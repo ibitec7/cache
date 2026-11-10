@@ -1,3 +1,23 @@
+## 2026-11-10T17:17:10Z · data · parallel fetch measured slower, T1 complete
+
+**Tasked:** check whether the parallel downloader beats a single stream before spending 11 h.
+
+**Actual:**
+- cluster45, cluster26, cluster10 downloaded and verified (zstd + upstream sha1 + sha256):
+  1.87 GB, 1.38 GB, 1.08 GB.
+- cluster52 is 93.09 GB, not 87 GB (the 87 GB figure in the docs was decimal vs binary confusion).
+- Measured: one curl stream 2.03 to 2.32 MB/s; 8 parallel ranges 1.44 MB/s aggregate;
+  4 parallel ranges 1.07 MB/s. The mirror throttles per client. `fetch_parallel.sh` kept but
+  marked measured-slower and not wired into `make`.
+- Resume of cluster52 from 7.5 GB continues at 2.32 MB/s, ETA about 10 h.
+- No HuggingFace mirror of this corpus exists (datasets API search: no match for
+  cache-trace / twemcache / cluster52), so the HF CLI is not applicable; the corpus is only
+  on the CMU mirror, SNIA and Baidu.
+
+**Failed / limitations:**
+- First parallel attempt wasted about 4 minutes and 165 MB of duplicate ranges, deleted.
+- Nothing else failed. Download is the only long pole left.
+
 ## 2026-11-10T15:48:50Z · data · retraction and integrity upgrade
 
 **Tasked:** audit the delegation batch's data claims, harden acquisition.

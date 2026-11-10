@@ -46,9 +46,19 @@ make data-t2          # T2, resumable, hours
 sha256 to `data/raw/traces/CHECKSUMS.sha256`, and refuses to start when free space
 drops below 5 GB.
 
-Throughput *measured* from this machine: about 2 MB/s per connection, and parallel
-range requests on the same host did not exceed that in a 180 s probe. Budget
-accordingly: T2 takes many hours.
+Throughput *measured* from this machine, cluster52 (93.09 GB) on the CMU mirror:
+
+| Mode | Aggregate rate | Note |
+|---|---|---|
+| 1 stream (`curl -C -`) | 2.03 to 2.32 MB/s | the rate the corpus actually moves at |
+| 8 parallel range streams (`scripts/fetch_parallel.sh`) | 1.44 MB/s | slower: 90 s and 60 s windows on a clean run |
+| 4 parallel ranges, 128 MiB, separate probe | 1.07 MB/s | same conclusion |
+
+The mirror throttles per client, not per connection, so splitting the object buys
+nothing and costs part-file bookkeeping. Measured T2 wall clock at the single-stream
+rate: about 11 hours for cluster52. `scripts/fetch_parallel.sh` is kept for the case
+where a future mirror is per-connection limited, with this table as the reason it is
+not the default.
 
 To inspect a shard without decompressing it to disk:
 
