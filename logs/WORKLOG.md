@@ -1,3 +1,26 @@
+## 2026-11-10T19:25:41Z · data · cluster52 span, op mix and TTL semantics resolved
+
+**Tasked:** resolve whether the kqps figure and the row count agree, and pin the TTL
+column's meaning before feature design.
+
+**Actual:**
+- Last row starts at t = 554,161 s = 6.41 days. 13,426,570,607 / 554,161 = 24,229 req/s
+  against the published 24.25 kqps, a 0.09% gap. The row count and the stat table agree,
+  so neither is a misread.
+- Op mix on the first 2M rows: get 0.892, add 0.045, gets 0.029, cas 0.026, delete 0.008,
+  set ~0.
+- `ttl` is 0 on every get/gets/delete and non-zero on every add/cas/set: 141,421 writes,
+  141,421 non-zero TTLs, exact complements. 0 means "read carried no TTL", not missing.
+- Non-zero TTLs sit in three buckets (1 d, 12 h, 14 d) whose conditional shares
+  0.64 / 0.07 / 0.28 reproduce the published `1d:0.65, 14d:0.27, 12h:0.07`. Recovering a
+  published statistic from raw bytes is the parser's independent correctness check.
+- Consequence recorded in docs: raw `log(ttl)` is a trap because the 0 spike encodes the
+  operation; use a TTL category plus op column.
+
+**Failed / limitations:**
+- Op/TTL shares come from a time-prefix, not a random sample. Anything that needs exact
+  whole-trace shares must be computed by a streaming pass, budgeted at about 10 minutes.
+
 ## 2026-11-10T19:14:11Z · data · cluster52 request count
 
 **Tasked:** exact row count for T2 bookkeeping.

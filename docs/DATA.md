@@ -95,6 +95,44 @@ Plain CSV, one request per row, no header:
 Object size used by the cache model is `key_size + value_size`. Keeping both raw
 columns is what allows the byte-weighted curve later.
 
+### cluster52 verified invariants
+
+Measured on the full shard (2026-11-11), not estimated. These are the numbers any
+experiment can be checked against.
+
+| Quantity | Value | How |
+|---|---|---|
+| requests | 13,426,570,607 | `zstd -dc \| wc -l` over the whole file |
+| compressed bytes | 93,087,028,859 | `Content-Length` and file size agree |
+| uncompressed bytes | 652,984,944,787 | `zstd -t` report |
+| bytes per request | 48.63 | 652,984,944,787 / 13,426,570,607 |
+| timestamp span | 554,161 s = 6.41 days | last row starts at t = 554,161 |
+| mean request rate | 24,229 req/s | 13,426,570,607 / 554,161, against the published 24.25 kqps |
+| sha1 | `d709465e…85e72a` | equals the mirror's published line for this file |
+
+Operation mix and TTL semantics on the first 2,000,000 requests (prefix, not a random
+sample, so treat the shares as indicative):
+
+| Operation | Share | TTL |
+|---|---|---|
+| get | 0.892 | always 0 |
+| add | 0.045 | always set |
+| gets | 0.029 | 0 |
+| cas | 0.026 | always set |
+| delete | 0.008 | 0 |
+| set | 0.000 | always set |
+
+`ttl` is therefore *not* a missing value to impute: 0 means "read, no TTL carried", and
+every write carries one. A model that treats raw `ttl` as a numeric feature sees a spike
+at 0 that encodes the operation, so the feature must be a TTL category plus an
+operation column, not a bare log(ttl).
+
+Non-zero TTL values appear in exactly three buckets in this prefix, 1 day, 12 hours and
+14 days, and their proportions conditional on being non-zero (0.64 / 0.28 / 0.07)
+reproduce the published stat table's `1d:0.65, 14d:0.27, 12h:0.07`. Recovering a
+published statistic from the raw file is the independent check that the parser reads the
+right columns.
+
 ## 5. Parsing contract
 
 `src/mrc/data/trace.py` is the only reader. It uses pyarrow's CSV reader over a
