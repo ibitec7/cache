@@ -20,7 +20,7 @@ project never downloads it whole.
 *Measured* sizes on the CMU mirror: 54 files, 1.9 TB total. Smallest: cluster10 1.0 GB,
 cluster26 1.3 GB, cluster45 1.7 GB, cluster3 4.5 GB. Recommended by the dataset authors
 for miss-ratio work: cluster52, cluster17, cluster18, cluster24, cluster44, cluster45,
-cluster29. cluster52 is 87 GB.
+cluster29. cluster52 is 93.09 GB compressed (652.98 GB uncompressed, 87 GiB).
 
 ## 2. Tiers actually used
 
@@ -28,7 +28,7 @@ cluster29. cluster52 is 87 GB.
 |---|---|---|---|---|
 | T0 | `samples/2020Mar/cluster001..054` from the GitHub repo | 3.8 GB clone, 11 to 94 MB per file | parser, unit tests, cross-cluster shape checks | `make test` |
 | T1 | cluster45, cluster26, cluster10 (full shards) | 4.33 GB compressed | model development, hazard calibration | M1, M2 |
-| T2 | cluster52 full shard | 93.09 GB compressed | the reported curves | M3, M4 |
+| T2 | cluster52 full shard | 93.09 GB compressed / 652.98 GB uncompressed | the reported curves | M3, M4 |
 
 Disk: 754 GB free on `/home`. T0 + T1 + T2 fits with room for intermediates, but
 intermediates are deleted per stage.
@@ -38,7 +38,7 @@ intermediates are deleted per stage.
 ```bash
 make data-samples     # T0
 make data-t1          # T1
-make data-t2          # T2, resumable, hours
+make data-t2          # T2, resumable, 8 parallel ranges, about 1 h at 20 MB/s
 ```
 
 `scripts/fetch_traces.sh` is the only supported entry point. It is resumable
@@ -66,7 +66,10 @@ measurement artifact of a degraded Wi-Fi association (PHY stuck at 54 Mbit/s wit
 *-37 dBm* signal, which is a driver/AP reassociation fault, fixed by
 `nmcli connection down/up`; the AP advertises 1170 Mbit/s).
 
-Wall clock at 21.9 MB/s: cluster52 in about 1.0 hour, so T0 + T1 + T2 fit comfortably
+Verified on arrival (2026-11-11): zstd integrity 652,984,944,787 bytes uncompressed, sha1
+`d709465e236199d7d3fddc1681cb828cdb85e72a` against the mirror's published `cluster52.sort.zst`
+line, sha256 `d65867a6f2bad96ef1fca9663a7189ee1dcced2814346250261275b51c7fb40e`. Wall clock at
+21.9 MB/s: cluster52 in about 1.0 hour, so T0 + T1 + T2 fit comfortably
 in an evening.
 
 To inspect a shard without decompressing it to disk:

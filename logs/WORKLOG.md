@@ -1,3 +1,26 @@
+## 2026-11-10T19:03:56Z · data · cluster52 downloaded and verified: T0 + T1 + T2 complete
+
+**Tasked:** finish T2 acquisition with integrity proof.
+
+**Actual:**
+- 8 parallel ranges, 66 minutes wall clock, one `Recv failure: Connection reset by peer` on
+  a range that resumed from its own byte count (no restart).
+- Part boundaries were exact to the byte: seven parts at 11,635,878,608 and the last at
+  11,635,878,603, total 93,087,028,859 bytes = the server's Content-Length.
+- `zstd -t`: OK, 652,984,944,787 bytes uncompressed, 615 s.
+- sha1 `d709465e236199d7d3fddc1681cb828cdb85e72a` equals the mirror's published line for
+  `cluster52.sort.zst`. sha256 `d65867a6f2bad96ef1fca9663a7189ee1dcced2814346250261275b51c7fb40e`
+  recorded in `data/raw/traces/CHECKSUMS.sha256`.
+- Parser sanity: 7 fields per row (time, key, key size, value size, client id, op, TTL flag),
+  timestamps ascending from 0, 100,000 lines counted on a slice.
+- Every cardinality claim in docs/DATA.md now matches disk: T1 = 4.33 GB, T2 = 93.09 GB
+  compressed / 652.98 GB uncompressed.
+
+**Failed / limitations:**
+- `zstd -t` on 93 GB costs 10 minutes and `sha256sum` another 4. Verification of T2 is not
+  free; run it once and trust the recorded digests afterwards.
+- Exact row count for cluster52 is still pending (background `zstd -dc | wc -l`).
+
 ## 2026-11-10T17:33:49Z · data · root cause of the slow download: degraded Wi-Fi, not the mirror
 
 **Tasked:** explain cluster52, find a faster source.
