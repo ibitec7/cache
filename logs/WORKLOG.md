@@ -1,3 +1,19 @@
+## 2026-11-10T19:14:11Z · data · cluster52 request count
+
+**Tasked:** exact row count for T2 bookkeeping.
+
+**Actual:**
+- `zstd -dc | wc -l` = 13,426,570,607 requests in 653 GB uncompressed (48.63 bytes/row,
+  10 min 13 s).
+- Cross-check against the published stat table: 13.43e9 requests at the documented
+  24.25 kqps implies a 6.4-day trace. Timestamp span pending (`tail -1` running); if the
+  span is not about 6.4 days then either the kqps figure or the row count is being
+  misread, and that has to be resolved before any window is defined.
+
+**Failed / limitations:**
+- Counting rows costs a full 10-minute decompress; there is no cheap index. Cache the
+  number in docs rather than recomputing per run.
+
 ## 2026-11-10T19:03:56Z · data · cluster52 downloaded and verified: T0 + T1 + T2 complete
 
 **Tasked:** finish T2 acquisition with integrity proof.
