@@ -42,7 +42,11 @@ fetch_part() {
   while :; do
     have=0
     [ -f "$part" ] && have=$(stat -c %s "$part")
-    [ "$have" -ge "$want" ] && { log "part $i complete ($have/$want)"; return 0; }
+    if [ "$have" -gt "$want" ]; then
+      log "ERROR: part $i holds $have bytes but its range is $want; part files are incompatible with NPARTS=$NPARTS, re-slice or change NPARTS"
+      return 1
+    fi
+    [ "$have" -eq "$want" ] && { log "part $i complete ($have/$want)"; return 0; }
     curl -fsSL -r "$(( start + have ))-$end" -o "$part.tmp" "$URL" \
       && cat "$part.tmp" >> "$part" && rm -f "$part.tmp"
     # a short write is normal (connection reset); loop until the part is full

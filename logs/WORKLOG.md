@@ -1,3 +1,28 @@
+## 2026-11-10T17:33:49Z · data · root cause of the slow download: degraded Wi-Fi, not the mirror
+
+**Tasked:** explain cluster52, find a faster source.
+
+**Actual:**
+- Wi-Fi was associated at 54 Mbit/s legacy (802.11a, HE-MCS absent) with -37 dBm signal, on an
+  AP advertising 1170 Mbit/s. `nmcli connection down/up` re-associated at 286.7 Mbit/s
+  (802.11ax, HE-MCS 11, NSS 2).
+- Before the fix, every remote host measured about 1 MB/s: Cloudflare CDN 1.05, HF 0.94,
+  CMU 0.71. After the fix, 4 parallel CDN streams gave 13.4 MB/s.
+- Re-ran the parallel-range test on a healthy link: 8 ranges from the CMU mirror sustain
+  21.9 MB/s aggregate on cluster52. The mirror limits per connection (2 to 3 MB/s), not per
+  client. ETA went from 11 h to 1.0 h.
+- Retracted the earlier "mirror throttles per client" conclusion: it was measured entirely on
+  the crippled link, which is a textbook measurement artifact. docs/DATA.md now carries both
+  link states in the table so the mistake is visible, not overwritten.
+- `fetch_parallel.sh` promoted to the default T2 path; added a guard that refuses part files
+  whose size exceeds their range (the failure mode when NPARTS changes between runs).
+- cluster52 download seeded from the 9.6 GB already fetched as part_0, no bytes re-downloaded.
+
+**Failed / limitations:**
+- One wasted 25-minute attempt (8 parallel over the bad link) plus 165 MB of duplicate ranges.
+- No alternative source found worth using: no HuggingFace mirror exists, SNIA needs a
+  registration form, Baidu pan needs an account. The CMU mirror is fine once the link is.
+
 ## 2026-11-10T17:17:10Z · data · parallel fetch measured slower, T1 complete
 
 **Tasked:** check whether the parallel downloader beats a single stream before spending 11 h.

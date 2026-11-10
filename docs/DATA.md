@@ -27,8 +27,8 @@ cluster29. cluster52 is 87 GB.
 | Tier | Content | Size | Purpose | Gates |
 |---|---|---|---|---|
 | T0 | `samples/2020Mar/cluster001..054` from the GitHub repo | 3.8 GB clone, 11 to 94 MB per file | parser, unit tests, cross-cluster shape checks | `make test` |
-| T1 | cluster45, cluster26, cluster10 (full shards) | 4.0 GB compressed | model development, hazard calibration | M1, M2 |
-| T2 | cluster52 full shard | 87 GB compressed | the reported curves | M3, M4 |
+| T1 | cluster45, cluster26, cluster10 (full shards) | 4.33 GB compressed | model development, hazard calibration | M1, M2 |
+| T2 | cluster52 full shard | 93.09 GB compressed | the reported curves | M3, M4 |
 
 Disk: 754 GB free on `/home`. T0 + T1 + T2 fits with room for intermediates, but
 intermediates are deleted per stage.
@@ -46,19 +46,28 @@ make data-t2          # T2, resumable, hours
 sha256 to `data/raw/traces/CHECKSUMS.sha256`, and refuses to start when free space
 drops below 5 GB.
 
-Throughput *measured* from this machine, cluster52 (93.09 GB) on the CMU mirror:
+Throughput *measured* from this machine, cluster52 (93.09 GB) on the CMU mirror.
+Two link states must be distinguished, and getting this wrong cost an hour.
 
-| Mode | Aggregate rate | Note |
+| Link state | Mode | Aggregate rate |
 |---|---|---|
-| 1 stream (`curl -C -`) | 2.03 to 2.32 MB/s | the rate the corpus actually moves at |
-| 8 parallel range streams (`scripts/fetch_parallel.sh`) | 1.44 MB/s | slower: 90 s and 60 s windows on a clean run |
-| 4 parallel ranges, 128 MiB, separate probe | 1.07 MB/s | same conclusion |
+| Wi-Fi associated at 54 Mbit/s legacy (802.11a on ch52) | 1 stream | 2.03 to 2.32 MB/s |
+| same crippled link | 8 parallel ranges | 1.44 MB/s |
+| same crippled link | 4 parallel CDN streams | 0.59 MB/s |
+| Wi-Fi re-associated at 286.7 Mbit/s (802.11ax, 2 streams) | 4 parallel CDN streams | 13.4 MB/s |
+| same healthy link | 4 parallel CMU ranges | 3.14 MB/s |
+| same healthy link | 8 parallel CMU ranges | 8.0 MB/s |
+| same healthy link, production run | 8 parallel CMU ranges, cluster52 | **21.9 MB/s** |
 
-The mirror throttles per client, not per connection, so splitting the object buys
-nothing and costs part-file bookkeeping. Measured T2 wall clock at the single-stream
-rate: about 11 hours for cluster52. `scripts/fetch_parallel.sh` is kept for the case
-where a future mirror is per-connection limited, with this table as the reason it is
-not the default.
+Conclusion, corrected: the mirror limits about 2 to 3 MB/s per connection, not per
+client. `scripts/fetch_parallel.sh` with 8 ranges is the default for T2 and turns an
+11-hour download into about 1 hour. The earlier "per client throttle" reading was a
+measurement artifact of a degraded Wi-Fi association (PHY stuck at 54 Mbit/s with
+*-37 dBm* signal, which is a driver/AP reassociation fault, fixed by
+`nmcli connection down/up`; the AP advertises 1170 Mbit/s).
+
+Wall clock at 21.9 MB/s: cluster52 in about 1.0 hour, so T0 + T1 + T2 fit comfortably
+in an evening.
 
 To inspect a shard without decompressing it to disk:
 
