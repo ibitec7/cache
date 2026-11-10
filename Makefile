@@ -16,7 +16,7 @@ data-samples:  ## T0: clone the 54 sample traces
 data-t1:  ## T1: three smallest clusters
 	bash scripts/fetch_traces.sh t1
 
-data-t2:  ## T2: cluster52 full shard (87 GB, resumable)
+data-t2:  ## T2: cluster52 full shard (93.09 GB, resumable, 8 parallel ranges)
 	bash scripts/fetch_traces.sh t2
 
 inspect:  ## summarise a trace file: make inspect F=data/raw/cache-trace/samples/2020Mar/cluster045

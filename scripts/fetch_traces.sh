@@ -3,7 +3,7 @@
 #
 #   ./scripts/fetch_traces.sh samples      # T0: 54 sample files (~1 GB repo clone)
 #   ./scripts/fetch_traces.sh t1           # T1: the three smallest clusters (~4 GB)
-#   ./scripts/fetch_traces.sh t2           # T2: cluster52 full shard (87 GB)
+#   ./scripts/fetch_traces.sh t2           # T2: cluster52 full shard (93.09 GB, 8 parallel ranges)
 #   ./scripts/fetch_traces.sh t1 t2        # both, in that order
 #
 # Every download is resumable (curl -C -), retried, and verified with `zstd -t`.
