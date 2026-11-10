@@ -162,3 +162,14 @@ statistical skeleton, experiment pipeline, telemetry, docs, wiki, report templat
 - 87 GB T2 shard not finished; download resumed in background.
 
 **Next:** T1 artifacts -> hazard features -> MLflow runs -> Optuna -> figures -> report tables.
+## 2026-11-10T21:23Z · audit · setup complete, science not started
+
+- Promoted `AGENTS.md` from the staged `docs/AGENTS_RULES.md` copy (commit 752e6c2); the
+  approval gate that blocked the filename is gone.
+- Fixed a dangling dependency: `t_8cb919d5` (M2 figures) listed archived `t_5cd843df` as a
+  parent, which would have pinned it in todo forever. Unlinked; it now waits only on
+  `t_e7bb2b4a`.
+- Audit verdict: repo scaffolding is complete and green (`pytest` 10/10, tree clean, 11
+  commits). No scientific artifact exists yet: `artifacts/mlflow` and `artifacts/optuna`
+  empty, `artifacts/tables` empty, `data/processed` empty, one figure and it is from the
+  44 MB GitHub sample, and every table/figure in report and slides is a placeholder.
