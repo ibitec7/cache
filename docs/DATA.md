@@ -84,10 +84,23 @@ things matter and both were bugs once:
    index space is per-block and the resulting key ids are garbage. Read the key as
    `pa.string()` and call `.dictionary_encode()` on the combined column.
 2. Per-request size must be read per row, never indexed by key id.
+3. `pyarrow.csv.read_csv` defaults to `has_header=True`. On these headerless shards it
+   silently consumes the first request as the header row and names the columns after
+   that request's values. Measured: 999,999 rows instead of 1,000,000 on the
+   cluster045 sample, with columns named `0`, `tSM5KAkocE`, `10`, `1`, `get`. Always
+   pass `ReadOptions(column_names=...)`, which implies `has_header=False`.
+
+Throughput *measured* on this host, 1,000,000 requests / 34.6 MB of cluster045:
+end-to-end ingest 0.40 s (86 MB/s, 2.48 M rows/s), peak RSS 387 MB; reuse distance
+2.58 M requests/s single core after numba warm-up. A bare `pyarrow.csv.read_csv`
+without the column work measures 355 MB/s on the same file, so the remaining cost
+is the key dictionary encode, not parsing.
 
 Memory *measured*: 1e6 requests of cluster45 occupy about 26 MB of key codes,
 timestamps and sizes plus the key dictionary (173,874 distinct keys per 200k rows
-in cluster45, that ratio is workload specific).
+in cluster45; that ratio is workload specific). At 1e9 requests the frozen schema
+is about 45 GB plain, 30 GB with dictionary-encoded keys, 10 to 11 GB as parquet,
+which is why ingest is row-group chunked.
 
 Frozen artifact schema (`data/interim/*.npz`, one file per shard and tier):
 
@@ -160,18 +173,39 @@ rows = page.css("table.results tr")
 
 Observed 2026-11-10, python 3.13, `libcachesim==0.3.5` wheel (manylinux):
 
-- `LRU.process_trace(reader)` returns `(1.0, 1.0)` for every capacity, including on a
-  synthetic trace with 200 keys where the true miss ratio at capacity 200 is 0.005.
-- Manual replay through the same object double counts: after one `insert` the cache
-  reports `get_n_obj() == 2`, and `get(req)` returns `False` for a key just inserted.
+Two separate observations, one of which retracts an earlier report.
+
+**Working: single-request replay.** `insert` then `get` behaves correctly.
 
 ```python
 import libcachesim as lc
-r = lc.TraceReader("syn.txt", lc.TraceType.PLAIN_TXT_TRACE)
-c = lc.LRU(cache_size=10); req = r.read_one_req()
-c.insert(req); print(c.get_n_obj())   # 2, expected 1
-print(c.get(req))                    # False, expected True
+r = lc.TraceReader(f, lc.TraceType.PLAIN_TXT_TRACE)
+c = lc.LRU(cache_size=100)
+req = r.read_one_req(); c.insert(req)
+print(c.get_n_obj())   # 1
+print(c.get(req))      # True
 ```
+
+**Broken: the aggregate path.** `process_trace` returns the same pair for every
+capacity, so it carries no capacity signal at all:
+
+```
+cap      10: (0.210032, 0.210032)
+cap     100: (0.210032, 0.210032)
+cap    1000: (0.210032, 0.210032)
+cap   10000: (0.210032, 0.210032)
+cap  100000: (0.210032, 0.210032)
+```
+
+On the same 1,000,000-request cluster045 prefix our simulation gives miss ratio
+0.9967 at capacity 10 and 0.8707 at capacity 100000, so `0.210032` is not a miss
+ratio under any reading.
+
+**Retraction.** An earlier version of this section claimed that inserts were double
+counted (`get_n_obj() == 2` after one insert, `get` returning `False`). That does not
+reproduce on this host and was a misuse of the API in the probe, not a library bug.
+The blocker is narrower than first reported: manual replay works, the aggregate
+replay does not.
 
 Consequence: the pybind cache cannot serve as ground truth. Ground truth is our own
 numba LRU replay, cross-checked against the naive `OrderedDict` reference. The

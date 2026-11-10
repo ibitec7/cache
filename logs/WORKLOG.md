@@ -1,3 +1,27 @@
+## 2026-11-10T15:48:50Z · data · retraction and integrity upgrade
+
+**Tasked:** audit the delegation batch's data claims, harden acquisition.
+
+**Actual:**
+- libcachesim 0.3.5 re-probed: `insert`/`get` work correctly (`get_n_obj()==1`, `get()` True),
+  but `process_trace` returns `(0.210032, 0.210032)` at capacities 10, 100, 1000, 10000 and
+  100000 on the same 1M-request trace, where our simulation gives 0.9967 down to 0.8707.
+- Retracted the "insert double counts" report: it does not reproduce; it was my probe misusing
+  the API. docs/DATA.md section 9 rewritten with the narrower blocker plus the retraction.
+- Found a silent data-integrity trap: `pyarrow.csv.read_csv` defaults to `has_header=True`, so on
+  these headerless shards it eats the first request and names columns after its values
+  (999,999 vs 1,000,000 rows on the cluster045 sample). Documented as parser pitfall 3.
+- End-to-end ingest measured: 0.40 s per 1M requests (86 MB/s, 2.48 M rows/s), peak RSS 387 MB;
+  reuse distance 2.58 M req/s. Bare `pyarrow.csv` parse: 355 MB/s.
+- Acquisition now verifies the mirror's published sha1 (`data/raw/traces/UPSTREAM.sha1`) on top of
+  zstd integrity, before recording sha256. Tamper detection tested on a synthetic file.
+- Running download restarted on the new script; cluster45 resumed from 1.62 GB of 1.74 GB.
+
+**Failed / limitations:**
+- Patching a script that bash was still reading killed the in-flight job (bash re-reads by byte
+  offset). Rule learned: kill the job first, then edit, then relaunch. Resume made it cheap.
+- `process_trace` remains unusable, so libcachesim stays out of the ground-truth path.
+
 # WORKLOG
 
 Append-only. Newest entry on top. UTC timestamps.

@@ -34,9 +34,16 @@ samples() {
   log "sample files: $(find "$RAW/cache-trace/samples/2020Mar" -type f | wc -l)"
 }
 
+ensure_upstream_sha1() {
+  local sums="$RAW/traces/UPSTREAM.sha1"
+  mkdir -p "$RAW/traces"
+  [ -s "$sums" ] || curl -fsSL -o "$sums" "$MIRROR/sha1sum"
+}
+
 fetch_cluster() {
   local c="$1" dest="$RAW/traces/$1.sort.zst"
   mkdir -p "$RAW/traces"
+  ensure_upstream_sha1
   local avail; avail=$(free_gb)
   if [ "$avail" -lt 5 ]; then log "ABORT: only ${avail}GB free"; exit 1; fi
   if [ -f "$dest" ] && zstd -t "$dest" 2>/dev/null; then
@@ -49,12 +56,15 @@ fetch_cluster() {
     log "attempt $attempt for $c failed, retrying"
     sleep 10
   done
-  if zstd -t "$dest" 2>/dev/null; then
-    log "$c verified: $(du -h "$dest" | cut -f1)"
-    sha256sum "$dest" >> "$RAW/traces/CHECKSUMS.sha256"
-  else
-    log "ERROR: $c failed integrity check"; return 1
+  if ! zstd -t "$dest" 2>/dev/null; then
+    log "ERROR: $c failed zstd integrity check"; return 1
   fi
+  if ! grep -F "  $c.sort.zst" "$RAW/traces/UPSTREAM.sha1" \
+       | (cd "$RAW/traces" && sha1sum -c --status -); then
+    log "ERROR: $c does not match the published sha1"; return 1
+  fi
+  log "$c verified (zstd + upstream sha1): $(du -h "$dest" | cut -f1)"
+  sha256sum "$dest" >> "$RAW/traces/CHECKSUMS.sha256"
 }
 
 main() {
