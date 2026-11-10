@@ -1,0 +1,26 @@
+\section{Limitations}
+
+\begin{frame}{Limitations}
+  \begin{description}
+    \item[Trace vintage] 2020 traces. A description of that period, not a
+      forecast.
+    \item[Single vendor] One production fleet. Cross-vendor transfer untested.
+    \item[Hazard binning] $K$ bins bound curve resolution, and bin edges matter
+      near the knee.
+    \item[Replacement policy] Identification is LRU. Segmented or sampled LRU
+      does not satisfy a pure distance threshold.
+  \end{description}
+\end{frame}
+
+\begin{frame}{What would change the conclusion}
+  \begin{itemize}
+    \item A policy-aware recency structure in place of the threshold condition.
+    \item A continuous hazard to remove the binning limit.
+    \item A per-cluster transfer check within the fleet.
+  \end{itemize}
+  \vspace{1em}
+  \begin{block}{Falsifier}
+    If estimated curves miss the simulated curve by more than the simulation
+    band at the knee, the survival formulation does not pay for itself.
+  \end{block}
+\end{frame}

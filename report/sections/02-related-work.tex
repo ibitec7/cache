@@ -1,0 +1,55 @@
+\section{Related Work}
+\label{sec:related-work}
+
+\subsection{Stack Distance and Reuse Distance}
+
+Mattson et al.\ introduced the stack algorithm and the distance between
+successive references to a block, and proved that LRU hit behavior at capacity
+$C$ is determined by counting distinct blocks referenced since the previous
+access \cite{mattson1970}. Hill and Smith developed the miss-ratio curve as a
+first-class object, computing all-miss-ratio curves by simulating a set of
+capacities and showing how curve shape distinguishes compulsory, capacity and
+conflict misses \cite{hill1989}. Both results are exact for the reference
+stream they are computed on; neither is a statistical model, and neither
+extrapolates to unobserved capacities.
+
+\subsection{Approximate MRC Construction}
+
+Exact stack distance computation costs time linear in the trace length times
+the number of distinct blocks. Counter stacks replace per-reference search with
+a compact data structure that yields stack distance histograms for many
+capacities in one pass \cite{wires2014}. SHARDS obtains MRCs at scale by
+sampling references into miniature simulations, correcting the resulting
+downsampling bias analytically, and aggregating per-simulation histograms
+\cite{waldspurger2015}. These methods are the ground truth against which a
+model is judged here: simulation is accurate up to sampling error, and its cost
+is what a model is meant to avoid on every capacity query.
+
+\subsection{Reuse-Distance Analysis}
+
+Reuse distance analysis extends the single-parameter stack model to arbitrary
+replacement policies by tracking the reuse distance of each request and
+replaying it against a policy-specific recency structure
+\cite{beckmann2016,beckmann2017}. This line of work establishes that reuse
+distance is a sufficient statistic for a broad class of policies, which is the
+premise the present model relies on for LRU and only for LRU. Production trace
+studies supply the workload evidence: the Twitter cache analysis reports
+reuse-distance and miss-ratio structure across hundreds of in-memory clusters
+and motivates cluster-level heterogeneity as a modelling concern
+\cite{yang2020}.
+
+\subsection{Survival Analysis in Systems Contexts}
+
+Reuse distance is a positive, integer-valued waiting time, observed under a
+truncation that depends on the observation window. That is a censored
+time-to-event problem, and the discrete hazard formulation used here follows
+the Kaplan-Meier product-limit estimator for right-censored data
+\cite{kaplan1958} and the proportional hazards regression of Cox
+\cite{cox1972}. Grouped and interval-censored observations, which arise when
+reuse distance is binned, are treated by the Turnbull estimator
+\cite{turnbull1976}. Gradient boosting supplies the flexible hazard component:
+gradient-boosted decision trees \cite{friedman2001} as implemented in LightGBM
+\cite{ke2017}, with hyperparameters selected by Optuna \cite{akiba2019}. The
+combination of a nonparametric hazard with a tree ensemble is standard in
+survival regression; the contribution here is the mapping of that hazard onto
+cache capacity rather than onto a clinical or reliability endpoint.

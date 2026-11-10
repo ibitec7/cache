@@ -1,0 +1,28 @@
+\section{Ground truth}
+
+\begin{frame}{Simulation is the reference}
+  \begin{itemize}
+    \item Full simulation of the held-out segment on a fixed capacity grid.
+    \item Exact stack distance where the trace fits in memory.
+    \item SHARDS with a fixed sampling rate where it does not.
+    \item The sampling rate and its confidence band ship with every curve.
+  \end{itemize}
+  \vspace{1em}
+  \begin{block}{Rule}
+    Model error is never reported below simulation error.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Metrics}
+  \begin{description}
+    \item[MRC error] max and mean absolute deviation from the simulated curve
+      over the capacity grid.
+    \item[Calibration] reliability of hazard predictions, summarized as
+      expected calibration error.
+    \item[Brier / IBS] squared error of the hazard, integrated over bins.
+  \end{description}
+  \vspace{1em}
+  \begin{block}{Why not likelihood}
+    Likelihood rewards over-confident hazards; the Brier score does not.
+  \end{block}
+\end{frame}

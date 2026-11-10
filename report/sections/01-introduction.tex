@@ -1,0 +1,62 @@
+\section{Introduction}
+\label{sec:introduction}
+
+A miss-ratio curve (MRC) gives the hit ratio $H(C)$ of a cache of capacity $C$
+on a given request stream. Operators use it to size memory: the capacity at
+which the curve flattens is the point past which additional memory buys little
+hit ratio. Published fleet analyses show that capacity decisions of this kind
+are made continuously across hundreds of clusters \cite{yang2020}.
+
+\subsection{The Gap: Aggregate Regression}
+
+The dominant practical approach regresses an aggregate hit count, or an
+aggregate miss ratio, on capacity. The fit is performed over a set of measured
+capacities, and the curve is interpolated or extrapolated from those points.
+This formulation has two costs. First, capacity enters as a covariate, so every
+new capacity requires new measurements or a new fit. Second, aggregating over
+requests removes the per-request quantity that actually governs the curve: how
+far back in the stream a request must reach to find its previous access. Two
+workloads with identical aggregate hit counts at one capacity can have
+different curves at every other capacity, and aggregate regression cannot
+distinguish them.
+
+\subsection{Motivation: Over- and Under-Allocation}
+
+Both directions of sizing error are expensive. Over-allocation reserves memory
+that produces no hit-ratio gain, which in a multi-tenant fleet is memory taken
+from another workload. Under-allocation produces misses that fall through to
+the storage tier, where the latency penalty is orders of magnitude larger than
+a cache lookup. A curve that is accurate in shape, and not only at the
+capacities that were measured, supports sizing at capacities that were never
+observed. That is the operational motivation for modelling the per-request
+reuse process instead of its aggregate.
+
+\subsection{Contributions}
+
+\begin{enumerate}[nosep]
+    \item A formulation of reuse distance as a right-censored discrete
+    time-to-event variable, with the LRU stack property supplying the exact map
+    from its survival function to the MRC (Section~\ref{sec:formalization}).
+    \item Two gradient-boosted discrete hazard parametrizations, one treating
+    reuse distance as a feature and one fitting a separate model per hazard
+    bin, together with an explicit censoring correction and a documented
+    Optuna search space (Section~\ref{sec:methods}).
+    \item An evaluation protocol against simulation ground truth on production
+    traces, reporting MRC error, hazard calibration, and the integrated Brier
+    score rather than a single aggregate fit statistic
+    (Section~\ref{sec:experiments}).
+\end{enumerate}
+
+\subsection*{Scope and Page Budget}
+\phantomsection\label{sec:pagebudget}
+
+% PAGE BUDGET: body 8-10 pages (Sections 1-6). References and appendix are
+% outside the budget. Derivations, full hyperparameter tables, per-cluster
+% numbers and reproduction commands live in the appendix by design, so that
+% the body states the argument and the appendix carries the evidence.
+The body of this report is budgeted at eight to ten pages, following the
+allocation recorded in \texttt{main.tex} and anchored at
+Section~\ref{sec:pagebudget}. Material that does not fit moves to the appendix
+rather than being compressed. The report covers LRU-referenced MRCs only;
+non-LRU replacement is discussed as a limitation in
+Section~\ref{sec:conclusion}.

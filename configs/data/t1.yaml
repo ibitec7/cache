@@ -1,0 +1,6 @@
+# T1: the three smallest production clusters, used for model development.
+tier: t1
+clusters: [cluster45, cluster26, cluster10]
+limit_requests: null        # null = whole shard
+max_distance_percentile: 99.9
+hazard_bins: 32

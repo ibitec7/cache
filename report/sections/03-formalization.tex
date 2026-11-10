@@ -1,0 +1,101 @@
+\section{Formalization}
+\label{sec:formalization}
+
+We fix a request stream and treat each request's reuse distance as a discrete
+survival time. This section defines the quantities, states the identification
+condition that connects reuse distance to capacity, and records what censoring
+means in this setting.
+
+\subsection{Notation}
+
+\begin{table}[ht]
+\centering
+\caption{Notation. All distances are counts of distinct blocks, not bytes.}
+\label{tab:notation}
+\begin{tabular}{@{}l l p{0.55\textwidth}@{}}
+\toprule
+Symbol & Domain & Meaning \\
+\midrule
+$x_i$ & $\mathcal{B}$ & block identifier of the $i$-th request \\
+$r_i$ & $\mathbb{N}$ & reuse distance of request $i$; distinct blocks referenced since the previous access to $x_i$ \\
+$C$ & $\mathbb{N}$ & cache capacity in blocks \\
+$k$ & $\{0,1,\ldots,K\}$ & hazard bin index, a discretized reuse distance \\
+$h_k$ & $[0,1]$ & discrete hazard, $\Pr(r = k \mid r \ge k)$ \\
+$S(k)$ & $[0,1]$ & survival function, $\Pr(r \ge k)$ \\
+$H(C)$ & $[0,1]$ & miss-ratio curve, hit ratio at capacity $C$ \\
+$\tau_i$ & $\mathbb{N} \cup \{\infty\}$ & censoring time for request $i$ \\
+$\delta_i$ & $\{0,1\}$ & event indicator, $1$ if $r_i$ observed, $0$ if censored \\
+$z_i$ & $\mathbb{R}^d$ & feature vector for request $i$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Reuse Distance}
+
+For a request to block $x_i$ at position $i$, let $j(i) = \max\{j < i : x_j = x_i\}$
+be the position of the previous access, or $\varnothing$ if none exists. The
+reuse distance is the number of distinct blocks referenced strictly between the
+two accesses,
+\begin{equation}\label{eq:reuse-distance}
+    r_i \;=\; \bigl|\{\, x_m : j(i) < m < i \,\}\bigr|,
+\end{equation}
+with $r_i = \infty$ for a first access. A first access is a compulsory miss at
+every capacity and is excluded from the hazard model; it contributes a fixed
+offset to the MRC.
+
+\subsection{Hazard, Survival, and the Miss-Ratio Curve}
+
+Discretize $r$ into bins $0, \ldots, K$ and let
+\begin{equation}\label{eq:hazard}
+    h_k \;=\; \Pr(r = k \mid r \ge k), \qquad k = 0, \ldots, K,
+\end{equation}
+be the discrete hazard, the conditional probability that the reuse distance
+resolves in bin $k$ given that it has not resolved before $k$. The survival
+function is the product of conditional non-resolution probabilities,
+\begin{equation}\label{eq:survival}
+    S(k) \;=\; \Pr(r \ge k) \;=\; \prod_{j=0}^{k-1}\bigl(1 - h_j\bigr),
+    \qquad S(0) = 1,
+\end{equation}
+and the MRC evaluated at capacity $C$ is
+\begin{equation}\label{eq:mrc}
+    H(C) \;=\; \Pr(r < C) \;=\; 1 - S(C).
+\end{equation}
+Capacity enters \cref{eq:mrc} only as an evaluation point of the estimated
+survival function. No model is refitted when $C$ changes.
+
+\subsection{Identification}
+
+\begin{proposition}[LRU hit condition]\label{prop:lru-hit}
+Under LRU replacement with capacity $C$ blocks, a repeated access $x_i$ hits if
+and only if $r_i < C$.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+LRU maintains a recency list of at most $C$ distinct blocks. Immediately before
+request $i$, that list contains exactly the $C$ most recently referenced
+distinct blocks, so $x_i$ is resident iff fewer than $C$ distinct blocks were
+referenced since $j(i)$, which is the condition $r_i < C$. This is the stack
+property established by Mattson et al.~\cite{mattson1970}.
+\end{proof}
+
+\begin{corollary}\label{cor:mrc-identity}
+For LRU, $H(C) = \Pr(r < C)$ exactly, so an estimator of the reuse-distance
+distribution is an estimator of the MRC at every capacity simultaneously.
+\end{corollary}
+
+The corollary is the identification argument and also its boundary: it holds
+for LRU and for policies whose hit condition can be written as a threshold on
+reuse distance. For adaptive policies the map from $r$ to a hit is not a
+threshold, and \cref{eq:mrc} is not the policy's MRC. We return to this in
+Section~\ref{sec:conclusion}.
+
+\subsection{Censoring}
+
+A trace is observed over a finite window. If the previous access to $x_i$ lies
+before the window start, or if fewer than $K$ distinct blocks have been seen
+since that access, the reuse distance is not observed: we know only $r_i \ge \tau_i$.
+Such observations are right-censored, with event indicator $\delta_i = 0$,
+and they enter the likelihood through the survival factor rather than the
+hazard factor. Treating them as misses at a known distance biases the estimated
+curve upward at large capacities, which is precisely the region where sizing
+decisions are made.

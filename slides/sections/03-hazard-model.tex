@@ -1,0 +1,40 @@
+\section{Hazard model}
+
+\begin{frame}{Discrete hazard}
+  Bin the reuse distance and define the conditional resolution probability:
+  \begin{equation*}
+    h_k \;=\; \Pr(r = k \mid r \ge k),
+    \qquad
+    S(k) \;=\; \prod_{j<k}(1 - h_j)
+  \end{equation*}
+  \begin{itemize}
+    \item Labels from the trace: $y_{i,k} = \mathbb{1}\{r_i = k\}$ on the risk set $r_i \ge k$.
+    \item Gradient-boosted trees on the expanded rows.
+    \item Censored requests contribute survival factors, never labels.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Two parametrizations}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{R-as-feature}
+      \begin{itemize}
+        \item One ensemble, bin index as a feature.
+        \item Shares strength across bins.
+        \item Monotonicity in $k$ learned implicitly.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Per-bin}
+      \begin{itemize}
+        \item One binary model per bin.
+        \item Unconstrained hazard per bin.
+        \item $K+1$ fits, no sharing.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{1em}
+  \begin{block}{Censoring correction}
+    Risk-set restriction against inverse-censoring weights; compared, not assumed.
+  \end{block}
+\end{frame}

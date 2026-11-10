@@ -1,0 +1,34 @@
+\section{Protocol}
+
+\begin{frame}{Split by time, not at random}
+  \begin{itemize}
+    \item Fit, validation, held-out segments in time order.
+    \item No interleaving, no random shuffle.
+    \item Reuse distances computed once over the whole trace, so distances
+      crossing a boundary are not truncated.
+    \item Ground truth simulated on the held-out segment only.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Fixed before fitting}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.52\textwidth}
+      \textbf{Capacity grid}
+      \begin{itemize}
+        \item Same grid for simulation, evaluation, and every model.
+        \item \SI{1}{GiB} to \SI{64}{GiB}, doubling.
+      \end{itemize}
+      \vspace{0.5em}
+      \textbf{Hyperparameters}
+      \begin{itemize}
+        \item Optuna, tree Parzen estimator.
+        \item Objective: validation IBS.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}{Cluster selection}
+        Traces complete over both windows, selected before any fit.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}

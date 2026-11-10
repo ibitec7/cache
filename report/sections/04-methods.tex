@@ -1,0 +1,112 @@
+\section{Methods}
+\label{sec:methods}
+
+The model is a discrete hazard estimator. Each request contributes one binary
+observation per bin it survives, labelled by whether its reuse distance
+resolves in that bin. A gradient-boosted tree ensemble \cite{friedman2001}
+predicts the conditional resolution probability from request features.
+
+\subsection{Discrete Hazard with Gradient-Boosted Trees}
+
+For a request with reuse distance $r_i$ observed in bin $k_i$, the expanded
+data set contains rows $(i, k)$ for $k = 0, \ldots, k_i$, with label
+\begin{equation}\label{eq:label}
+    y_{i,k} \;=\; \mathbb{1}\{r_i = k\},
+\end{equation}
+and row $(i,k)$ is in the risk set only if $r_i \ge k$. The model estimates
+$h_k(z_i) = \Pr(y_{i,k} = 1 \mid r_i \ge k, z_i)$, and the log-likelihood of the
+observed data is
+\begin{equation}\label{eq:likelihood}
+    \ell \;=\; \sum_{i} \Biggl[
+        \sum_{k=0}^{k_i - 1} \log\bigl(1 - h_k(z_i)\bigr)
+        \;+\; \delta_i \log h_{k_i}(z_i)
+    \Biggr],
+\end{equation}
+where $\delta_i$ is the event indicator of \cref{tab:notation}. The first term
+is the survival contribution of bins the request passed through, the second is
+the resolution contribution, present only when the distance is observed.
+
+\subsection{Two Parametrizations}
+
+\textbf{R-as-feature.} A single ensemble is trained on the expanded rows with
+the bin index $k$ appended to $z_i$ as a numeric feature. The model learns one
+response surface over features and bin index, which shares strength across bins
+and keeps the number of fitted models at one. The risk is that the ensemble must
+represent a monotone structure in $k$ implicitly.
+
+\textbf{Per-bin.} One binary ensemble is fitted per bin $k$ on that bin's risk
+set, using $z_i$ without the bin index. Each model is small and the hazard in
+each bin is unconstrained, at the cost of $K+1$ fits and no sharing between
+adjacent bins. Both parametrizations produce a hazard sequence that is
+normalized to $[0,1]$ and, if needed, projected to be non-increasing in $k$ for
+$S(k)$.
+
+\subsection{Training Labels and Censoring Correction}
+
+Labels follow \cref{eq:label} directly for observed distances. A censored
+request with censoring time $\tau_i$ contributes rows for $k < \tau_i$ with
+label $0$ and no row at $\tau_i$; it is never labelled as a resolution. Two
+corrections are compared for the bias that remains when censoring correlates
+with features:
+\begin{enumerate}[label=(\roman*),nosep]
+    \item \textbf{Risk-set restriction:} drop bins whose at-risk count falls
+    below a floor, and report the curve only up to the largest well-populated
+    capacity.
+    \item \textbf{Inverse-censoring weights:} weight each uncensored row by the
+    inverse of the estimated censoring survival function at its bin, following
+    the usual inverse-probability-of-censoring construction.
+\end{enumerate}
+The comparison is reported in \cref{sec:experiments}; neither correction is
+assumed to dominate.
+
+\subsection{Hyperparameter Search}
+
+Hyperparameters are selected with Optuna \cite{akiba2019} using the tree
+Parzen estimator over the space in \cref{tab:searchspace}. The objective is the
+validation integrated Brier score defined in \cref{sec:metrics}, not the
+training likelihood, because likelihood favors over-confident hazards.
+
+\begin{table}[ht]
+\centering
+\caption{Optuna search space. Values are placeholders until the sweep is run.}
+\label{tab:searchspace}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Hyperparameter & Range & Scale \\
+\midrule
+Number of leaves & $[15, 255]$ & integer, log \\
+Learning rate & $[10^{-3}, 10^{-1}]$ & log \\
+Minimum child samples & $[20, 500]$ & integer, log \\
+Feature fraction & $[0.5, 1.0]$ & linear \\
+Bagging fraction & $[0.5, 1.0]$ & linear \\
+L2 regularization & $[10^{-8}, 10^{1}]$ & log \\
+Max bins & $\{63, 127, 255\}$ & categorical \\
+Hazard bins $K$ & $\{32, 64, 128\}$ & categorical \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Evaluation Metrics}
+\label{sec:metrics}
+
+Let $\hat{H}$ be the estimated curve and $H$ the simulated curve on a held-out
+segment of the same trace, evaluated on the capacity grid $\mathcal{C}$.
+\begin{enumerate}[label=(\roman*),nosep]
+    \item \textbf{MRC error:} the maximum absolute deviation
+    $\max_{C \in \mathcal{C}} |\hat{H}(C) - H(C)|$, and the mean absolute
+    deviation over $\mathcal{C}$.
+    \item \textbf{Calibration:} reliability of the hazard predictions, binned by
+    predicted probability, summarized as expected calibration error.
+    \item \textbf{Brier score:} mean squared error of the binary hazard
+    predictions, and the integrated Brier score over bins, which aggregates the
+    score across the survival path rather than at one horizon.
+\end{enumerate}
+
+\subsection{Simulation Ground Truth}
+
+Ground truth is a full simulation of the trace on the capacity grid, using
+exact stack distance where the trace fits in memory and SHARDS
+\cite{waldspurger2015} with a fixed sampling rate where it does not. The
+sampling rate and the resulting confidence band are recorded with each curve,
+so that model error is never reported below simulation error. Ground truth is
+computed once per trace and capacity, never per model configuration.

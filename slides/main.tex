@@ -1,0 +1,42 @@
+%----------------------------------------------------------------------------------------
+%	Cache Hit-Ratio Curves from Reuse Distance -- slides
+%	Compile: latexmk -pdf -interaction=nonstopmode main.tex
+%----------------------------------------------------------------------------------------
+
+\documentclass[aspectratio=169,10pt]{beamer}
+
+% Metropolis is installed in this TeX tree. If it is not available on another
+% machine, replace the next line with \usetheme{default} and add
+% \setbeamertemplate{navigation symbols}{}.
+\usetheme{metropolis}
+\metroset{block=fill, sectionpage=none, numbering=fraction}
+
+% Serif math to match the report body.
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{siunitx}
+
+\title{Cache Hit-Ratio Curves from Reuse Distance}
+\subtitle{A Survival Model on Production Traces}
+\author{Syed Ibrahim Omer}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\input{sections/01-motivation}
+\input{sections/02-reuse-distance}
+\input{sections/03-hazard-model}
+\input{sections/04-ground-truth}
+\input{sections/05-protocol}
+\input{sections/06-results}
+\input{sections/07-limitations}
+\input{sections/08-takeaway}
+
+\end{document}

@@ -1,0 +1,8 @@
+study: hazard
+storage: sqlite:///artifacts/optuna/study.db
+direction: minimize
+n_trials: 60
+timeout_seconds: 5400
+sampler: tpe
+seed: 7
+objective: mae_mrc     # mean absolute MRC error against the simulated ground truth

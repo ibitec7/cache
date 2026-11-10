@@ -1,0 +1,36 @@
+\section{Motivation}
+
+\begin{frame}{Sizing a cache fleet}
+  \begin{itemize}
+    \item The miss-ratio curve $H(C)$ maps capacity $C$ to hit ratio.
+    \item Operators read the knee of the curve and provision to it.
+    \item Over-allocation: memory reserved, no hit-ratio gain.
+    \item Under-allocation: misses fall through to storage, latency penalty.
+  \end{itemize}
+  \vspace{1em}
+  \begin{block}{What is needed}
+    A curve that is accurate in shape, including at capacities that were never
+    measured.
+  \end{block}
+\end{frame}
+
+\begin{frame}{The gap: regressing the aggregate}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{Current practice}
+      \begin{itemize}
+        \item Fit aggregate hit count on capacity.
+        \item Capacity is a covariate.
+        \item New capacity, new fit.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{What is lost}
+      \begin{itemize}
+        \item Per-request reuse structure.
+        \item Curve shape between measured points.
+        \item Two workloads can share one point and differ elsewhere.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}

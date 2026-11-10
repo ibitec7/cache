@@ -1,0 +1,52 @@
+[project]
+name = "mrc-curve"
+version = "0.1.0"
+description = "Cache hit-ratio curves from reuse distance: GBDT discrete-hazard survival model vs Mattson stack-distance MRC on Twitter production traces"
+readme = "README.md"
+authors = [{ name = "ibitec7", email = "syed.ibrahim.omer.2@gmail.com" }]
+requires-python = ">=3.13"
+dependencies = [
+  "lightgbm>=4.6",
+  "numpy>=2.1",
+  "pandas>=2.2",
+  "pyarrow>=18",
+  "scipy>=1.14",
+  "polars>=1.12",
+  "duckdb>=1.1",
+  "zstandard>=0.23",
+  "libcachesim>=0.3.5",
+  "optuna>=4.1",
+  "optuna-dashboard>=0.17",
+  "mlflow>=2.18",
+  "matplotlib>=3.9",
+  "pyyaml>=6.0",
+  "tqdm>=4.66",
+  "click>=8.1",
+  "numba>=0.68.1",
+]
+
+[project.scripts]
+mrc = "mrc.cli:main"
+
+[dependency-groups]
+viz = ["mkdocs-material>=9.5", "pymdown-extensions>=10.11"]
+dev = ["pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8", "mypy>=1.13", "pre-commit>=4.0"]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "mrc"
+module-root = "src"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+ignore_missing_imports = true

@@ -1,0 +1,87 @@
+site_name: MRC Curve Wiki
+site_description: Cache hit-ratio curves from reuse distance on Twitter production traces
+site_author: ibitec7
+docs_dir: docs
+site_dir: site
+copyright: MRC Curve project
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Problem: problem.md
+  - Data: data.md
+  - Reuse distance: reuse-distance.md
+  - Hazard model: hazard-model.md
+  - Ground truth MRC: ground-truth.md
+  - Experiments: experiments.md
+  - Results: results.md
+  - Notation: notation.md
+  - Papers:
+      - papers/index.md
+      - Mattson et al. 1970: papers/mattson-1970.md
+      - Yang et al. 2020 (Twitter): papers/yang-2020-twitter.md
+      - Waldspurger et al. 2015 (SHARDS): papers/waldspurger-2015-shards.md
+      - Wires et al. 2014 (Counter Stacks): papers/wires-2014-counterstacks.md
+      - Beckmann & Sanchez 2015 (Talus): papers/beckmann-2015-talus.md
+      - Hill & Smith 1989: papers/hill-smith-1989.md
+      - Kaplan & Meier 1958: papers/kaplan-meier-1958.md
+      - Cox 1972: papers/cox-1972.md
+      - Ke et al. 2017 (LightGBM): papers/ke-2017-lightgbm.md
+      - Akiba et al. 2019 (Optuna): papers/akiba-2019-optuna.md
+      - Yang et al. 2023 (S3-FIFO): papers/yang-2023-s3fifo.md
+      - libCacheSim: papers/libcachesim.md
+      - Discrete-time survival: papers/discrete-time-survival.md
+      - Right-censoring: papers/right-censoring.md
+  - Glossary: glossary.md
+  - Reproduction: reproduction.md

@@ -1,0 +1,28 @@
+\section{Reuse distance}
+
+\begin{frame}{Reuse distance}
+  For a repeated access $x_i$ with previous access at position $j(i)$:
+  \begin{equation*}
+    r_i \;=\; \bigl|\{\, x_m : j(i) < m < i \,\}\bigr|
+  \end{equation*}
+  \begin{itemize}
+    \item Counts \emph{distinct} blocks referenced since the last access.
+    \item First access: $r_i = \infty$, compulsory miss at every capacity.
+    \item A property of the stream, not of the cache.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The LRU identification condition}
+  \begin{block}{Stack property (Mattson et al., 1970)}
+    Under LRU with capacity $C$ blocks, a repeated access hits if and only if
+    $r_i < C$.
+  \end{block}
+  \begin{equation*}
+    H(C) \;=\; \Pr(r < C) \;=\; 1 - S(C)
+  \end{equation*}
+  \begin{itemize}
+    \item One estimated distribution gives the curve at every capacity.
+    \item Capacity is an evaluation point, never a feature.
+    \item Holds for LRU; not for adaptive policies (see limitations).
+  \end{itemize}
+\end{frame}

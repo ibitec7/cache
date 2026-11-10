@@ -1,0 +1,48 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Findings}
+
+% PLACEHOLDER: replace with the verified outcome once the runs complete.
+% State only what the held-out numbers support, and state simulation error
+% alongside model error.
+This section will report whether the discrete hazard formulation reproduces
+simulated MRCs within simulation error on the held-out segment, and whether the
+two parametrizations differ by more than that band. Three outcomes are
+distinguishable in advance: both parametrizations track the curve within the
+simulation band; the per-bin model tracks it and the shared model does not,
+which would indicate that the hazard's dependence on the bin index is not
+learnable from a single response surface; or neither tracks it, which would
+point at the feature set rather than at the survival formulation. No claim of
+the first outcome is made until \cref{tab:mrc-error} is populated.
+
+\subsection{Limitations}
+
+\textbf{Trace vintage.} The traces date from 2020. Cache workloads change with
+application mix, object sizes, and client libraries, so the fitted hazard is a
+description of that period, not a forecast. Any deployment would refit on
+current traces.
+
+\textbf{Single-vendor workload.} All clusters come from one production fleet.
+Cluster-level heterogeneity is visible within the fleet, but cross-vendor
+generalization is untested, and the cluster features used by the model may
+encode vendor-specific conventions.
+
+\textbf{Hazard binning.} Discretizing reuse distance into $K$ bins bounds the
+resolution of the curve, and the choice of $K$ interacts with capacity: a bin
+wider than the spacing of the capacity grid cannot represent the curve between
+grid points. Binning also makes the estimator sensitive to the bin edges near
+the knee of the curve.
+
+\textbf{Replacement policy.} Identification relies on the LRU hit condition of
+\cref{prop:lru-hit}. Production caches frequently use segmented or sampled LRU,
+and their hit condition is not a pure threshold on reuse distance, so the curve
+estimated here is the LRU curve for the same stream rather than the deployed
+policy's curve.
+
+\subsection{Future Work}
+
+The natural extensions are a policy-aware recency structure to replace the
+threshold condition, a continuous rather than binned hazard to remove the
+resolution limit, and a per-cluster transfer check to test whether a hazard
+fitted on one cluster transfers to another within the same fleet.

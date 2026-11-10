@@ -1,0 +1,148 @@
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[10pt,a4paper]{article}
+
+% Adjusting margins
+\addtolength{\oddsidemargin}{-.5in}
+\addtolength{\evensidemargin}{-.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1in}
+
+% Graphics
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+
+% Math
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+% Theorems and proofs
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{definition}[proposition]{Definition}
+\newtheorem{corollary}[proposition]{Corollary}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+% Other
+\usepackage{algorithmic}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage[english]{babel}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+% ---- Additions over the BXINT4 template preamble (three only) --------------
+% Times-compatible text and math: the body font must match the Times-like
+% serif used inside the generated figures, so figure labels and captions do
+% not visibly change typeface at the figure boundary.
+\usepackage{newtxtext,newtxmath}
+% SI units: capacities are reported in GiB and rates in requests per second,
+% so unit macros avoid hand-written and inconsistent unit strings.
+\usepackage{siunitx}
+% Cross-references: every reference must name its own type (Section, Table,
+% Figure, Equation) to keep the long appendix readable. Loaded after hyperref.
+\usepackage{cleveref}
+% ---------------------------------------------------------------------------
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+%----------------------------------------------------------------------------------------
+%	PAGE BUDGET (binding, checked before submission)
+%----------------------------------------------------------------------------------------
+% Main body, Section 1 through Section 6: 8 to 10 pages.
+% References: 1 page, not counted against the body budget.
+% Appendix: unlimited, ordered derivations, hyperparameters, per-cluster
+%   numbers, reproducibility commands.
+% Enforcement: the body is assembled only from sections/01 through
+%   sections/06. Any material that pushes the body past 10 pages moves to
+%   sections/appendix.tex rather than compressing the argument.
+% The anchor for this budget is \label{sec:pagebudget} in Section 1.
+%----------------------------------------------------------------------------------------
+
+
+%----------------------------------------------------------------------------------------
+%	MAIN PART
+%----------------------------------------------------------------------------------------
+\begin{document}
+
+\title{Cache Hit-Ratio Curves from Reuse Distance: A Survival Model on Production Traces}
+\author{Syed Ibrahim Omer}
+\date{\today}
+\maketitle
+
+
+%----------------------------------------------------------------------------------------
+%	Abstract
+%----------------------------------------------------------------------------------------
+\begin{abstract}
+\noindent
+Miss-ratio curves (MRCs) report the hit ratio of a cache as a function of its
+capacity, and they drive memory provisioning decisions in production cache
+fleets. Current practice fits the aggregate hit count, or the aggregate miss
+ratio, as a function of capacity, which discards the per-request structure that
+determines where a curve bends. We instead treat the reuse distance of each
+request as a positive integer survival time and estimate its discrete hazard
+with gradient-boosted decision trees. The resulting survival function maps
+directly onto the MRC through the LRU stack property, so capacity is a
+post-hoc evaluation point rather than a regressor input.
+
+The report formalizes reuse distance as a censored discrete time-to-event
+variable, states the identification condition that ties it to LRU hit behavior,
+and specifies two gradient-boosted hazard parametrizations: reuse distance as a
+feature, and one model per hazard bin. Censoring is handled explicitly, because
+requests whose reuse distance exceeds the observation window are not misses at
+a known distance but unresolved observations. Evaluation is against MRCs
+obtained from full trace simulation on production clusters, using MRC error,
+hazard calibration, and the integrated Brier score. All quantitative results in
+this skeleton are placeholders; no numbers are reported until the simulation
+and model runs complete.
+\end{abstract}
+
+
+%----------------------------------------------------------------------------------------
+%	Table of Contents
+%----------------------------------------------------------------------------------------
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	Main Part
+%----------------------------------------------------------------------------------------
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-formalization}
+\input{sections/04-methods}
+\input{sections/05-experiments}
+\input{sections/06-conclusion}
+
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	Bibliography
+%----------------------------------------------------------------------------------------
+\bibliographystyle{unsrt}
+\bibliography{bibliography/refs}
+
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	Appendix
+%----------------------------------------------------------------------------------------
+\input{sections/appendix}
+
+\end{document}

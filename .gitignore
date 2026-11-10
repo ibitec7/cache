@@ -1,0 +1,44 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+# data (never commit traces)
+data/raw/
+data/interim/
+data/processed/
+*.zst
+*.parquet
+
+# artifacts
+artifacts/mlflow/
+artifacts/optuna/
+mlruns/
+mlflow.db
+
+# latex
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+report/main.pdf
+slides/main.pdf
+
+# wiki build
+wiki/site/
+
+# editor
+.DS_Store
+.idea/
+.vscode/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
