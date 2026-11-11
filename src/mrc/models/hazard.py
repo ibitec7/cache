@@ -37,11 +37,52 @@ def bin_edges(max_distance: int, nbins: int = 32) -> np.ndarray:
 
 
 def assign_bins(distance: np.ndarray, edges: np.ndarray) -> np.ndarray:
-    """Bin index per request; compulsory accesses get -1."""
+    """Bin index per request; compulsory accesses get -1.
+
+    A distance at or above the last edge lands in the last real bin, index
+    ``len(edges) - 2``, never in ``len(edges) - 1``. That bin is the overflow
+    bin: it collects every capped distance, so survival below it is the
+    identification limit.
+    """
     d = np.asarray(distance)
     b = np.searchsorted(edges, d, side="right") - 1
+    b = np.clip(b, -1, len(edges) - 2)
     b[d < 0] = CB
     return b
+
+
+def block_masks(n: int, train: float | None = None,
+                valid: float | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Contiguous request-index masks for train / valid / test.
+
+    The split is on request index, not on expanded rows: neighbouring requests in
+    a trace share keys, so any interleaved split puts the same key on both sides.
+    """
+    from mrc.config import SPLIT_TRAIN, SPLIT_VALID
+
+    train = SPLIT_TRAIN if train is None else train
+    valid = SPLIT_VALID if valid is None else valid
+    i_tr = int(n * train)
+    i_va = int(n * valid)
+    idx = np.arange(n)
+    return idx < i_tr, (idx >= i_tr) & (idx < i_va), idx >= i_va
+
+
+def _split_rows(rows: dict, n_requests: int, train: float | None = None,
+                valid: float | None = None):
+    """Row masks for train / valid / test, split on ORIGINAL request index.
+
+    ``rows["request_index"]`` indexes the kept eligible rows and
+    ``rows["eligible_index"]`` maps them back to trace positions, so the frozen
+    70/15/15 request-index rule is applied once, in ``block_masks``.
+    """
+    orig = rows["eligible_index"][rows["request_index"]]
+    if orig.size and int(orig.max()) >= int(n_requests):
+        raise ValueError(
+            f"request index {int(orig.max())} outside n_requests={int(n_requests)}"
+        )
+    tr, va, te = block_masks(int(n_requests), train, valid)
+    return tr[orig], va[orig], te[orig]
 
 
 def expand_risk_set(X: np.ndarray, bins: np.ndarray, event: np.ndarray, nbins: int):
@@ -72,10 +113,12 @@ class HazardModel:
     booster: lgb.Booster | None = None
     edges: np.ndarray | None = None
     feature_names: list[str] | None = None
+    validation_logloss: float | None = None
+    split_n: int | None = None
 
     def fit(self, X, bins, event, edges, feature_names, num_boost_round=400, valid_frac=0.2):
         self.edges, self.feature_names = edges, feature_names
-        Xr, step, y, req = expand_risk_set(X, bins, event, self.nbins)
+        Xr, step, y, _req = expand_risk_set(X, bins, event, self.nbins)
         Xr = np.column_stack([Xr, step]).astype(np.float32)
         n = Xr.shape[0]
         cut = int(n * (1 - valid_frac))
@@ -83,6 +126,38 @@ class HazardModel:
         dvalid = lgb.Dataset(Xr[cut:], label=y[cut:], reference=dtrain)
         self.booster = lgb.train(self.params, dtrain, num_boost_round=num_boost_round,
                                  valid_sets=[dvalid], callbacks=[lgb.early_stopping(50, verbose=False)])
+        return self
+
+    def fit_grouped(self, rows: dict, edges: np.ndarray, feature_names: list[str],
+                    num_boost_round: int = 400, n_requests: int | None = None,
+                    train: float | None = None, valid: float | None = None) -> HazardModel:
+        """Fit on grouped risk-set rows with contiguous time-block splits.
+
+        ``rows`` is the output of ``risk_set.grouped_rows``. The split is applied
+        to the original request index, never to the row order, so neighbouring
+        requests cannot put the same key on both sides.
+        """
+        self.edges = edges
+        self.feature_names = list(feature_names)
+        n_req = (int(rows["eligible_index"].max()) + 1
+                 if n_requests is None else int(n_requests))
+        self.split_n = n_req
+        tr, va, _te = _split_rows(rows, n_req, train, valid)
+
+        X = np.column_stack([rows["X"], rows["bin"]]).astype(np.float32)
+        y = np.asarray(rows["y"], dtype=np.float32)
+        w = np.asarray(rows["w"], dtype=np.float32)
+        names = self.feature_names + ["hazard_step"]
+
+        dtrain = lgb.Dataset(X[tr], label=y[tr], weight=w[tr], feature_name=names)
+        dvalid = lgb.Dataset(X[va], label=y[va], weight=w[va], reference=dtrain)
+        self.booster = lgb.train(
+            self.params, dtrain, num_boost_round=num_boost_round,
+            valid_sets=[dvalid],
+            callbacks=[lgb.early_stopping(50, verbose=False)],
+        )
+        score = self.booster.best_score.get("valid_0", {})
+        self.validation_logloss = float(score.get("binary_logloss", np.nan))
         return self
 
     def predict_survival(self, X, steps):
@@ -103,7 +178,15 @@ class HazardModel:
         turn into hits; the model is fitted only on requests that have a previous
         access, so that mass has to be added back explicitly.
         """
-        kmax = int(min(len(edges) - 2, assign_bins(np.array([int(max(capacities))]), edges)[0])) + 1
+        caps = np.asarray(capacities, dtype=np.int64)
+        limit = int(edges[-2])
+        if caps.size and int(caps.max()) >= limit:
+            raise ValueError(
+                f"capacity {int(caps.max())} is at or above the identification limit "
+                f"{limit}: the overflow bin makes every capacity from {limit} upward "
+                "unidentified. Truncate the grid below the limit."
+            )
+        kmax = int(min(len(edges) - 2, assign_bins(np.array([int(caps.max())]), edges)[0])) + 1
         steps = np.arange(kmax + 1)
         S = self.predict_survival(X, steps)
         bins_c = assign_bins(np.asarray(capacities, dtype=np.int64) - 1, edges)

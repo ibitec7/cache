@@ -4,6 +4,7 @@ from __future__ import annotations
 import mlflow
 import optuna
 
+
 def suggest_params(trial: optuna.Trial) -> dict:
     return {
         "objective": "binary",
