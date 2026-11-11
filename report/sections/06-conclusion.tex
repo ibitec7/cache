@@ -1,27 +1,34 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-A miss-ratio curve is the survival function of the backward reuse distance, and a
-discrete hazard with 12 request-level covariates estimates it on a held-out block to
-a mean absolute error of 0.0003 to 0.0077 across three production traces, against
-0.0118 to 0.0439 for the marginal curve and 0.0793 to 0.1097 for a hit-count
-regression. The same curves place provisioning capacity within 7.5\% of the truth,
-where the marginal curve misses by up to a factor of four. Capacity is an evaluation
-point of the survival function, not a regressor.
+A miss-ratio curve is the survival function of the backward reuse distance. Modelled
+that way, it is one distribution per workload, estimated once from request features,
+and read at any capacity. The measured consequence is a curve whose mean absolute
+error is one to two orders of magnitude below a hit-count regression and two to
+seventy times below a marginal estimator, with a provisioning decision inside 7.5\%
+of the true capacity.
 
-Four results support the claim: the smallest mean absolute error of the three on all
-three traces, including the cold-heavy one; a capacity ratio in $[0.925, 1.004]$ at
-every target and trace, so a curve error does not become a wrong sizing decision;
-recency first in the SHAP summary; and a 30-fold and 4.6-fold error increase when the
-timing family is removed on two traces.
+The claim is narrow on purpose. It is about within-trace prediction on three
+production traces, not about transfer, and it is stated with the two corrections that
+made it measurable: the model targets the backward distance, and the capacity grid
+is aligned to the hazard bins. Both corrections are evidence that the estimator is
+easy to get subtly wrong, which is why the gates in \cref{sec:gates} exist.
 
-It would be falsified by a fourth trace on which the hazard's error is at or above
-the marginal curve's; by a provisioning ratio outside $[0.9, 1.1]$ at any target; by
-a trace on which the timing family is not load-bearing while the error stays low; or
-by a failure of gate 2 of \cref{sec:methods}, which would void every comparison.
+\paragraph{What would falsify it.}
+A fourth trace on which the hazard's error is at or above the marginal curve's; a
+provisioning ratio outside $[0.9,1.1]$ at any target; a trace where the timing family
+is not load-bearing while error stays low; or a failure of the exactness gates, which
+would void every comparison in \cref{sec:experiments}.
 
-Two questions remain open. \emph{Does the hazard transfer across traces?} The
-default is no: every number here is a within-trace fit. \emph{Is the grouped
-likelihood adequate?} Gate 3 shows the expansions agree on support, not on the
-estimate; the default is grouped, because per-step rows cannot be fitted at this
-scale.
+\paragraph{What remains open.}
+\emph{Transfer.} Every number here is a within-trace fit. The default assumption is
+that the conditional hazard does not transfer across clusters without refitting, and
+the report does not claim otherwise. \emph{Grouped versus per-step likelihood.} The
+two expansions agree on support, not on the estimate; the grouped form is used
+because per-step rows cannot be fitted at this scale, and the difference is an
+appendix derivation rather than a measured curve.
+
+\paragraph{The practical sentence.}
+If the question is ``what does another gigabyte buy'', the answer is the survival
+function evaluated one capacity higher, and the features that move it are recency and
+timing, not object size or client identity.

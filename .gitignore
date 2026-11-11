@@ -47,3 +47,7 @@ wiki/site/
 artifacts/models/
 artifacts/figures/fig_*.pdf
 artifacts/truth/
+report/main*.pdf
+report/mainv2.bbl
+report/mainv2.blg
+report/mainv2.run.xml

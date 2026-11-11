@@ -1,192 +1,124 @@
-\section{Methods}
+\section{Method}
 \label{sec:methods}
 
-\captionsetup{hypcap=false}
+The estimator is a gradient-boosted discrete hazard on request features, fitted on
+grouped risk sets, split by time. This section describes the four choices that
+matter (features, risk set, split, guard), the alternatives it is compared against,
+and the gates that keep the implementation honest.
 
-One estimator produces every curve in this report: a gradient-boosted discrete
-hazard over the backward reuse distance, fitted on a grouped risk set with a
-12-column design matrix. Three baselines are scored on the same grid, and a set
-of exactness gates fixes the target and the ground truth before any fit.
+\subsection{Features}
+\label{sec:features}
 
-\subsection{The Design Matrix}
+The twelve features are computed from the request and its history, never from the
+target and never from another request. \Cref{tab:features} groups them by the
+question each family asks. Categorical values are integer codes fed to LightGBM as
+categoricals; the token bucket exists because the production keys are opaque
+ten-character tokens with no namespace, so the first colon-delimited component
+would be a distinct value per key.
 
-The 12 columns are computed from the request and from state the cache already
-holds at request time. Nothing reads a later request, so the matrix is causal by
-construction.
-
-\begin{center}
-\begin{minipage}{\linewidth}
+\begin{table}[t]
+\centering
 \footnotesize
-\captionof{table}{The 12 design-matrix columns, in fixed order. A reordering or rename is
-a feature-version bump, because the fitted booster addresses columns by position.}
+\caption{The twelve features, by family. Every column is float32 and finite; the
+order is frozen in \texttt{FEATURE\_NAMES} and changing it is a version bump.}
 \label{tab:features}
 \begin{tabular}{@{}l l l@{}}
 \toprule
-Column & Transform & Family \\
+Feature & Family & What it measures, and why it could move the curve \\
 \midrule
-\texttt{log\_obj\_size} & $\log(1+\text{bytes})$ & sizes \\
-\texttt{log\_key\_size} & $\log(1+\text{bytes})$ & sizes \\
-\texttt{log\_val\_size} & $\log(1+\max(s-\ell,0))$ & sizes \\
-\texttt{ns\_code} & categorical & namespace \\
-\texttt{op} & categorical & request type \\
-\texttt{is\_write} & $\mathbf{1}\{\text{op} \notin \{\text{get}, \text{gets}\}\}$ & request type \\
-\texttt{log\_ttl} & $\log(1+\max(\tau,0))$ & timing \\
-\texttt{has\_ttl} & $\mathbf{1}\{\tau > 0\}$ & timing \\
-\texttt{client\_bucket} & $\log(1+(c \bmod 512))$ & client \\
-\texttt{log\_gap} & $\log(1+g)$ & timing \\
-\texttt{log\_freq} & $\log(1+n_k)$ & popularity \\
-\texttt{log\_age} & $\log(1+i)$ & timing \\
+\texttt{log\_obj\_size} & size & $\log(1+$key bytes $+$ value bytes$)$; a large object evicts more \\
+\texttt{log\_key\_size} & size & $\log(1+$key bytes$)$; key length is a proxy for key class \\
+\texttt{log\_val\_size} & size & $\log(1+$value bytes$)$; separates small metadata from payloads \\
+\texttt{ns\_code} & identity & 64-bucket code of the key; coarse key class, not a namespace \\
+\texttt{op} & operation & read, write, delete, incr, decr \\
+\texttt{is\_write} & operation & 1 when the operation is not a read \\
+\texttt{log\_ttl} & timing & $\log(1+$TTL$)$; expiring keys can change reuse \\
+\texttt{has\_ttl} & timing & TTL present \\
+\texttt{client\_bucket} & origin & client id modulo 512, log-scaled \\
+\texttt{log\_gap} & timing & $\log(1+$requests since the previous access$)$; recency \\
+\texttt{log\_freq} & popularity & $\log(1+$occurrence index of the key$)$; frequency \\
+\texttt{log\_age} & timing & $\log(1+$request index$)$; a drift proxy \\
 \bottomrule
 \end{tabular}
-\end{minipage}
-\end{center}
+\end{table}
 
-Object size, key length and payload size give byte pressure; the namespace code is
-the key family; the request-type columns separate reads from writes; TTL, gap and
-window position describe when the key was last seen; the client bucket proxies
-access loop shape; and the occurrence count is a popularity sketch. Here $s$ is
-object size in bytes, $\ell$ key length, $\tau$ TTL in seconds, $c$ the client
-identifier, $g$ the requests since the previous access, $n_k$ the occurrence count
-so far and $i$ the request index.
+\subsection{Risk sets and the fitted object}
+\label{sec:riskset}
 
-\subsection{The Grouped Risk Set}
+For an eligible request with capped distance $\tilde R$ in bin $b$, the grouped risk
+set contributes rows for bins $0,\dots,b$. The label is 1 only in bin $b$ when the
+distance is observed inside the ceiling, and 0 elsewhere; a censored request
+contributes rows up to the ceiling and no positive label. Every row is one Bernoulli
+trial of the within-bin hazard, so the fitting weight is one.
 
-For a request with truncated distance $\tilde R_i$ and bin $b_i =
-\mathrm{bin}(\tilde R_i)$, the fit sees one row per bin at risk, each with weight
-one, and a binary log-loss over those rows:
-\begin{align}
-    &\bigl(x_i, b, y_{i,b}\bigr), \quad b = 0,\dots,b_i, \qquad
-    y_{i,b} = \delta_i\,\mathbf{1}\{b = b_i\}, \label{eq:rows}\\
-    &\ell(\theta) = \sum_{i}\sum_{b=0}^{b_i}
-    \bigl[y_{i,b}\log h_b(x_i) + (1-y_{i,b})\log\bigl(1-h_b(x_i)\bigr)\bigr].
-    \label{eq:loss}
-\end{align}
+The master plan that preceded this implementation weighted each row by its bin
+width, the grouped-likelihood approximation to the per-step product. That is correct
+only under a complementary log-log link with an offset of $\log(\text{width})$.
+Under the binary log-loss used here it over-weights wide bins by up to five orders
+of magnitude; measured on the 1M-request development sample it raised test MAE from
+0.0050 to 0.0113. The implementation keeps the width as a recorded column and fits
+unweighted.
 
-\begin{center}
-\begin{minipage}{\linewidth}
-\footnotesize
-\captionof{table}{Symbols of \cref{eq:rows} and \cref{eq:loss}.}
-\label{tab:sym-rows}
-\begin{tabular}{@{}l l l@{}}
-\toprule
-Symbol & Domain & Meaning and units \\
-\midrule
-$b$ & $\{0,\dots,M-1\}$ & bin index (dimensionless) \\
-$b_i$ & $\{0,\dots,M-1\}$ & bin of the truncated distance of request $i$ (dimensionless) \\
-$y_{i,b}$ & $\{0,1\}$ & label of the row for request $i$ in bin $b$ (dimensionless) \\
-$\delta_i$ & $\{0,1\}$ & event indicator of \cref{eq:truncation} (dimensionless) \\
-$h_b(x_i)$ & $[0,1]$ & predicted hazard of bin $b$ (dimensionless) \\
-$\theta$ & $\mathbb{R}^p$ & booster parameters (dimensionless) \\
-\bottomrule
-\end{tabular}
-\end{minipage}
-\end{center}
+The classification target is the observed backward distance, not the next access.
+The latter is a different distribution, and in a finite window it is biased: the
+forward-event target produced test MAE 0.170 with a systematic optimistic bias of
++0.170 on cluster45, while the backward target produced 0.005. This is the single
+largest methodological correction in the build and is reported again in
+\cref{sec:limitations}.
 
-Unit weight is the point: one row is one Bernoulli trial of the within-bin hazard,
-which is the discrete-hazard likelihood written per bin. Weighting a row by its bin
-width is correct only under a complementary log-log link with an offset of
-$\log w_b$; under the binary log-loss used here it scales one row's loss by $w_b$
-and is not the likelihood of any model. The earlier plan specified width weights,
-they inflated test error on a subsample, and they are not used. The expansion costs
-$O(M)$ rows per request instead of $O(\min(R_i, c))$.
+\subsection{Split, fit and cost}
+\label{sec:fit}
 
-\subsection{Time-Block Split and the LightGBM Hazard}
+Requests are split by position into contiguous fit, validation and test blocks at
+70, 85 and 100\%. Splitting on request index, not on rows, is what prevents a key
+from appearing on both sides: neighbouring requests share keys. Hyperparameters are
+chosen on validation, and the test block is scored once.
 
-Requests are split by position into contiguous blocks at 70, 85 and 100\%, never at
-random, because neighbouring requests share keys and an interleaved split lets a
-tree memorise a key it will be scored on. Within the fit block the last 15\% of rows
-is the early-stopping set.
+The model is LightGBM with 300 boosting rounds, early stopping after 50 rounds on
+the validation block, learning rate 0.05, 63 leaves, 12 threads, and
+\texttt{deterministic} with \texttt{force\_row\_wise}. LightGBM's parameters are
+searched by Optuna (Tpe sampler, seed 7) over leaves 15 to 127, learning rate 0.01
+to 0.15, minimum leaf size 50 to 2000, feature and bagging fractions 0.6 to 1.0, and
+$L_2$ from $10^{-3}$ to 10; the study is stored in \texttt{artifacts/optuna}.
 
-Training rows are a uniform subsample of eligible fit-block requests, sized to a
-fixed grouped-row budget of 20 million rows. A subsample is unbiased for a
-likelihood that is a sum over requests, at the cost of variance; prediction and
-scoring use every request of the validation and test blocks.
+Cost is bounded in two places. Grouped rows are at most $M+1$ per eligible request,
+not one per unit of distance, so a larger ceiling does not grow the row count. Above
+20 million rows the fit uses a fixed random subsample of the training block; the
+likelihood is a sum over requests, so the subsample is unbiased with more variance.
+Prediction and scoring always use every request in the scored block.
 
-One booster is fitted with the bin index appended as a thirteenth column, so a
-single ensemble shares strength across adjacent bins; a per-bin parametrization is
-not used, because it needs $M$ fits and gives up the sharing across adjacent bins.
-The reported runs use one fixed parameter set (\cref{tab:fixed-params}): 63 leaves,
-learning rate 0.05, 300 boosting rounds at most, early stopping after 50 rounds,
-deterministic row-wise construction and a fixed seed.
+\subsection{Alternatives and ablations}
+\label{sec:alternatives}
 
-\subsection{Hyperparameter Search}
+Three alternatives are compared under the same protocol. \emph{Kaplan-Meier} uses
+the same bins and the same risk set but no features, so it isolates the value of
+conditioning. \emph{Hit-count regression} predicts the key's occurrence count from
+the features and maps it to a distance through a training-decile calibration, which
+is the practice this report argues against. \emph{Single-row} fits a classifier on
+one row per request with the event label and no risk-set expansion; it is an
+ablation of the risk set, and because it uses the scored request's own distance to
+place the step it is an oracle, reported only to bound what the expansion buys.
 
-The search is Optuna with the tree-structured Parzen estimator, seeded and
-persisted to a SQLite study. The objective is validation-block MAE of the curve,
-not the training likelihood, because likelihood rewards an over-confident hazard.
-The capacity grid, bin edges and grouped rows are built once and reused by every
-trial, so a trial refits the booster only.
+Six variants zero one feature family at a time and refit, with the full model as the
+reference row: timing, size, popularity, client and token bucket. Zeroing rather than deleting keeps
+the matrix shape and lets a tree split on a constant, which is a declared weakness
+of that view; the ablation is read beside SHAP, not instead of it.
 
-\begin{center}
-\begin{minipage}{\linewidth}
-\footnotesize
-\captionof{table}{Optuna search space, as implemented in
-\texttt{mrc.tuning.search.suggest\_params}.}
-\label{tab:searchspace}
-\begin{tabular}{@{}l l l@{}}
-\toprule
-Hyperparameter & Range & Scale \\
-\midrule
-\texttt{num\_leaves} & $[15, 127]$ & integer, log \\
-\texttt{learning\_rate} & $[0.01, 0.15]$ & log \\
-\texttt{min\_data\_in\_leaf} & $[50, 2000]$ & integer, log \\
-\texttt{feature\_fraction} & $[0.6, 1.0]$ & linear \\
-\texttt{bagging\_fraction} & $[0.6, 1.0]$ & linear \\
-\texttt{lambda\_l2} & $[10^{-3}, 10]$ & log \\
-\texttt{bagging\_freq} & $1$ & constant \\
-boosting rounds per trial & $300$ & constant \\
-\bottomrule
-\end{tabular}
-\end{minipage}
-\end{center}
+\subsection{Gates}
+\label{sec:gates}
 
-The reported numbers come from the fixed set of \cref{tab:fixed-params}, not from a
-tuned trial, so no result depends on the search; the tuned path is one flag away.
+Three gates make the numbers checkable. The reuse kernel is compared bit-for-bit
+with a naive $O(n\cdot\text{window})$ reference on random traces. The truth curve is
+compared with an explicit LRU replay, also bit-for-bit. The grouped and per-step
+expansions are checked to cover the same support and to agree on every observed
+event. A style test freezes the figure contract. The suite is 82 tests and
+\texttt{make check} runs lint, types and tests together.
 
-\subsection{Baselines}
+\subsection{Telemetry}
+\label{sec:telemetry}
 
-Three baselines are scored on the same capacities, blocks and compulsory mass.
-
-\begin{enumerate}[nosep,leftmargin=*]
-    \item \textbf{Kaplan-Meier.} The empirical hazard of each bin, $h_b = d_b/n_b$,
-    with no covariates, and the survival product of \cref{eq:mrc}. Censoring enters
-    only through the risk set, so the gap to the hazard model is the value of the
-    covariates.
-    \item \textbf{Hit-count regression.} Regress $\log(1+\text{freq})$ on the 12
-    columns, map the prediction through the training deciles of predicted frequency
-    to the median training distance of each decile, and read the curve as the
-    fraction of mapped distances at or above $C$. Frequency is not a distance.
-    \item \textbf{Single-row.} One row per request, labelled at its own bin, with
-    survival read as one minus the predicted event probability where the request's
-    own bin is at or below $k(C)$ and one elsewhere. It drops the product over the
-    bins the request survived, and it needs the scored block's own distances.
-\end{enumerate}
-
-Under the backward target most requests are events, so the single-row probability
-saturates and its curve collapses to the empirical survival of the block it is
-scored on. It isolates the risk-set expansion and stays out of the accuracy table,
-because a curve that reads the scored block's distances is not a prediction.
-
-\subsection{Exactness Gates}
-
-Five gates, all at tolerance zero and all upstream of any fit, establish that the
-target and the ground truth are the same object:
-
-\begin{enumerate}[label=\arabic*.,nosep,leftmargin=*]
-    \item the reuse kernel returns the same distances as the naive
-    ordered-dictionary reference (\texttt{tests/test\_smoke.py});
-    \item the object-count MRC computed from $R$ equals single-request LRU replay
-    exactly (\texttt{tests/gt/test\_stackdist.py});
-    \item the grouped risk set and the per-step support give the same survival
-    (\texttt{tests/models/test\_risk\_set.py});
-    \item the block masks are contiguous, ordered and cover every request once
-    (\texttt{tests/models/test\_blocks.py});
-    \item a capacity at or above $b_{M-1}$ is refused, and two fits with the same
-    seed and rows are identical (\texttt{tests/models/test\_hazard\_model.py}).
-\end{enumerate}
-
-Gate 2 is load-bearing: the truth is the empirical survival of the backward
-distance, and the stack property makes it equal to the curve of an actual LRU cache,
-so the comparison is between a model and an identity. Gate 3 licenses the grouped
-fit, without which the unit weight of \cref{eq:loss} would be an approximation of
-unknown sign.
+Every run writes one MLflow entry with parameters, split sizes, row counts,
+per-model metrics and the curve artefact, and one metrics JSON under
+\texttt{artifacts/tables/}. Capacity grids, bin edges and the identification limit
+are recorded beside the numbers, so a curve cannot be read without the range on
+which it is identified.

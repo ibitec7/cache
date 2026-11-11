@@ -1,70 +1,91 @@
 \section{Introduction}
 \label{sec:introduction}
+\label{sec:pagebudget}
 
-A miss-ratio curve (MRC) gives the miss ratio $m(C)$ of a cache of capacity $C$
-on a fixed request stream, and operators use it to size memory: the capacity at
-which the curve flattens is the point past which additional memory buys little
-hit ratio. Fleet analyses show that decisions of this kind are made continuously
-across hundreds of clusters \cite{yang2020}.
+A cache operator with a fixed memory budget asks a question that sounds simple:
+if this workload gets $C$ bytes, how often will it miss? The function that answers
+it is the miss-ratio curve, $\mathrm{MRC}(C)$, and it drives the memory decision:
+the curve at the current size says what the fleet is losing, and the curve one
+size up says what the next purchase would buy.
 
-\subsection{The Gap: Aggregate Regression}
+The exact answer is old and cheap in principle. Replay the trace; for each request,
+count the distinct keys touched since the same key was last requested. That count
+is the \emph{reuse distance}. Under LRU a request hits exactly when its reuse
+distance is below the capacity, so one pass over the trace gives the curve at every
+capacity. The cost is the pass: a production fleet has many traces, and teams
+change capacity without changing traces, so the curve is recomputed or, more often,
+guessed.
 
-The dominant practical approach regresses an aggregate hit count or miss ratio on
-capacity and interpolates from the measured points. Capacity therefore enters as a
-covariate, so every new capacity needs new measurements, and aggregating over
-requests removes the quantity that governs the curve: how far back a request must
-reach to find its previous access. Two workloads with identical hit counts at one
-capacity can differ at every other capacity, and aggregate regression cannot tell
-them apart.
+The common shortcuts are to simulate a handful of capacities and interpolate, or to
+regress the aggregate miss ratio on capacity. Both lose the structure that makes a
+curve bend. A regression on capacity cannot say anything about a capacity it was not
+fitted at, and a sampled simulation answers only the points it was run at. What is
+missing is a model of the \emph{distribution of reuse distance} itself, conditioned
+on what is known about a request, so that any capacity is a threshold query rather
+than a new experiment.
 
-\subsection{Motivation: Over- and Under-Allocation}
+\subsection{The idea}
+\label{sec:idea}
 
-Both directions of sizing error are expensive. Over-allocation reserves memory that
-produces no hit-ratio gain, which in a multi-tenant fleet is memory taken from
-another workload; under-allocation produces misses that fall through to the storage
-tier, where the latency penalty is orders of magnitude larger than a cache lookup.
-A curve that is accurate in shape, not only at measured capacities, supports sizing
-where nothing was measured.
+Treat reuse distance as a survival time. For every request with a previous access,
+the backward distance is observed, and the miss-ratio curve is its survival
+function, $\mathrm{MRC}(C)=\Pr(R\ge C)$. A discrete-time hazard over log-spaced
+distance bins estimates that survival function with gradient-boosted trees on
+request-level features: object size, operation, TTL, client, recency, frequency.
+Capacity never enters the model. It enters afterwards, as the point at which the
+survival function is read.
+
+This is not a new estimator of a distribution. It is a change of object: the curve
+is a distribution, not a regression, and capacity is an evaluation point, not an
+input. Three consequences follow, and they organise the report. The curve is
+monotone by construction. Every capacity is available after one fit. And the model
+can be inspected, because the question ``which features move the curve'' becomes a
+question about a classifier.
 
 \subsection{Contributions}
+\label{sec:contributions}
 
-\begin{enumerate}[nosep]
-    \item A formulation of the miss-ratio curve as the survival function of the
-    \emph{backward} reuse distance, with the LRU stack property supplying an exact
-    map from that survival function to the curve. Because the backward distance is
-    computed from the past only, it is observed for every repeated request, and the
-    only censoring is the observation ceiling, which fixes the reported capacity
-    range (Section~\ref{sec:formalization}).
-    \item A grouped discrete-hazard estimator: one row per request and bin at risk,
-    12 causal features, one gradient-boosted classifier with the bin index as a
-    column, contiguous time-block splits, a documented Optuna search space, and
-    exactness gates that fix the target before any fit (Section~\ref{sec:methods}).
-    \item An evaluation against the exact Mattson curve on held-out blocks of three
-    production traces, with five curve metrics, three baselines, capacity
-    provisioning, and a SHAP and family ablation that say which part of the model
-    carries the curve (Section~\ref{sec:experiments}).
+\begin{enumerate}[leftmargin=1.2em,itemsep=2pt]
+  \item \textbf{Formulation.} The MRC is written as the survival function of the
+  backward reuse distance, estimated by a discrete hazard on grouped risk sets.
+  Only the observation ceiling censors a distance, which removes the boundary bias
+  of modelling the next access instead of the previous one
+  (\cref{sec:formalization,sec:methods}).
+  \item \textbf{Measured accuracy.} On three production traces, one protocol and
+  one capacity grid, the hazard model reaches test-block MAE 0.0003 to 0.0077,
+  against 0.0118 to 0.0439 for a Kaplan-Meier curve and 0.079 to 0.110 for a
+  hit-count regression (\cref{tab:accuracy}).
+  \item \textbf{A decision, not just an error.} To reach a target hit ratio, the
+  model chooses capacity within 7.5\% of the true requirement. The marginal curve
+  under-provisions by up to a factor of four on the trace where capacity matters
+  most (\cref{tab:provisioning}).
+  \item \textbf{Attribution.} Recency, the time since the previous access to the
+  same key, is the dominant feature on all three traces. Removing the timing family
+  raises error 51-fold on one trace and 5.4-fold on another; on the dense trace it
+  changes nothing, and there the feature set is over-specified
+  (\cref{fig:importance,tab:methods}).
 \end{enumerate}
 
-\subsection{Results in Brief}
+\subsection{What the report does not claim}
+\label{sec:nonclaims}
 
-On the first 5{,}000{,}000 requests of three traces that differ by a factor of six
-in key cardinality, the hazard model's mean absolute curve error on the held-out
-block is 0.00027, 0.00548 and 0.00772, against 0.02000, 0.01178 and 0.04387 for a
-marginal Kaplan-Meier curve and 0.10968, 0.07927 and 0.07930 for a hit-count
-regression. The capacity provisioning ratios, model over truth, stay within
-$[0.925, 1.004]$ at three targets, while the marginal curve under-provisions by up
-to a factor of four on one trace. A SHAP summary puts the gap since the previous
-access first, and removing the timing family from the ablation multiplies
-validation error by 30 on one trace and by 4.6 on another.
+The evidence is three traces, each a five-million-request window, and a model
+fitted within a trace and scored on a later block of the same trace. Nothing here
+shows transfer to an unseen workload. The hit ratio is bounded by
+$1-p_c$, where $p_c$ is the fraction of requests with no previous access, so a
+target above that ceiling is unreachable by any cache; the report states targets as
+a fraction of the ceiling for that reason. Two measurement errors found during the
+build, a biased forward-event target and a capacity grid misaligned with the hazard
+bins, are reported with their evidence in \cref{sec:limitations} because they
+changed the method and because they are the reason the remaining numbers are
+credible.
 
-\subsection*{Scope and Page Budget}
-\phantomsection\label{sec:pagebudget}
+\subsection{How to read the rest}
 
-% PAGE BUDGET: body 8-10 pages (Sections 1-6). References and appendix are
-% outside the budget. Derivations, full hyperparameter tables, per-cluster
-% numbers and reproduction commands live in the appendix by design, so that
-% the body states the argument and the appendix carries the evidence.
-The body is budgeted at eight to ten pages, anchored at
-Section~\ref{sec:pagebudget}; material that does not fit moves to the appendix
-rather than being compressed. The report covers LRU-referenced MRCs only, and
-non-LRU replacement is a limitation in Section~\ref{sec:experiments}.
+\Cref{sec:related-work} places the method against stack-distance simulation,
+sampling and learned estimators. \Cref{sec:formalization} states the quantity and
+the identification condition. \Cref{sec:methods} describes the estimator that was
+built, including the alternatives it is compared against.
+\Cref{sec:experiments} reports the three traces, the accuracy, the method ablation,
+the provisioning result and the attribution. \Cref{sec:conclusion} states what
+would falsify the claim.

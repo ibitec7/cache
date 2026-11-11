@@ -1,169 +1,207 @@
 \section{Experiments}
 \label{sec:experiments}
 
-\captionsetup{hypcap=false}
-\sisetup{group-separator={,},group-minimum-digits=4}
+Three questions organise the results. Does the curve match the exact one, and by how
+much? Does the model beat the estimators a team would otherwise use? And does the
+error change a decision? Each subsection answers one, and every number is read from
+the generated tables beside it.
 
-Every model is scored against the exact Mattson curve on a held-out time block of
-three production traces. All numbers come from the generated tables of
-\cref{sec:accuracy} and from the metric artefacts they are rendered from.
+\subsection{The traces}
+\label{sec:traces}
 
-\subsection{The Three Production Traces}
-
-Each trace is the first 5{,}000{,}000 requests of a sorted shard from the 2020
-production cache analysis of Yang et al.~\cite{yang2020}.
+Each trace is the first five million requests of a sorted shard from the 2020
+production cache analysis of Yang et al.~\cite{yang2020}. The three were chosen
+because they fail in different ways: cluster45 is large-cardinality with a long
+reuse tail, cluster26 has a small working set and sees almost every key again, and
+cluster10 is scan-like with half its requests compulsory. \Cref{tab:traces} gives
+the design numbers, including the realised bin and grid counts rather than the
+requested constants.
 
 \begin{table}[t]
 \centering
 \footnotesize
 \sisetup{group-separator={,},group-minimum-digits=4}
-\caption{Workload and evaluation design of the three traces. Every trace is the
-first 5{,}000{,}000 requests of one sorted shard. Eligible is the fraction of
-requests with a previous access inside the window; $p_c$ is its complement and
-enters \cref{eq:mrc} as the compulsory mass; $R$ is the backward reuse distance
-in objects. Bins and grid points are realised counts, not the requested
-constants; $b_{M-1}$ is the lower edge of the overflow bin, and every capacity in
-the grid is below it.}
+\caption{The three traces, first 5{,}000{,}000 requests each. Eligible is the
+fraction with a previous access inside the window; $p_c$ is its complement and is
+the compulsory mass. $R$ is the backward reuse distance in objects. Bins and grid
+points are realised counts; $b_{M-1}$ is the lower edge of the overflow bin, and
+every reported capacity is below it.}
 \label{tab:traces}
-\begin{tabular}{@{}l r r r r r r r r r r@{}}
+\begin{tabular}{@{}l r r r r r r r r@{}}
 \toprule
-Trace & {Keys} & {Mean object (B)} & {Eligible} & {$p_c$} & {$R$ p50} & {$R$ p99} & {$R$ p99.9} & {Bins} & {Grid} & {$b_{M-1}$} \\
+Trace & {Keys} & {Mean object (B)} & {Eligible} & {$p_c$} & {$R$ p50} & {$R$ p99} & {Bins / grid} \\
 \midrule
-cluster45 & \num{2158200} & \num{91} & 0.568 & 0.432 & \num{4} & \num{1008186} & \num{1725692} & 33 & 24 & \num{1110405} \\
-cluster26 & \num{394747} & \num{1046} & 0.921 & 0.079 & \num{472} & \num{17709} & \num{51990} & 33 & 24 & \num{37455} \\
-cluster10 & \num{2500051} & \num{1289} & 0.500 & 0.500 & \num{1} & \num{8} & \num{14} & 14 & 12 & \num{13} \\
+cluster45 & \num{2158200} & \num{91} & 0.568 & 0.432 & \num{4} & \num{1008186} & 33 / 24 \\
+cluster26 & \num{394747} & \num{1046} & 0.921 & 0.079 & \num{472} & \num{17709} & 33 / 24 \\
+cluster10 & \num{2500051} & \num{1289} & 0.500 & 0.500 & \num{1} & \num{8} & 14 / 12 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Protocol}
+\label{sec:protocol}
 
-Labels, including the backward distance, the eligibility flag and the cap, are
-computed once over the whole window, so no distance is truncated at a split
-boundary. Requests are split by position into contiguous fit, validation and test
-blocks at 70, 85 and 100\%, and the test block is scored once, after every choice is
-fixed. The truth on each block is the empirical survival of $R$, which by
-\cref{prop:lru-hit} is the exact LRU curve for that block.
+Labels are computed once over the whole window, so a distance is never truncated at
+a split boundary. Requests are split by position into contiguous fit, validation and
+test blocks at 70, 85 and 100\%. The test block is scored once, after every choice
+is fixed. The truth on a block is the empirical survival of $R$ on that block, which
+by \cref{prop:lru} is the exact LRU curve for it.
 
-The capacity grid is truncated below $b_{M-1}$, at most 24 points. Fitting uses the
-grouped rows under a 20-million-row budget, 300 boosting rounds and early stopping,
-and $p_c$ is measured on the block being scored.
+Capacities are the upper edges of the hazard bins, below the overflow edge, at most
+24 points. Aligning the grid to the bins is not cosmetic: a binned hazard is a step
+function, so evaluating it inside a wide bin charges the model for the bin width.
+The measured effect of that alignment is in \cref{sec:limitations}.
 
-Provisioning asks for the smallest capacity whose curve reaches a target hit
-ratio, as a fraction of the achievable ceiling $1-p_c$, interpolated in log
-capacity between bracketing grid points; the ratio of predicted to true capacity is
-reported. Below one
-under-provisions.
-
-\subsection{Curve Accuracy}
+\subsection{Does the curve match?}
 \label{sec:accuracy}
 
-\input{tables/cluster45_metrics}
-\input{tables/cluster26_metrics}
-\input{tables/cluster10_metrics}
+\input{tables/accuracy}
 
-The hazard model is the most accurate of the three on every trace
-(\cref{tab:cluster45-test,tab:cluster26-test,tab:cluster10-test}): mean absolute
-error 0.00027, 0.00548 and 0.00772, against 0.02000, 0.01178 and 0.04387 for the
-marginal curve and 0.10968, 0.07927 and 0.07930 for the hit-count regression. A
-frequency model never sees a distance, so it cannot recover where a curve bends.
+\Cref{tab:accuracy} is the headline. On the trace where the curve is hardest to
+interpolate, cluster45, the hazard model's mean absolute error is 0.00027 against
+0.02000 for Kaplan-Meier and 0.10968 for the hit-count regression. On the small
+working set, cluster26, the gap over Kaplan-Meier narrows to a factor of two, which
+is expected: when nearly every key recurs, the marginal curve is already close. On
+the cold-heavy trace, cluster10, it is a factor of 5.7. The ordering is the same on
+all three traces, and every point of the pre-registered accuracy gate passes.
 
-The marginal curve's error is almost entirely a level shift: on two traces its bias
-and its mean absolute error agree to four decimal places and are negative, so it
-places the whole curve above the truth by a nearly constant offset. The hazard error
-is signed the same way but concentrated near the knee: its worst point is 0.021 on
-the trace where it is weakest (cluster26), against 0.034 and 0.120 for the marginal
-curve on the other two, where the marginal curve is the second-best model rather
-than a competitor.
+\Cref{fig:mrc-curves} shows why the average hides different behaviours. The hazard
+curve (solid) lies on the exact curve across three decades of capacity. The marginal
+curve (dashed) is a level shift: it is close in shape and wrong in height, which is
+what a model without features can produce.
 
 \begin{center}
 \begin{minipage}{\linewidth}
 \includegraphics[width=\linewidth]{figures/mrc-curves.pdf}
-\captionof{figure}{Estimated and exact miss-ratio curves on the test block, panels
-cluster45, cluster26 and cluster10. Exact Mattson curve in black, hazard model
-solid, Kaplan-Meier dashed. Window
-5{,}000{,}000 requests; capacities below $b_{M-1}$ (\num{1110405}, \num{37455} and
-13 objects).}
+\captionof{figure}{Predicted and exact miss-ratio curves on the test block. Exact
+Mattson curve in black, hazard model solid, Kaplan-Meier dashed. Panels are
+cluster45, cluster26 and cluster10; capacity is in objects and log-scaled.}
 \label{fig:mrc-curves}
 \end{minipage}
 \end{center}
 
+\subsection{Where the error lives}
+\label{sec:error}
+
+\Cref{fig:cluster-error} plots absolute error against capacity on a log axis. The
+log scale is the point of the figure: on a linear axis the hazard curve is a
+horizontal line at zero and the comparison disappears. Three readings follow. The
+hazard error stays one to two decades below the alternatives over almost the whole
+grid. The marginal error is flat in capacity, the signature of a level shift rather
+than a local modelling failure. The hit-count regression is worst where the curve
+bends, which is the region an operator cares about.
+
 \begin{center}
 \begin{minipage}{\linewidth}
 \includegraphics[width=\linewidth]{figures/cluster-error.pdf}
-\captionof{figure}{Absolute curve error against capacity on the test block, same
-panels. Hazard model solid, Kaplan-Meier dashed. Window 5{,}000{,}000 requests; capacities below
-$b_{M-1}$ (\num{1110405}, \num{37455} and 13 objects). The marginal error is flat
-in capacity, the signature of a level shift.}
+\captionof{figure}{Absolute curve error against capacity, log-log. Hazard GBDT solid,
+Kaplan-Meier dashed, hit-count dotted. Exact zeros are floored at $3\times10^{-5}$,
+below every measured hazard error.}
 \label{fig:cluster-error}
 \end{minipage}
 \end{center}
 
-\subsection{Provisioning}
+\subsection{Which part of the model matters?}
+\label{sec:ablation}
+
+\Cref{tab:methods} puts every estimator and every feature-family ablation on one
+protocol, so the differences are attributable to the row and not to a change of
+split or grid. Read it in three blocks.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+  \item \emph{Against practice}: the hazard is 1.9 to 50 times more accurate than
+  the marginal curve, with the largest gap on the trace with the longest reuse tail,
+  and 11 to 260 times more accurate than the hit-count regression.
+  \item \emph{Inside the hazard}: removing the timing family costs a factor of 51 on
+  cluster45 and 5.4 on cluster10. It costs nothing on cluster26, where reuse is
+  dense and recency is less informative; there, removing popularity or client
+  actually improves error by about a third, so the twelve features are not uniformly
+  optimal per trace. Size, popularity, client and the token bucket move the long-tail
+  traces by under 10\%, which is the run-to-run noise.
+  \item \emph{The oracle}: the single-row ablation reproduces the truth exactly
+  because it reads the scored request's own distance. It is not a deployable
+  estimator; it bounds how much the risk-set expansion is worth under a stationary
+  block, and it is excluded from every headline comparison.
+\end{itemize}
+
+\input{tables/method_ablation}
+
+\subsection{Does the error change a decision?}
+\label{sec:provisioning}
+
+\input{tables/provisioning}
+
+An operator does not buy MAE; they buy capacity. \Cref{tab:provisioning} converts
+each curve into the capacity needed to reach a target hit ratio, as a fraction of the
+ceiling $1-p_c$, and reports the ratio to the true capacity.
+
+The hazard model is within 7.5\% at every target and trace. The marginal curve is
+within 3\% on the small working set, where its curve was already close, and badly
+wrong on cluster45: at the 80\% target it chooses 0.239 of the needed capacity, a
+factor of four under. \Cref{fig:capacity-ratio} shows the same result as a median
+over traces. The lesson is not that a marginal curve is always bad; it is that its
+error is invisible without the truth, and the error turns into memory.
 
 \begin{center}
-\begin{minipage}{\linewidth}
-\footnotesize
-\captionof{table}{Capacity ratio, model over truth, for a target hit ratio expressed as a
-fraction of the achievable ceiling $1-p_c$. Below one under-provisions. Window
-5{,}000{,}000 requests per trace.}
-\label{tab:provisioning}
-\begin{tabular}{@{}l l r r r@{}}
-\toprule
-Trace & Model & {60\%} & {80\%} & {95\%} \\
-\midrule
-cluster45 & hazard & 1.003 & 0.976 & 1.004 \\
-cluster45 & Kaplan-Meier & 0.922 & 0.239 & 0.524 \\
-cluster26 & hazard & 0.977 & 0.981 & 0.999 \\
-cluster26 & Kaplan-Meier & 0.971 & 0.985 & 0.996 \\
-cluster10 & hazard & 0.947 & 0.935 & 0.925 \\
-cluster10 & Kaplan-Meier & 0.635 & 0.681 & 0.744 \\
-\bottomrule
-\end{tabular}
-\end{minipage}
-\end{center}
-
-The hazard model places the crossing within 7.5\% of the true capacity at every
-target and trace, and within 2.5\% on the first two; its worst case is the
-cold-heavy trace at the 95\% target. The marginal curve provisions less than a
-quarter of the capacity needed at the 80\% target on the large-cardinality
-trace.
-
-\begin{center}
-\begin{minipage}{\linewidth}
-\includegraphics[width=0.42\linewidth]{figures/capacity-ratio.pdf}
+\begin{minipage}{0.62\linewidth}
+\includegraphics[width=\linewidth]{figures/capacity-ratio.pdf}
 \captionof{figure}{Capacity ratio at three targets, median over the three traces,
-with parity dotted. Window 5{,}000{,}000 requests; targets as fractions of the
-achievable ceiling.}
+with parity dotted. Below one is under-provisioning.}
 \label{fig:capacity-ratio}
 \end{minipage}
 \end{center}
 
-\subsection{Interpretability}
-\label{sec:ablation}
+\subsection{Why does it work?}
+\label{sec:attribution}
 
-Recency dominates (\cref{fig:importance}, values in \cref{tab:shap}): the gap since
-the previous access and the hazard step carry almost all of the SHAP contribution,
-and the next column is an order of magnitude smaller. On the cold-heavy trace the two
-leading columns tie, consistent with near-collinearity, since a 99.9th percentile
-distance of 14 objects makes the bin index nearly a function of the gap.
+\Cref{fig:importance} ranks features by mean absolute SHAP contribution. Recency,
+the time since the previous access to the same key, is first on all three traces.
+The hazard step is second, which is expected: it is the bin index, and it carries the
+shape of the distribution. Object size, client, popularity and the token bucket are
+an order of magnitude smaller. The ablation agrees: when the timing family is
+removed, the model loses most of its advantage.
+
+That is the interpretable claim of the report. A curve is predicted well when the
+model knows how long it has been since the key was last seen; the rest of the request
+metadata is a refinement.
 
 \begin{center}
 \begin{minipage}{\linewidth}
 \includegraphics[width=\linewidth]{figures/importance.pdf}
-\captionof{figure}{Mean absolute SHAP contribution, six leading columns per trace, on
-validation grouped rows. Window 5{,}000{,}000 requests; the hazard step is the
-bin index, not a request feature.}
+\captionof{figure}{Mean absolute SHAP contribution, six features per trace. Recency
+dominates; the hazard step carries the distribution shape.}
 \label{fig:importance}
 \end{minipage}
 \end{center}
 
-\subsection{Limitations}
+\subsection{Limitations and corrections}
+\label{sec:limitations}
 
-Three limits bound the claims directly; \cref{tab:limitations} adds three
-design limits. The cold-heavy trace has $p_c = 0.500$, so an absolute 90\% hit
-target is unreachable and every target is a fraction of $1-p_c$. The
-target is the backward distance: a forward bound labels never-reused keys as
-resolved, so the model does not estimate when a key will next be requested. And
-each trace is a 5-million-request prefix, so a request whose previous access
-predates it counts as compulsory; nothing above $b_{M-1}$ is claimed.
+\textbf{The forward-event target is biased.} The first implementation modelled
+whether a key would be requested again before the window ended. That is a different
+distribution from the backward distance the curve is a survival function of. It
+produced test MAE 0.170 with a systematic optimistic bias of +0.170 on cluster45;
+targeting the backward distance produced 0.005. The comparison is reported because
+the error is not visible from the fitted model alone.
+
+\textbf{A capacity grid inside a bin is a measurement error, not a model error.} The
+first grid was log-spaced independently of the bins. Re-evaluating the same fitted
+booster on bin upper edges cut cluster26's worst error from 0.147 to 0.021 and
+cluster45's from 0.005 to 0.0003. The grid is now aligned.
+
+\textbf{Three traces, one window.} Every number is a within-trace fit on a
+five-million-request window. Distances above the window are unobservable, which is
+why every caption states the window and why the grid stops below $b_{M-1}$. The
+cluster52 shard (93 GB) was not run, and no claim is made about it.
+
+\textbf{Cold-heavy workloads have a ceiling.} The hit ratio cannot exceed $1-p_c$.
+On cluster10 that ceiling is 50\%, so a 90\% target is not a modelling problem. This
+is why provisioning targets are stated relative to the ceiling.
+
+\textbf{Tuning is bounded.} Optuna ran 15 trials on a four-million-row subsample of
+cluster45, not 60 at full budget. The default parameters already reached the accuracy
+gate, so the study is evidence that the search works, not the source of the headline
+model.
+
+\textbf{The single-row row of \cref{tab:methods} is an oracle.} It is included to
+bound the risk-set expansion, and it is excluded from every headline comparison.

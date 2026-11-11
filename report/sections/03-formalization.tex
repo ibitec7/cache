@@ -1,222 +1,151 @@
-\section{Formalization}
+\section{The quantity, formally}
 \label{sec:formalization}
 
-\captionsetup{hypcap=false}
+This section states what is estimated and under which condition it is identified.
+The prose before each equation says what the equation buys; the tables define every
+symbol, so the section can be read without the derivations in the appendix.
 
-A miss-ratio curve is the survival function of the backward reuse distance,
-parametrized by a discrete hazard on a log-spaced bin grid. This section states the
-one censoring mechanism and the capacity range it identifies, and fixes the
-metrics.
+\subsection{Reuse distance and the miss-ratio curve}
+\label{sec:reuse}
 
-\subsection{Backward Reuse Distance}
+Fix a trace of $N$ requests and a window. For request $i$ with key $k_i$, let $p(i)$
+be the previous position at which the same key was requested. The backward reuse
+distance is the number of distinct keys requested strictly between the two accesses:
 
-For request $i$ with key $k_i$, let $p(i) = \max\{j < i : k_j = k_i\}$ be the
-position of the previous access to the same key, and $p(i) = \bot$ when the key has
-not been requested earlier in the window. The reuse distance is the number of
-distinct keys requested strictly between the two accesses,
 \begin{equation}\label{eq:reuse}
-    R_i \;=\; \bigl|\{\, k_j : p(i) < j < i \,\}\bigr|,
+  R_i \;=\; \bigl|\{\,k_j \;:\; p(i) < j < i\,\}\bigr|,
 \end{equation}
-with $R_i = \infty$ when $p(i) = \bot$.
 
-\begin{center}
-\begin{minipage}{\linewidth}
+with $R_i=\infty$ when no previous access exists inside the window. The distance is
+a function of the past only. It is therefore observed at request $i$ whenever the
+previous access is inside the window, and the end of the window does not censor it.
+
+\begin{table}[t]
+\centering
 \footnotesize
-\captionof{table}{Symbols of \cref{eq:reuse}.}
+\caption{Symbols of \cref{eq:reuse}.}
 \label{tab:sym-reuse}
 \begin{tabular}{@{}l l l@{}}
 \toprule
 Symbol & Domain & Meaning and units \\
 \midrule
-$i, j$ & $\{1,\dots,N\}$ & request index in the window (count) \\
+$i,j$ & $\{1,\dots,N\}$ & request index (count) \\
 $k_i$ & $\mathcal{K}$ & key of request $i$ (identifier) \\
-$p(i)$ & $\{1,\dots,N\} \cup \{\bot\}$ & previous access to $k_i$ (request index) \\
-$R_i$ & $\mathbb{N}_0 \cup \{\infty\}$ & backward reuse distance (distinct keys, equivalently objects) \\
+$p(i)$ & $\{1,\dots,N\}\cup\{\bot\}$ & previous access to $k_i$ (request index) \\
+$R_i$ & $\mathbb{N}_0\cup\{\infty\}$ & backward reuse distance (distinct keys, equivalently objects) \\
+$C$ & $\mathbb{N}$ & cache capacity (objects) \\
 \bottomrule
 \end{tabular}
-\end{minipage}
-\end{center}
+\end{table}
 
-A backward distance depends on the past only, so it is observed for every request
-whose previous access lies inside the window, and the window end does not censor it.
+Under LRU, a request hits exactly when the objects touched since its previous access
+still fit. At unit object size this is a threshold on the distance:
 
-\subsection{Miss Ratio as a Survival Function}
-
-\begin{proposition}[LRU hit condition]\label{prop:lru-hit}
-Under LRU replacement with capacity $C$ objects, a repeated request $i$ hits if and
-only if $R_i < C$.
+\begin{proposition}[LRU hit condition]\label{prop:lru}
+For a cache of capacity $C$ objects under LRU, request $i$ hits if and only if
+$R_i < C$. Hence
+\begin{equation}\label{eq:mrc}
+  \mathrm{MRC}(C) \;=\; \Pr(R \ge C),
+\end{equation}
+the survival function of the backward reuse distance, and compulsory requests
+($R=\infty$) miss at every finite capacity.
 \end{proposition}
 
-\begin{proof}
-Before request $i$ the cache holds the $C$ most recently requested distinct keys.
-The keys requested after $p(i)$ are exactly the keys more recent than $k_i$, and
-they are distinct, so they occupy $R_i$ recency positions above $k_i$. The key
-$k_i$ is resident if and only if $R_i < C$, the stack property established by
-Mattson et al.~\cite{mattson1970}.
-\end{proof}
+The proof is the stack argument of Mattson et al.\ and is repeated in
+\cref{app:proofs}. The operational content is that capacity is a threshold, not a
+regressor: one model of $R$ answers every $C$.
 
-Write $B = \mathrm{bin}(R)$ for the bin index of the reuse distance and $X$ for the
-feature vector of a request. The miss ratio at capacity $C$ is the probability that
-a repeated request misses, averaged over requests, plus the compulsory mass that no
-capacity can recover:
-\begin{equation}\label{eq:mrc}
-    m(C) \;=\; p_c \;+\; (1 - p_c)\,\frac{1}{N}\sum_{i=1}^{N} S_{k(C)}(x_i),
-    \qquad k(C) = \mathrm{bin}(C - 1),
+\subsection{A discrete hazard for the distance}
+\label{sec:hazard}
+
+Discretise the distance into $M$ bins with edges $e_0<\dots<e_M$, where bin $b$ is
+$[e_b,e_{b+1})$. The discrete hazard is the probability that the distance falls in
+bin $b$, given that it has not fallen in an earlier bin:
+
+\begin{equation}\label{eq:hazard}
+  h_b(x) \;=\; \Pr\bigl(R\in b \;\big|\; R\ge e_b,\; X=x\bigr),
 \end{equation}
-with $S_k(x) = \Pr(R \ge b_{k+1} \mid X = x)$ the survival through bin $k$ and
-$b_{k+1}$ that bin's upper edge.
 
-\begin{center}
-\begin{minipage}{\linewidth}
+with $X$ the request features of \cref{sec:features}. The survival function is the
+product of within-bin survival probabilities,
+
+\begin{equation}\label{eq:survival}
+  S(k\mid x) \;=\; \prod_{b=0}^{k}\bigl(1-h_b(x)\bigr),
+  \qquad
+  \mathrm{MRC}(C) \;=\; p_c + (1-p_c)\,\mathbb{E}_x\bigl[S(\beta(C)\mid x)\bigr],
+\end{equation}
+
+where $\beta(C)$ is the index of the bin containing $C-1$ and $p_c=\Pr(R=\infty)$ is
+the compulsory mass. The first term is the requests no capacity can turn into hits;
+the second is the part the model estimates. \Cref{tab:sym-hazard} fixes the
+notation.
+
+\begin{table}[t]
+\centering
 \footnotesize
-\captionof{table}{Symbols of \cref{eq:mrc}.}
-\label{tab:sym-mrc}
-\begin{tabular}{@{}l l l@{}}
-\toprule
-Symbol & Domain & Meaning and units \\
-\midrule
-$C$ & $\mathbb{N}$ & cache capacity (objects) \\
-$m(C)$ & $[0,1]$ & miss ratio at capacity $C$ (dimensionless) \\
-$p_c$ & $[0,1]$ & fraction of requests with no previous access in the window (dimensionless) \\
-$N$ & $\mathbb{N}$ & requests in the scored block (count) \\
-$x_i$ & $\mathbb{R}^{12}$ & feature vector of request $i$ (\cref{tab:features}) \\
-$k(C)$ & $\{0,\dots,M-2\}$ & bin index of the largest distance below capacity $C$ (dimensionless) \\
-$S_k(x)$ & $[0,1]$ & survival through bin $k$ (dimensionless) \\
-$b_k$ & $\mathbb{N}_0$ & lower edge of bin $k$ (objects) \\
-\bottomrule
-\end{tabular}
-\end{minipage}
-\end{center}
-
-\subsection{Discrete Hazard on Log-Spaced Bins}
-
-The hazard of bin $b$ is the probability that the distance resolves in that bin
-given that it reached the bin's lower edge, and survival multiplies the
-non-resolution probabilities:
-
-\begin{align}
-    h_b(x) &= \Pr\bigl(B = b \mid B \ge b,\; X = x\bigr),
-    \qquad b = 0, \dots, M-1, \label{eq:hazard}\\
-    S_k(x) &= \prod_{b=0}^{k}\bigl(1 - h_b(x)\bigr),
-    \qquad S_{-1}(x) = 1. \label{eq:survival}
-\end{align}
-The interior edges are a rounded geometric sequence over the observed 99.9th
-percentile: $b_0 = 0$, $b_1 = 1$, and $b_2,\dots,b_M$ are the unique values of
-$\operatorname{round}(2\gamma^{t})$ for $t = 0,\dots,M-1$, with
-$\gamma = (\max(3,q)/2)^{1/(M-1)}$.
-
-\begin{center}
-\begin{minipage}{\linewidth}
-\footnotesize
-\captionof{table}{Symbols of \cref{eq:hazard}, \cref{eq:survival} and the edge sequence.}
+\caption{Symbols of \cref{eq:hazard,eq:survival}.}
 \label{tab:sym-hazard}
 \begin{tabular}{@{}l l l@{}}
 \toprule
 Symbol & Domain & Meaning and units \\
 \midrule
-$b$ & $\{0,\dots,M-1\}$ & bin index (dimensionless) \\
-$B$ & $\{0,\dots,M-1\}$ & bin index of the observed reuse distance (dimensionless) \\
-$h_b(x)$ & $[0,1]$ & discrete hazard of bin $b$ for features $x$ (dimensionless) \\
-$S_k(x)$ & $[0,1]$ & survival through bins $0,\dots,k$ (dimensionless) \\
-$M$ & $\mathbb{N}$ & requested number of bins (count) \\
-$q$ & $\mathbb{N}$ & 99.9th percentile of $R$ over eligible requests (objects) \\
-$\gamma$ & $\mathbb{R}_{>1}$ & geometric growth factor between interior edges (dimensionless) \\
-$t$ & $\{0,\dots,M-1\}$ & index of the geometric sequence (dimensionless) \\
+$b$ & $\{0,\dots,M-1\}$ & distance-bin index (dimensionless) \\
+$e_b$ & $\mathbb{N}_0$ & bin edge, increasing, in objects \\
+$h_b(x)$ & $[0,1]$ & hazard in bin $b$ for features $x$ (probability) \\
+$S(k\mid x)$ & $[0,1]$ & survival through bin $k$ (probability) \\
+$p_c$ & $[0,1]$ & compulsory fraction, $1-\Pr(R<\infty)$ \\
+$X$ & $\mathbb{R}^{12}$ & request features, \cref{tab:features} \\
+$\beta(C)$ & $\{0,\dots,M-1\}$ & bin containing capacity $C-1$ \\
 \bottomrule
 \end{tabular}
-\end{minipage}
-\end{center}
+\end{table}
 
-Rounding collapses duplicates, so the realised bin count is reported: with $M=32$
-requested the traces of \cref{sec:experiments} realise 33, 33 and 14 bins, the last
-because its 99.9th percentile distance is 14 objects. Since the hazard is constant
-within a bin, the capacity grid sits at interior bin upper edges, where
-$S_{k(C)}$ and $\Pr(R \ge C)$ are the same event.
+\subsection{What is observed, and where the curve stops being identified}
+\label{sec:identification}
 
-\subsection{The Only Censoring: the Observation Ceiling}
+Every eligible request contributes one row per bin it survived: bins
+$0,\dots,\beta(R)$, with the label set at $\beta(R)$ when $R\le e_M$ and no positive
+label when the distance exceeds the ceiling. This grouped risk set is the
+discrete-time likelihood written once per bin rather than once per unit of distance.
+It is exact up to the assumption that the hazard is constant inside a bin.
 
-Two integers are retained per request, a truncated distance and an event indicator,
-and the capacity grid is truncated at the same ceiling:
-\begin{align}
-    \tilde R_i &= \min(R_i,\, c), \qquad
-    \delta_i = \mathbf{1}\{R_i \le c\}, \qquad c = b_{M-1} - 1,
-    \label{eq:truncation}\\
-    \mathcal{C} &\subset \{1, \dots, b_{M-1} - 1\}. \label{eq:limit}
-\end{align}
+Two boundaries follow. First, the observation ceiling: distances above $e_M$ are
+right-censored at $e_M$, so capacities at or above the last real bin edge $b_{M-1}$
+are not identified and the pipeline raises instead of extrapolating. Second, the
+compulsory mass: as $C$ grows, $\mathrm{MRC}(C)\to p_c$, never to zero. A target hit
+ratio above $1-p_c$ is unreachable on that trace, which is why
+\cref{sec:experiments} states targets as a fraction of that ceiling.
 
-\begin{center}
-\begin{minipage}{\linewidth}
+\subsection{Metrics, and what failing each one means}
+\label{sec:metrics}
+
+Let $\hat m$ be the predicted curve and $m^\ast$ the exact one on capacities
+$C_1,\dots,C_J$. \Cref{tab:metrics} defines the five curve metrics and the one
+decision metric. All are computed on the held-out block, once.
+
+\begin{table}[t]
+\centering
 \footnotesize
-\captionof{table}{Symbols of \cref{eq:truncation} and \cref{eq:limit}.}
-\label{tab:sym-truncation}
+\caption{Metrics. ``Failing it'' is the reading a reviewer should take from a bad
+value, not a threshold chosen after the fact.}
+\label{tab:metrics}
 \begin{tabular}{@{}l l l@{}}
 \toprule
-Symbol & Domain & Meaning and units \\
+Metric & Definition & Failing it means \\
 \midrule
-$\tilde R_i$ & $\{0,\dots,c\}$ & truncated reuse distance (objects) \\
-$\delta_i$ & $\{0,1\}$ & event indicator, zero when $R_i$ exceeds the cap (dimensionless) \\
-$c$ & $\mathbb{N}_0$ & truncation cap, one object below the overflow edge (objects) \\
-$\mathcal{C}$ & $2^{\mathbb{N}}$ & capacity grid, at most 24 points (objects) \\
-$b_{M-1}$ & $\mathbb{N}$ & lower edge of the overflow bin (objects) \\
+MAE & $\frac1J\sum_j|\hat m_j-m^\ast_j|$ & the curve is wrong on average \\
+MAX & $\max_j|\hat m_j-m^\ast_j|$ & a local blow-up, often near the knee \\
+bias & $\frac1J\sum_j(\hat m_j-m^\ast_j)$ & systematic over- or under-estimation \\
+MRE & mean $|\hat m_j-m^\ast_j|/m^\ast_j$ for $m^\ast_j\ge0.01$ & relative error where the cache is useful \\
+ABC & $\int|\hat m-m^\ast|\,\mathrm{d}\log C \,/\,\Delta\log C$ & error averaged over decades of capacity \\
+ratio & $\hat C_q/C_q$ for target hit $q$ & a wrong provisioning decision, the applied cost \\
 \bottomrule
 \end{tabular}
-\end{minipage}
-\end{center}
+\end{table}
 
-The only censoring is administrative: distances at or above $b_{M-1}$ are pooled
-into the overflow bin, so such a request is known only to have reached it,
-contributes one row per lower bin labelled zero, and no positive label. A request
-with no previous access inside the window leaves the fit and enters $p_c$, and some
-of those are not compulsory in the workload's history, only in the window. The truth
-uses the same convention, so the comparison is exact but conditional on a warm
-start.
-
-Survival above $b_{M-1}$ is not identified and the estimator refuses a capacity
-there rather than extrapolating. The ceiling is 1{,}110{,}405, 37{,}455 and 13 objects
-on the three traces of \cref{sec:experiments}, so the third is evaluated on 12
-capacities of at most 12 objects.
-
-\subsection{Metrics}
-
-Let $\hat m$ be the estimated curve, $m$ the exact curve on the same block, and
-$e(C) = \hat m(C) - m(C)$ the signed error at capacity $C$. On a grid
-$\mathcal{C}$ of $n$ capacities the reported metrics are
-\begin{align}
-    \mathrm{MAE} &= \frac{1}{n}\sum_{C \in \mathcal{C}} \lvert e(C) \rvert, &
-    \mathrm{MAX} &= \max_{C \in \mathcal{C}} \lvert e(C) \rvert, \label{eq:metrics-abs}\\
-    \mathrm{bias} &= \frac{1}{n}\sum_{C \in \mathcal{C}} e(C), &
-    \mathrm{MRE} &= \frac{1}{n_+}\sum_{C \in \mathcal{C}_+} \frac{\lvert e(C) \rvert}{m(C)},
-    \label{eq:metrics-rel}\\
-    \mathrm{ABC} &= \frac{1}{\log C_n - \log C_1}
-    \int_{\log C_1}^{\log C_n} \lvert e(C) \rvert \; d\log C, & &
-    \label{eq:abc}
-\end{align}
-where $\mathcal{C}_+ = \{C \in \mathcal{C} : m(C) \ge 0.01\}$ and $n_+ =
-\lvert \mathcal{C}_+ \rvert$.
-
-\begin{center}
-\begin{minipage}{\linewidth}
-\footnotesize
-\captionof{table}{Symbols of \cref{eq:metrics-abs}, \cref{eq:metrics-rel} and \cref{eq:abc}.}
-\label{tab:sym-metrics}
-\begin{tabular}{@{}l l l@{}}
-\toprule
-Symbol & Domain & Meaning and units \\
-\midrule
-$\mathcal{C}$ & $2^{\mathbb{N}}$ & capacity grid, $\lvert\mathcal{C}\rvert = n$ (objects) \\
-$n$ & $\mathbb{N}$ & number of grid points (count) \\
-$C$ & $\mathbb{N}$ & one grid capacity (objects) \\
-$\hat m(C)$ & $[0,1]$ & estimated miss ratio (dimensionless) \\
-$m(C)$ & $[0,1]$ & exact miss ratio, $m(C) = \Pr(R \ge C)$ (dimensionless) \\
-$e(C)$ & $[-1,1]$ & signed error $\hat m(C) - m(C)$ (dimensionless) \\
-$\mathcal{C}_+$ & $2^{\mathbb{N}}$ & grid points with $m(C) \ge 0.01$ (objects) \\
-$n_+$ & $\mathbb{N}$ & number of such points (count) \\
-$C_1, C_n$ & $\mathbb{N}$ & smallest and largest grid capacity (objects) \\
-\bottomrule
-\end{tabular}
-\end{minipage}
-\end{center}
-
-All five are dimensionless; \cref{tab:metric-roles} says what each measures and
-what failing it would mean. ABC normalises by the log range of the grid, and MRE is
-reported with $n_+$ because dividing by a vanishing miss ratio measures nothing.
+MAE is the headline because it is the quantity a capacity decision integrates over;
+MAX catches the failure MAE hides; bias distinguishes a curve that is wrong
+everywhere in the same direction from one that is noisy; MRE refuses to average
+relative errors where the truth is effectively zero; ABC makes two grids comparable
+in log capacity. The provisioning ratio is the only metric an operator acts on
+directly, and it is reported separately for that reason.

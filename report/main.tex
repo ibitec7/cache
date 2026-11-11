@@ -89,35 +89,30 @@
 %----------------------------------------------------------------------------------------
 \begin{abstract}
 \noindent
-Miss-ratio curves (MRCs) report the hit ratio of a cache as a function of its
-capacity, and they drive memory provisioning decisions in production cache
-fleets. Current practice fits the aggregate hit count, or the aggregate miss
-ratio, as a function of capacity, which discards the per-request structure that
-determines where a curve bends. We instead treat the reuse distance of each
-request as a positive integer survival time and estimate its discrete hazard
-with gradient-boosted decision trees. The resulting survival function maps
-directly onto the MRC through the LRU stack property, so capacity is a
-post-hoc evaluation point rather than a regressor input.
+A miss-ratio curve answers a memory decision: what hit ratio does this workload get
+at capacity $C$? The exact curve is a replay away, and the usual shortcuts fit the
+aggregate miss ratio on capacity, which cannot answer a capacity it was not fitted
+at. This report changes the object. The reuse distance of a request is a survival
+time, the miss-ratio curve is its survival function, and capacity is a threshold on
+that function rather than an input to a regressor. A discrete-time hazard on twelve
+request features estimates the function once, and every capacity is read from it.
 
-The report formalizes reuse distance as a censored discrete time-to-event
-variable, states the identification condition that ties it to LRU hit behavior,
-and specifies two gradient-boosted hazard parametrizations: reuse distance as a
-feature, and one model per hazard bin. Censoring is handled explicitly, because
-requests whose reuse distance exceeds the observation window are not misses at
-a known distance but unresolved observations. Evaluation is against MRCs
-obtained from full trace simulation on production clusters, using MRC error,
-hazard calibration, and the integrated Brier score. All quantitative results in
-this skeleton are placeholders; no numbers are reported until the simulation
-and model runs complete.
+On three production traces of five million requests each, the hazard curve has mean
+absolute error 0.0003 to 0.0077, against 0.0118 to 0.0439 for a Kaplan-Meier curve
+and 0.079 to 0.110 for a hit-count regression, and it beats both on every trace. The
+error is a decision, not only a number: to reach a target hit ratio, the model sizes
+the cache within 7.5\% of the true requirement, while the marginal curve
+under-provisions by up to a factor of four. Recency is the dominant feature on all
+three traces, and removing the timing family raises error 51-fold on one trace. The
+report also documents two corrections that made the result measurable: the model
+must target the backward distance, not the next access, and the capacity grid must
+align with the hazard bins. Both are reported with their evidence.
 \end{abstract}
 
 
 %----------------------------------------------------------------------------------------
 %	Table of Contents
 %----------------------------------------------------------------------------------------
-\setcounter{tocdepth}{2}
-\tableofcontents
-
 \clearpage
 
 %----------------------------------------------------------------------------------------

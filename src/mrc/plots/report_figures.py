@@ -41,7 +41,9 @@ def plot_curves(clusters: list[str], path: Path | None = None) -> Path:
         label_mrc(ax)
         ax.set_title(cluster.replace("cluster", "C"), fontsize=8)
         ax.set_ylim(0.0, 1.02)
-    axes[0].legend(loc="lower left", fontsize=7)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
+               fontsize=7, bbox_to_anchor=(0.5, -0.06))
     path = Path(path or FIG_DIR / "fig_mrc.pdf")
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path)
@@ -49,25 +51,40 @@ def plot_curves(clusters: list[str], path: Path | None = None) -> Path:
     return path
 
 
+FLOOR = 3e-5
+
+
 def plot_error(clusters: list[str], path: Path | None = None) -> Path:
-    """Absolute error of the two estimators against capacity."""
+    """Absolute curve error against capacity on a log scale.
+
+    A log axis is the only way to see both estimators in one panel: the hazard
+    error sits one to two decades below the marginal curve. Exact zeros are
+    floored at `FLOOR`, which is below every measured hazard error.
+    """
     plt = _plt()
-    fig, axes = plt.subplots(1, len(clusters), figsize=(DOUBLE_COL, 1.9), sharey=True)
+    fig, axes = plt.subplots(1, len(clusters), figsize=(DOUBLE_COL, 2.0), sharey=True)
     axes = np.atleast_1d(axes)
+    styles = (("gbdt_test", PALETTE[1], "Hazard GBDT", "-"),
+              ("km_test", PALETTE[2], "Kaplan-Meier", "--"),
+              ("hitcount_test", PALETTE[3], "Hit-count", ":"))
     for ax, cluster in zip(axes, clusters):
         payload = load_metrics(cluster)
         caps = np.asarray(payload["curves"]["capacities"])
         truth = np.asarray(payload["curves"]["truth_test"])
-        for key, colour, label in (("gbdt_test", PALETTE[1], "Hazard GBDT"),
-                                   ("km_test", PALETTE[2], "Kaplan-Meier")):
-            err = np.abs(np.asarray(payload["curves"][key]) - truth)
-            ax.plot(caps, err, color=colour, lw=1.2, label=label)
+        for key, colour, label, style in styles:
+            if key not in payload["curves"]:
+                continue
+            err = np.maximum(np.abs(np.asarray(payload["curves"][key]) - truth), FLOOR)
+            ax.plot(caps, err, color=colour, lw=1.2, ls=style, label=label)
         ax.set_xscale("log")
+        ax.set_yscale("log")
         ax.set_xlabel("Cache capacity (objects)")
         ax.set_title(cluster.replace("cluster", "C"), fontsize=8)
-        ax.set_ylim(bottom=0.0)
+        ax.set_ylim(FLOOR, 0.5)
     axes[0].set_ylabel("Absolute error")
-    axes[0].legend(loc="upper left", fontsize=7)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
+               fontsize=7, bbox_to_anchor=(0.5, -0.06))
     path = Path(path or FIG_DIR / "fig_error.pdf")
     fig.savefig(path)
     plt.close(fig)
@@ -95,8 +112,8 @@ def plot_provisioning(clusters: list[str], path: Path | None = None) -> Path:
         ax.bar(x + (offset - 0.5) * width, ratios, width=width, color=colour, label=label)
     ax.axhline(1.0, color="black", lw=0.8, ls=":")
     ax.set_xticks(x)
-    ax.set_xticklabels([f"{int(t * 100)}% of ceiling" for t in fractions])
-    ax.set_xlabel("Target as a fraction of the achievable hit ratio")
+    ax.set_xticklabels([f"{int(t * 100)}%\nof ceiling" for t in fractions], fontsize=7)
+    ax.set_xlabel("Target hit ratio")
     ax.set_ylabel("Capacity ratio (model / truth)")
     ax.legend(loc="upper left", fontsize=7)
     path = Path(path or FIG_DIR / "fig_capacity.pdf")
