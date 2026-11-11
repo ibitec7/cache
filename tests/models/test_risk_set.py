@@ -50,8 +50,10 @@ def test_grouped_rows_columns_and_index_mapping():
     assert rows["request_index"].tolist() == [0, 0, 0, 1, 2, 2, 2, 2]
     assert rows["bin"].tolist() == [0, 1, 2, 0, 0, 1, 2, 3]
     assert rows["n_rows"] == 8
-    # weights are the clipped bin widths of edges = [0, 1, 2, 4, 8]
-    assert rows["w"].tolist() == [1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 4.0]
+    # each row is one Bernoulli trial, so the fit weight is 1; the clipped bin
+    # width is recorded separately for analysis (edges = [0, 1, 2, 4, 8])
+    assert rows["w"].tolist() == [1.0] * 8
+    assert rows["bin_width"].tolist() == [1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 4.0]
     # one event in the bin where the observed reuse lands, none for the censored request
     assert rows["y"].tolist() == [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
     # rows of a request carry that request's features, in bin order

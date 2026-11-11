@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PY := env -u PYTHONPATH uv run
 export MLFLOW_TRACKING_URI := sqlite:///$(CURDIR)/artifacts/mlflow/mlflow.db
 
-.PHONY: help sync data-samples data-t1 data-t2 inspect reuse mrc fit plots report slides wiki ui smoke test lint
+.PHONY: help sync data-samples data-t1 data-t2 inspect reuse mrc fit labels features truth train tune interpret analysis plots report slides wiki ui smoke test lint check
 
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/'
@@ -31,6 +31,27 @@ mrc:  ## empirical MRC curve: make mrc R=data/interim/x.parquet
 fit:  ## fit the hazard model under MLflow: make fit R=data/interim/x.parquet
 	$(PY) python -m mrc.cli fit "$(R)"
 
+labels:  ## cache labels: make labels C=cluster45
+	$(PY) python -m mrc.cli labels "$(or $(F),$(shell python -c 'from mrc.cli import default_source; print(default_source("$(C)"))'))" --cluster "$(C)"
+
+features:  ## build the design matrix: make features C=cluster45
+	$(PY) python -m mrc.cli features "$(C)"
+
+truth:  ## ground-truth curve: make truth C=cluster45
+	$(PY) python -m mrc.cli truth "$(C)"
+
+train:  ## full run + MLflow: make train C=cluster45
+	$(PY) python -m mrc.cli train "$(C)"
+
+tune:  ## Optuna search: make tune C=cluster45 T=20
+	$(PY) python -m mrc.cli tune "$(C)" --trials "$(or $(T),20)"
+
+interpret:  ## permutation, SHAP and ablation: make interpret C=cluster45
+	$(PY) python -m mrc.cli interpret "$(C)"
+
+analysis:  ## capacity-provisioning table
+	$(PY) python -m mrc.cli analysis
+
 plots:  ## regenerate every figure from artifacts
 	$(PY) python -m mrc.cli plots
 
@@ -55,3 +76,8 @@ test:  ## full test suite
 
 lint:  ## ruff + mypy
 	$(PY) ruff check src tests && $(PY) mypy src
+
+check:  ## the full gate: ruff, mypy, pytest
+	$(PY) ruff check src tests
+	$(PY) mypy src
+	$(PY) pytest -q

@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 
 from mrc.config import N_CAPACITIES, REPO
-from mrc.gt.stackdist import identified_grid, mrc_from_labels
+from mrc.gt.stackdist import capacity_grid_from_edges, identified_grid, mrc_from_labels
 
 MANIFEST_SUFFIX = ".manifest.json"
 
@@ -55,6 +55,7 @@ def written_truth(
     overflow_edge: int,
     points: int = N_CAPACITIES,
     source_labels: str | Path = "",
+    edges: np.ndarray | None = None,
 ) -> Path:
     """Write the ground-truth MRC artefact plus its manifest; return the manifest path.
 
@@ -63,7 +64,8 @@ def written_truth(
     The curve is object-capacity only: `by_bytes` never reaches this function.
     """
     out = Path(out)
-    capacities = identified_grid(n_keys, overflow_edge, points)
+    capacities = (capacity_grid_from_edges(edges, points) if edges is not None
+                  else identified_grid(n_keys, overflow_edge, points))
     mrc = np.asarray(mrc_from_labels(labels, capacities, by_bytes=False), dtype=np.float64)
     r = np.asarray(labels["R"])
 

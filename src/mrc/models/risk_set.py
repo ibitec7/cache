@@ -11,9 +11,13 @@ Both expanders read ``rtilde``, never the raw reuse distance ``R``: a censored
 request contributes the bins it survived, never the distance it never reached.
 
 Grouped variant (canonical): one row per (request, bin at risk). The label is 1
-in the bin where the observed event lands, 0 in every earlier bin, and the row
-weight is the bin width, the grouped-likelihood approximation to the per-step
-product. Cost is O(M) per request instead of O(R); measured 28.4x fewer rows on
+in the bin where the observed event lands, 0 in every earlier bin. Every row is
+one Bernoulli trial of the within-bin hazard, so the fitting weight is 1. The
+master plan proposed weighting each row by the bin width, the grouped-likelihood
+approximation to the per-step product; that is only correct under a complementary
+log-log link with an offset of log(width). Under the binary log-loss used here it
+over-weights wide (late) bins by up to six orders of magnitude, and measured on
+the 1M sample it raised test MAE from 0.0050 to 0.0113. Cost is O(M) per request instead of O(R); measured 28.4x fewer rows on
 cluster045 (745,784 vs 21,174,922 for 200,000 requests).
 
 Per-step variant (ablation only): one row per (request, step at risk), the exact
@@ -22,6 +26,8 @@ likelihood. It refuses above ``PER_STEP_MAX_REQUESTS`` and above
 distance, so the request guard alone does not bound the row count.
 """
 from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 
@@ -36,7 +42,7 @@ def _bin_widths(edges: np.ndarray) -> np.ndarray:
     return w
 
 
-def _within_request_index(counts: np.ndarray, dtype: np.dtype) -> np.ndarray:
+def _within_request_index(counts: np.ndarray, dtype: Any) -> np.ndarray:
     """``0..count_i - 1`` for each request i, concatenated. O(total) and vectorised."""
     total = int(counts.sum())
     starts = (np.cumsum(counts) - counts).astype(np.int32)
@@ -73,7 +79,8 @@ def grouped_rows(X: np.ndarray, rtilde: np.ndarray, delta: np.ndarray,
         "X": X[keep][request_index],
         "bin": bin_index,
         "y": y,
-        "w": _bin_widths(edges)[bin_index],
+        "w": np.ones(total, dtype=np.float32),
+        "bin_width": _bin_widths(edges)[bin_index],
         "request_index": request_index,
         "eligible_index": np.flatnonzero(keep),
         "n_rows": total,

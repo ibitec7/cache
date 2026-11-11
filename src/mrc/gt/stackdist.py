@@ -28,7 +28,7 @@ from mrc.eval.mrc import capacity_grid, mrc_curve
 
 def mrc_from_labels(
     labels: Mapping[str, np.ndarray],
-    capacities: Sequence[int],
+    capacities: Sequence[int] | np.ndarray,
     by_bytes: bool = False,
 ) -> np.ndarray:
     """Miss ratio at each capacity from a label dict produced by `compute_reuse`.
@@ -60,3 +60,21 @@ def identified_grid(
     if top < 1:
         raise ValueError(f"no identified capacity below overflow_edge={overflow_edge}")
     return capacity_grid(top, points)
+
+
+def capacity_grid_from_edges(edges: np.ndarray, points: int = N_CAPACITIES) -> np.ndarray:
+    """Capacities aligned to bin upper edges, strictly below the overflow bin.
+
+    A binned hazard is a step function: its survival at capacity C is the product
+    through `bin(C - 1)`. Evaluating that step inside a wide bin against a smooth
+    ground truth charges the model for the bin's width, not for its error. At the
+    upper edge of bin b the model's survival and `P(R >= C)` refer to the same
+    event, so the comparison is exact up to the within-bin hazard assumption.
+    """
+    inner = np.asarray(edges, dtype=np.int64)[1:-2]
+    if inner.size == 0:
+        raise ValueError("no bin upper edge below the overflow edge")
+    if inner.size > points:
+        keep = np.unique(np.round(np.linspace(0, inner.size - 1, points)).astype(int))
+        inner = inner[keep]
+    return inner

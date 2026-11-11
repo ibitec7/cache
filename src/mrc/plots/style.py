@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from cycler import cycler
 
 SERIF_CANDIDATES = ["Nimbus Roman", "Liberation Serif", "Times New Roman", "DejaVu Serif"]
 
@@ -46,7 +47,7 @@ def apply_style() -> None:
         "savefig.pad_inches": 0.02,
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
-        "axes.prop_cycle": mpl.cycler(color=PALETTE),
+        "axes.prop_cycle": cycler(color=PALETTE),
     })
 
 

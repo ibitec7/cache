@@ -47,7 +47,8 @@ def test_byte_mrc_close_to_replay():
 
 def test_style_contract():
     import matplotlib as mpl
-    from mrc.plots.style import apply_style, SERIF_CANDIDATES
+
+    from mrc.plots.style import SERIF_CANDIDATES, apply_style
     apply_style()
     assert mpl.rcParams["font.family"] == ["serif"] or mpl.rcParams["font.family"] == "serif"
     assert mpl.rcParams["axes.grid"] is False

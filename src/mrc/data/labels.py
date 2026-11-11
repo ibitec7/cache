@@ -102,7 +102,7 @@ def save_labels(
     if npz_path.suffix != ".npz":
         raise ValueError(f"label cache path must end in .npz, got {npz_path}")
     npz_path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(npz_path, **labels)
+    np.savez_compressed(npz_path, **labels)  # type: ignore[arg-type]
 
     eligible = np.asarray(labels["eligible"], dtype=bool)
     delta = np.asarray(labels["delta"], dtype=bool)

@@ -50,7 +50,7 @@ class Trace:
     def __len__(self) -> int:
         return int(self.ts.shape[0])
 
-    def slice(self, start: int, stop: int) -> "Trace":
+    def slice(self, start: int, stop: int) -> Trace:
         return Trace(
             ts=self.ts[start:stop],
             key=self.key[start:stop],
@@ -63,7 +63,7 @@ class Trace:
 
     @property
     def n_keys(self) -> int:
-        return int(len(self.key_vocab))
+        return len(self.key_vocab)
 
 
 def _open(path: str | Path) -> pa.NativeFile:

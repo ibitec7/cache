@@ -29,9 +29,8 @@ def _curves(pred: ArrayLike, truth: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _trapezoid(y: np.ndarray, x: np.ndarray) -> float:
-    """Trapezoid rule; numpy 2 renamed `trapz` to `trapezoid`."""
-    fn = getattr(np, "trapezoid", None) or np.trapz
-    return float(fn(y, x))
+    """Trapezoid rule."""
+    return float(np.trapezoid(y, x))
 
 
 def abc(pred: ArrayLike, truth: ArrayLike, capacities: ArrayLike) -> float:

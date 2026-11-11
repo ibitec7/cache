@@ -42,3 +42,6 @@ wiki/site/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
+# trained boosters (regenerable, multi-MB text)
+artifacts/models/
