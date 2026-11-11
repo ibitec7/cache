@@ -5,65 +5,101 @@
 
 \subsection{Survival as a Product of Hazards}
 
-For integer $k \ge 1$, apply the chain rule to the event $\{r \ge k\}$:
+For an integer bin $k \ge 0$, apply the chain rule to the event that the reuse
+distance reaches bin $k+1$:
 \begin{align}
-    \Pr(r \ge k)
-    &= \Pr(r \ge k \mid r \ge k-1)\,\Pr(r \ge k-1) \nonumber\\
-    &= \bigl(1 - \Pr(r = k-1 \mid r \ge k-1)\bigr)\,\Pr(r \ge k-1) \nonumber\\
-    &= \bigl(1 - h_{k-1}\bigr)\,S(k-1).
+    \Pr(R \ge b_{k+1})
+    &= \Pr(R \ge b_{k+1} \mid R \ge b_{k})\,\Pr(R \ge b_{k}) \nonumber\\
+    &= \bigl(1 - \Pr(B = k \mid B \ge k)\bigr)\,\Pr(R \ge b_{k}) \nonumber\\
+    &= \bigl(1 - h_k\bigr)\,S_{k-1}.
 \end{align}
-Unrolling from $S(0) = \Pr(r \ge 0) = 1$ gives \cref{eq:survival}. The hazard
-sequence and the survival function therefore carry the same information, and
-$h_k = 1 - S(k+1)/S(k)$ recovers the hazard from the curve.
+Unrolling from $S_{-1} = 1$ gives \cref{eq:survival}. The hazard sequence and the
+survival function therefore carry the same information, and
+$h_k = 1 - S_k/S_{k-1}$ recovers the hazard from the curve. No monotonicity of
+$h_k$ in $k$ is needed for monotonicity of the curve in capacity, because every
+factor stays in $[0,1]$: a local reversal in the hazard cannot reverse the curve,
+it only inflates the variance of $S_k$ at large $k$, where estimation error
+accumulates through the product.
 
-\subsection{Bias from Treating Censored Requests as Misses}
+\subsection{Bias from Treating a Pooled Distance as Resolved}
 
-Let a fraction $\pi$ of requests be right-censored at $\tau$, and suppose a
-naive estimator assigns them $r = \tau$. The estimated survival at $C > \tau$ is
-then $\hat{S}(C) = \Pr(r \ge C \mid \delta = 1)\,(1-\pi)$, while the target is
-$\Pr(r \ge C)$. Because $\Pr(r \ge C \mid \delta = 1) \le \Pr(r \ge C \mid r < \tau)$
-for positively associated censoring, the naive curve understates survival at
-large $C$, hence overstates the hit ratio exactly where capacity decisions are
-made. The direction of the bias is therefore known even when its magnitude is
-not, which is why \cref{sec:methods} treats censoring explicitly rather than
-truncating the curve at $\tau$.
+Two truncations are tempting and both bias the curve in a known direction.
 
-\subsection{Equivalence of the Grouped and Expanded Likelihoods}
+For a request whose true distance exceeds the cap, $R_i > c$, assigning
+$\tilde R_i = c$ treats an unresolved observation as a resolution at $c$. The
+estimated survival then satisfies $\hat S(c) = \Pr(R \ge c \mid R \le c)$ on the
+capped part of the data, which is at most $\Pr(R \ge c)$ because the conditioning
+excludes exactly the long distances. Understating survival understates the miss
+ratio, so the curve is optimistic at and above the cap. The capacity grid is
+truncated below $c$ precisely so that this bias never enters a reported number.
 
-For a request observed in bin $k_i$, the grouped likelihood contribution is
-$S(k_i)\,h_{k_i}$, which by \cref{eq:survival} equals
-$\prod_{j<k_i}(1-h_j)\cdot h_{k_i}$. The expanded binary likelihood over rows
-$(i, k)$ for $k \le k_i$, with labels $y_{i,k} = \mathbb{1}\{k = k_i\}$, is
+For the forward formulation, a request that is never reused inside the window has
+no observed distance at all, only the bound $\Gamma_i$, the number of distinct
+keys after it. Assigning it $\Gamma_i$ treats the bound as an event. The fitted
+hazard then places mass at short distances for keys that never resolved, which
+inflates the hit ratio at small capacities. That is the measured reason the
+backward distance of \cref{eq:reuse} is the target: it is observed, not bounded.
+
+\subsection{The Per-Step Likelihood and the Grouped Approximation}
+
+For a request observed in bin $k_i$, the per-step contribution is
+$S_{k_i-1}\,h_{k_i}$, which by \cref{eq:survival} equals
+$\prod_{b<k_i}(1-h_b)\cdot h_{k_i}$. The expanded binary likelihood over rows
+$(i,b)$ for $b \le k_i$, with labels $y_{i,b} = \mathbf{1}\{b = k_i\}$, is
 \begin{equation}
-    \prod_{k=0}^{k_i}\bigl(1-h_k\bigr)^{1-y_{i,k}}\,h_k^{\,y_{i,k}}
-    \;=\; \prod_{k<k_i}\bigl(1-h_k\bigr)\cdot h_{k_i},
+    \prod_{b=0}^{k_i}\bigl(1-h_b\bigr)^{1-y_{i,b}}\,h_b^{\,y_{i,b}}
+    \;=\; \prod_{b<k_i}\bigl(1-h_b\bigr)\cdot h_{k_i},
 \end{equation}
-identical term by term. Fitting the expanded rows with a binary objective is
-therefore maximum likelihood for the grouped problem, which is the form used in
-\cref{eq:likelihood}. The argument is the discrete analogue of the Turnbull
-construction for grouped data \cite{turnbull1976}.
+identical term by term, so fitting the per-step rows with a binary objective is
+maximum likelihood for the discrete hazard. The construction is the discrete
+analogue of the Turnbull estimator for grouped data \cite{turnbull1976}.
 
-\section{Hyperparameters}
+The fit in this report uses the grouped rows of \cref{eq:rows}, one Bernoulli
+trial per bin at risk instead of one per unit of distance. If the hazard is
+constant within a bin of width $w_b$, the probability of an event inside that bin
+is $1 - (1-h_b)^{w_b}$ and so is the survival decrement, so the grouped form
+approximates the per-step likelihood with a per-bin bias of order $w_b h_b^2$.
+Weighting a grouped row by $w_b$ recovers the exact grouped likelihood only under
+a complementary log-log link with an offset of $\log w_b$; under the binary
+log-loss used here it scales one row's loss by $w_b$ and is not the likelihood of
+any model. Gate 3 of \cref{sec:methods} checks that the two expansions agree on
+support and survival, and the approximation is stated rather than hidden.
+
+\section{Hyperparameters and Protocol Constants}
 \label{sec:appendix-hyper}
 
-\begin{table}[ht]
+\begin{table}[t]
 \centering
-\caption{Selected hyperparameters per parametrization. Placeholders until the
-Optuna sweep completes; the search space is \cref{tab:searchspace}.}
-\label{tab:selected-hyper}
+\footnotesize
+\caption{The fixed parameter set used for every reported run, from
+\texttt{mrc.pipeline.DEFAULT\_PARAMS}, and the protocol constants that bound the
+fit.}
+\label{tab:fixed-params}
 \begin{tabular}{@{}l l l@{}}
 \toprule
-Hyperparameter & R-as-feature & Per-bin \\
+Setting & Value & Role \\
 \midrule
-Number of leaves & \ldots & \ldots \\
-Learning rate & \ldots & \ldots \\
-Minimum child samples & \ldots & \ldots \\
-Feature fraction & \ldots & \ldots \\
-Bagging fraction & \ldots & \ldots \\
-L2 regularization & \ldots & \ldots \\
-Max bins & \ldots & \ldots \\
-Hazard bins $K$ & \ldots & \ldots \\
-Trials & \ldots & \ldots \\
+\texttt{objective} & binary & per-row Bernoulli likelihood \\
+\texttt{metric} & binary logloss & early-stopping criterion \\
+\texttt{num\_leaves} & 63 & tree capacity \\
+\texttt{learning\_rate} & 0.05 & shrinkage per round \\
+\texttt{min\_data\_in\_leaf} & 100 & leaf floor \\
+\texttt{feature\_fraction} & 0.9 & column subsample per tree \\
+\texttt{bagging\_fraction} & 0.8 & row subsample per tree \\
+\texttt{bagging\_freq} & 1 & bagging every round \\
+\texttt{lambda\_l2} & 1.0 & leaf-value penalty \\
+\texttt{num\_threads} & 12 & parallelism \\
+\texttt{seed} & 7 & sampler and bagging seed \\
+\texttt{deterministic} & true & reproducible histogram build \\
+\texttt{force\_row\_wise} & true & one deterministic row layout \\
+\midrule
+boosting rounds & 300 & cap, not a fixed length \\
+early stopping & 50 rounds & on the last 15\% of fit rows \\
+fit / valid / test split & 0.70 / 0.85 / 1.00 & contiguous request blocks \\
+grouped-row budget & 20{,}000{,}000 & training subsample size \\
+requested bins & 32 & realised counts in \cref{tab:traces} \\
+requested grid points & 24 & realised counts in \cref{tab:traces} \\
+truncation cap $c$ & $b_{M-1}-1$ & distances at or above $b_{M-1}$ pooled \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -71,19 +107,114 @@ Trials & \ldots & \ldots \\
 \section{Per-Cluster Numbers}
 \label{sec:appendix-clusters}
 
-\begin{table}[ht]
+\begin{table}[t]
 \centering
-\caption{Per-cluster curve error and calibration, both parametrizations, held-out
-segment. Values are placeholders.}
-\label{tab:per-cluster}
-\begin{tabular}{@{}l S[table-format=1.3] S[table-format=1.3] S[table-format=1.3] S[table-format=1.3] S[table-format=1.3]@{}}
+\footnotesize
+\caption{Test-block metrics for all three models and all three traces. MAE, MAX,
+bias, MRE and ABC are in miss-ratio units and dimensionless; MRE is over grid
+points with the truth at least 0.01; $n$ is the number of grid points. Rows
+named \emph{hazard} give the model of \cref{sec:methods}; \emph{Kaplan-Meier} and
+\emph{hit-count} are its two baselines.}
+\label{tab:all-metrics}
+\begin{tabular}{@{}l l r r r r r r@{}}
 \toprule
-Cluster & {Max err} & {Mean err} & {ECE} & {Brier} & {IBS} \\
+Trace & Model & MAE & MAX & bias & MRE & ABC & $n$ \\
 \midrule
-C1 & \ldots & \ldots & \ldots & \ldots & \ldots \\
-C2 & \ldots & \ldots & \ldots & \ldots & \ldots \\
-C3 & \ldots & \ldots & \ldots & \ldots & \ldots \\
-C4 & \ldots & \ldots & \ldots & \ldots & \ldots \\
+cluster45 & hazard & 0.00027 & 0.00107 & $-0.00017$ & 0.0005 & 0.0003 & 24 \\
+cluster45 & Kaplan-Meier & 0.02000 & 0.03429 & $-0.01645$ & 0.0356 & 0.0202 & 24 \\
+cluster45 & hit-count & 0.10968 & 0.19838 & $-0.07341$ & 0.1838 & 0.1139 & 24 \\
+cluster26 & hazard & 0.00548 & 0.02057 & $-0.00539$ & 0.0106 & 0.0053 & 24 \\
+cluster26 & Kaplan-Meier & 0.01178 & 0.01537 & $-0.01178$ & 0.0201 & 0.0119 & 24 \\
+cluster26 & hit-count & 0.07927 & 0.27053 & $+0.04805$ & 0.1477 & 0.0799 & 24 \\
+cluster10 & hazard & 0.00772 & 0.01902 & $-0.00772$ & 0.0127 & 0.0092 & 12 \\
+cluster10 & Kaplan-Meier & 0.04387 & 0.12042 & $-0.04387$ & 0.0623 & 0.0713 & 12 \\
+cluster10 & hit-count & 0.07930 & 0.33206 & $-0.06852$ & 0.1112 & 0.1418 & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The columns of \cref{tab:all-metrics} separate two failure modes that a single
+error number would merge. The marginal curve is biased almost exactly by its own
+mean absolute error on two traces, which is the signature of a constant vertical
+offset; its shape is close and its level is not. The hit-count regression has a
+bias of the opposite sign on the second trace, where the frequency-to-distance map
+places the proxy too high, and a worst-case error of 0.33 on the cold-heavy
+trace, where a single mapped distance decides half the curve.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Mean absolute SHAP contribution per column, top five per trace, on
+validation grouped rows. Columns not listed contribute less than 0.03.}
+\label{tab:shap}
+\begin{tabular}{@{}l r l r l r@{}}
+\toprule
+\multicolumn{2}{c}{cluster45} & \multicolumn{2}{c}{cluster26} & \multicolumn{2}{c}{cluster10} \\
+\cmidrule(lr){1-2}\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Column & {mean $|$SHAP$|$} & Column & {mean $|$SHAP$|$} & Column & {mean $|$SHAP$|$} \\
+\midrule
+\texttt{log\_gap} & 2.66 & \texttt{log\_gap} & 1.32 & \texttt{log\_gap} & 3.29 \\
+\texttt{hazard\_step} & 1.42 & \texttt{hazard\_step} & 1.03 & \texttt{hazard\_step} & 3.29 \\
+\texttt{log\_age} & 0.12 & \texttt{log\_age} & 0.10 & \texttt{log\_obj\_size} & 0.08 \\
+\texttt{op} & 0.02 & \texttt{log\_freq} & 0.03 & \texttt{log\_age} & 0.07 \\
+\texttt{log\_freq} & 0.02 & \texttt{log\_ttl} & 0.02 & \texttt{log\_val\_size} & 0.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{What each metric of \cref{eq:metrics-abs} measures, why it is the right
+quantity here, and what failing it would mean.}
+\label{tab:metric-roles}
+\begin{tabular}{@{}l p{0.29\textwidth} p{0.26\textwidth} p{0.26\textwidth}@{}}
+\toprule
+Metric & What it measures & Why it is right here & What failing it means \\
+\midrule
+MAE & average absolute displacement over the grid & the primary scalar, comparable across traces and models & the curve is wrong on average \\
+MAX & worst displacement at any grid capacity & a sizing decision sits at one capacity, and the worst point sets the risk & one capacity is badly wrong, enough to mis-size a cache \\
+bias & signed displacement & separates a curve that is uniformly low from one that is noisy around the truth & the model systematically over- or under-provisions \\
+MRE & relative displacement where the miss ratio is at least 0.01 & small miss ratios dominate the tail, where absolute error hides a large relative one & the curve is wrong in relative terms where small misses still cost latency \\
+ABC & average displacement in log capacity & one number over the whole grid, independent of the point count & the curve's shape is wrong across decades \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Limitations, their mechanism, and what each one bounds in this report.}
+\label{tab:limitations}
+\begin{tabular}{@{}p{0.19\textwidth} p{0.37\textwidth} p{0.34\textwidth}@{}}
+\toprule
+Limitation & Mechanism & Consequence for the claims \\
+\midrule
+Cold-heavy trace & $p_c = 0.500$ on cluster10, so the achievable hit ratio is 0.5 and an absolute 90\% target is unreachable & every provisioning target is a fraction of $1-p_c$, and the curve is judged on a band 0.5 wide; this is the worst of the three traces \\
+Forward target & a forward bound is a lower bound on an unobserved distance and labels never-reused keys as resolved & the model estimates the backward distance distribution, not when a key is next requested; the forward fit was more than an order of magnitude worse \\
+Window truncation & each trace is a 5-million-request prefix, so a request whose previous access predates it is counted as compulsory & model and truth share the convention, but the curve describes a warm-started window; nothing above $b_{M-1}$ is claimed \\
+Object capacities, LRU only & identification is for unit-size objects under LRU; byte stack distance is approximate for variable sizes & byte capacities are not reported; segmented or sampled LRU and TTL expiry have no threshold hit condition, so this is the LRU curve of the same stream \\
+One parameter set & no per-trace tuning is reported & the search space exists but no result depends on it; a tuned run would need its own held-out block \\
+Attribution on a subsample & SHAP and the ablation use fit-window requests and the validation block, and the ablation zeroes columns instead of deleting them & no test-block attribution; a zeroed column can still be split on, so the ablation is read beside SHAP rather than instead of it \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Feature-family ablation: validation MAE of the curve after zeroing a
+family and refitting, on a request subsample of the fit window. \texttt{all} is
+the same subsample with no column zeroed. Lower is better.}
+\label{tab:ablation}
+\begin{tabular}{@{}l r r r r r r@{}}
+\toprule
+Trace & \texttt{all} & \texttt{no\_timing} & \texttt{no\_sizes} & \texttt{no\_popularity} & \texttt{no\_client} & \texttt{no\_namespace} \\
+\midrule
+cluster45 & 0.00051 & 0.01557 & 0.00052 & 0.00040 & 0.00048 & 0.00048 \\
+cluster26 & 0.02303 & 0.02098 & 0.02166 & 0.02198 & 0.02138 & 0.02180 \\
+cluster10 & 0.00509 & 0.02365 & 0.00572 & 0.00493 & 0.00498 & 0.00490 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -91,32 +222,36 @@ C4 & \ldots & \ldots & \ldots & \ldots & \ldots \\
 \section{Reproducibility}
 \label{sec:appendix-repro}
 
-All figures under \texttt{artifacts/figures/} are produced by
-\texttt{src/mrc/plots/}; none is edited by hand. Ground truth, model fits, and
-plots are regenerated in that order, so that a figure can always be traced to
-the run that produced it.
+Every artefact is a pure function of a cached input and a manifest, and every
+stage is a command. From the repository root, with the project environment:
 
 \begin{verbatim}
-# 1. Ground-truth MRCs by full simulation on the capacity grid
-uv run python -m mrc.simulate --trace data/<cluster>.trace \
-    --capacities configs/capacities.yaml --out artifacts/ground_truth
-
-# 2. Fit both hazard parametrizations
-uv run python -m mrc.fit --trace data/<cluster>.trace \
-    --config configs/hazard.yaml --parametrization {r_feature,per_bin} \
-    --out artifacts/models
-
-# 3. Evaluate: MRC error, calibration, Brier and integrated Brier
-uv run python -m mrc.evaluate --models artifacts/models \
-    --truth artifacts/ground_truth --out artifacts/metrics
-
-# 4. Plots (the only writer of artifacts/figures)
-uv run python -m mrc.plots --metrics artifacts/metrics \
-    --out artifacts/figures
-
-# 5. Document
-latexmk -pdf -interaction=nonstopmode main.tex
+env -u PYTHONPATH uv run python -m mrc.cli labels \
+    data/raw/traces/cluster45.sort.zst --cluster cluster45
+env -u PYTHONPATH uv run python -m mrc.cli features cluster45
+env -u PYTHONPATH uv run python -m mrc.cli truth   cluster45
+env -u PYTHONPATH uv run python -m mrc.cli train   cluster45
+env -u PYTHONPATH uv run python -m mrc.cli tune    cluster45 --trials 20
+env -u PYTHONPATH uv run python -m mrc.cli interpret cluster45
+env -u PYTHONPATH uv run python -m mrc.cli plots \
+    --clusters cluster45,cluster26,cluster10
 \end{verbatim}
 
-The trace files are not redistributed; \texttt{data/} holds placeholders and the
-commands above are parameterized by cluster name.
+\texttt{labels} writes \texttt{data/processed/<cluster>/labels.npz} beside a
+manifest that records the source shard, the request limit and the cap;
+\texttt{train} writes \texttt{artifacts/tables/<cluster>\_metrics.json},
+\texttt{artifacts/tables/<cluster>\_curves.npz} and
+\texttt{artifacts/models/<cluster>.txt}, and logs one MLflow run.
+\texttt{plots} regenerates every figure and every table in
+\texttt{report/} from those cached artefacts, so no figure or table is drawn or
+typed by hand. The report is built with
+
+\begin{verbatim}
+cd report && env -u PYTHONPATH latexmk -pdf -interaction=nonstopmode main.tex
+\end{verbatim}
+
+The traces are not redistributed. \texttt{data/raw/} is populated by
+\texttt{scripts/fetch\_traces.sh}, which records \texttt{url},
+\texttt{fetched\_at} and \texttt{sha256} per shard in a manifest; the commands
+above are parameterised by cluster name and read whatever shard that manifest
+names.

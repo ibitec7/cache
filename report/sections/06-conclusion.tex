@@ -1,48 +1,27 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-\subsection{Findings}
+A miss-ratio curve is the survival function of the backward reuse distance, and a
+discrete hazard with 12 request-level covariates estimates it on a held-out block to
+a mean absolute error of 0.0003 to 0.0077 across three production traces, against
+0.0118 to 0.0439 for the marginal curve and 0.0793 to 0.1097 for a hit-count
+regression. The same curves place provisioning capacity within 7.5\% of the truth,
+where the marginal curve misses by up to a factor of four. Capacity is an evaluation
+point of the survival function, not a regressor.
 
-% PLACEHOLDER: replace with the verified outcome once the runs complete.
-% State only what the held-out numbers support, and state simulation error
-% alongside model error.
-This section will report whether the discrete hazard formulation reproduces
-simulated MRCs within simulation error on the held-out segment, and whether the
-two parametrizations differ by more than that band. Three outcomes are
-distinguishable in advance: both parametrizations track the curve within the
-simulation band; the per-bin model tracks it and the shared model does not,
-which would indicate that the hazard's dependence on the bin index is not
-learnable from a single response surface; or neither tracks it, which would
-point at the feature set rather than at the survival formulation. No claim of
-the first outcome is made until \cref{tab:mrc-error} is populated.
+Four results support the claim: the smallest mean absolute error of the three on all
+three traces, including the cold-heavy one; a capacity ratio in $[0.925, 1.004]$ at
+every target and trace, so a curve error does not become a wrong sizing decision;
+recency first in the SHAP summary; and a 30-fold and 4.6-fold error increase when the
+timing family is removed on two traces.
 
-\subsection{Limitations}
+It would be falsified by a fourth trace on which the hazard's error is at or above
+the marginal curve's; by a provisioning ratio outside $[0.9, 1.1]$ at any target; by
+a trace on which the timing family is not load-bearing while the error stays low; or
+by a failure of gate 2 of \cref{sec:methods}, which would void every comparison.
 
-\textbf{Trace vintage.} The traces date from 2020. Cache workloads change with
-application mix, object sizes, and client libraries, so the fitted hazard is a
-description of that period, not a forecast. Any deployment would refit on
-current traces.
-
-\textbf{Single-vendor workload.} All clusters come from one production fleet.
-Cluster-level heterogeneity is visible within the fleet, but cross-vendor
-generalization is untested, and the cluster features used by the model may
-encode vendor-specific conventions.
-
-\textbf{Hazard binning.} Discretizing reuse distance into $K$ bins bounds the
-resolution of the curve, and the choice of $K$ interacts with capacity: a bin
-wider than the spacing of the capacity grid cannot represent the curve between
-grid points. Binning also makes the estimator sensitive to the bin edges near
-the knee of the curve.
-
-\textbf{Replacement policy.} Identification relies on the LRU hit condition of
-\cref{prop:lru-hit}. Production caches frequently use segmented or sampled LRU,
-and their hit condition is not a pure threshold on reuse distance, so the curve
-estimated here is the LRU curve for the same stream rather than the deployed
-policy's curve.
-
-\subsection{Future Work}
-
-The natural extensions are a policy-aware recency structure to replace the
-threshold condition, a continuous rather than binned hazard to remove the
-resolution limit, and a per-cluster transfer check to test whether a hazard
-fitted on one cluster transfers to another within the same fleet.
+Two questions remain open. \emph{Does the hazard transfer across traces?} The
+default is no: every number here is a within-trace fit. \emph{Is the grouped
+likelihood adequate?} Gate 3 shows the expansions agree on support, not on the
+estimate; the default is grouped, because per-step rows cannot be fitted at this
+scale.

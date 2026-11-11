@@ -1,112 +1,192 @@
 \section{Methods}
 \label{sec:methods}
 
-The model is a discrete hazard estimator. Each request contributes one binary
-observation per bin it survives, labelled by whether its reuse distance
-resolves in that bin. A gradient-boosted tree ensemble \cite{friedman2001}
-predicts the conditional resolution probability from request features.
+\captionsetup{hypcap=false}
 
-\subsection{Discrete Hazard with Gradient-Boosted Trees}
+One estimator produces every curve in this report: a gradient-boosted discrete
+hazard over the backward reuse distance, fitted on a grouped risk set with a
+12-column design matrix. Three baselines are scored on the same grid, and a set
+of exactness gates fixes the target and the ground truth before any fit.
 
-For a request with reuse distance $r_i$ observed in bin $k_i$, the expanded
-data set contains rows $(i, k)$ for $k = 0, \ldots, k_i$, with label
-\begin{equation}\label{eq:label}
-    y_{i,k} \;=\; \mathbb{1}\{r_i = k\},
-\end{equation}
-and row $(i,k)$ is in the risk set only if $r_i \ge k$. The model estimates
-$h_k(z_i) = \Pr(y_{i,k} = 1 \mid r_i \ge k, z_i)$, and the log-likelihood of the
-observed data is
-\begin{equation}\label{eq:likelihood}
-    \ell \;=\; \sum_{i} \Biggl[
-        \sum_{k=0}^{k_i - 1} \log\bigl(1 - h_k(z_i)\bigr)
-        \;+\; \delta_i \log h_{k_i}(z_i)
-    \Biggr],
-\end{equation}
-where $\delta_i$ is the event indicator of \cref{tab:notation}. The first term
-is the survival contribution of bins the request passed through, the second is
-the resolution contribution, present only when the distance is observed.
+\subsection{The Design Matrix}
 
-\subsection{Two Parametrizations}
+The 12 columns are computed from the request and from state the cache already
+holds at request time. Nothing reads a later request, so the matrix is causal by
+construction.
 
-\textbf{R-as-feature.} A single ensemble is trained on the expanded rows with
-the bin index $k$ appended to $z_i$ as a numeric feature. The model learns one
-response surface over features and bin index, which shares strength across bins
-and keeps the number of fitted models at one. The risk is that the ensemble must
-represent a monotone structure in $k$ implicitly.
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{The 12 design-matrix columns, in fixed order. A reordering or rename is
+a feature-version bump, because the fitted booster addresses columns by position.}
+\label{tab:features}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Column & Transform & Family \\
+\midrule
+\texttt{log\_obj\_size} & $\log(1+\text{bytes})$ & sizes \\
+\texttt{log\_key\_size} & $\log(1+\text{bytes})$ & sizes \\
+\texttt{log\_val\_size} & $\log(1+\max(s-\ell,0))$ & sizes \\
+\texttt{ns\_code} & categorical & namespace \\
+\texttt{op} & categorical & request type \\
+\texttt{is\_write} & $\mathbf{1}\{\text{op} \notin \{\text{get}, \text{gets}\}\}$ & request type \\
+\texttt{log\_ttl} & $\log(1+\max(\tau,0))$ & timing \\
+\texttt{has\_ttl} & $\mathbf{1}\{\tau > 0\}$ & timing \\
+\texttt{client\_bucket} & $\log(1+(c \bmod 512))$ & client \\
+\texttt{log\_gap} & $\log(1+g)$ & timing \\
+\texttt{log\_freq} & $\log(1+n_k)$ & popularity \\
+\texttt{log\_age} & $\log(1+i)$ & timing \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
 
-\textbf{Per-bin.} One binary ensemble is fitted per bin $k$ on that bin's risk
-set, using $z_i$ without the bin index. Each model is small and the hazard in
-each bin is unconstrained, at the cost of $K+1$ fits and no sharing between
-adjacent bins. Both parametrizations produce a hazard sequence that is
-normalized to $[0,1]$ and, if needed, projected to be non-increasing in $k$ for
-$S(k)$.
+Object size, key length and payload size give byte pressure; the namespace code is
+the key family; the request-type columns separate reads from writes; TTL, gap and
+window position describe when the key was last seen; the client bucket proxies
+access loop shape; and the occurrence count is a popularity sketch. Here $s$ is
+object size in bytes, $\ell$ key length, $\tau$ TTL in seconds, $c$ the client
+identifier, $g$ the requests since the previous access, $n_k$ the occurrence count
+so far and $i$ the request index.
 
-\subsection{Training Labels and Censoring Correction}
+\subsection{The Grouped Risk Set}
 
-Labels follow \cref{eq:label} directly for observed distances. A censored
-request with censoring time $\tau_i$ contributes rows for $k < \tau_i$ with
-label $0$ and no row at $\tau_i$; it is never labelled as a resolution. Two
-corrections are compared for the bias that remains when censoring correlates
-with features:
-\begin{enumerate}[label=(\roman*),nosep]
-    \item \textbf{Risk-set restriction:} drop bins whose at-risk count falls
-    below a floor, and report the curve only up to the largest well-populated
-    capacity.
-    \item \textbf{Inverse-censoring weights:} weight each uncensored row by the
-    inverse of the estimated censoring survival function at its bin, following
-    the usual inverse-probability-of-censoring construction.
-\end{enumerate}
-The comparison is reported in \cref{sec:experiments}; neither correction is
-assumed to dominate.
+For a request with truncated distance $\tilde R_i$ and bin $b_i =
+\mathrm{bin}(\tilde R_i)$, the fit sees one row per bin at risk, each with weight
+one, and a binary log-loss over those rows:
+\begin{align}
+    &\bigl(x_i, b, y_{i,b}\bigr), \quad b = 0,\dots,b_i, \qquad
+    y_{i,b} = \delta_i\,\mathbf{1}\{b = b_i\}, \label{eq:rows}\\
+    &\ell(\theta) = \sum_{i}\sum_{b=0}^{b_i}
+    \bigl[y_{i,b}\log h_b(x_i) + (1-y_{i,b})\log\bigl(1-h_b(x_i)\bigr)\bigr].
+    \label{eq:loss}
+\end{align}
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Symbols of \cref{eq:rows} and \cref{eq:loss}.}
+\label{tab:sym-rows}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Symbol & Domain & Meaning and units \\
+\midrule
+$b$ & $\{0,\dots,M-1\}$ & bin index (dimensionless) \\
+$b_i$ & $\{0,\dots,M-1\}$ & bin of the truncated distance of request $i$ (dimensionless) \\
+$y_{i,b}$ & $\{0,1\}$ & label of the row for request $i$ in bin $b$ (dimensionless) \\
+$\delta_i$ & $\{0,1\}$ & event indicator of \cref{eq:truncation} (dimensionless) \\
+$h_b(x_i)$ & $[0,1]$ & predicted hazard of bin $b$ (dimensionless) \\
+$\theta$ & $\mathbb{R}^p$ & booster parameters (dimensionless) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+
+Unit weight is the point: one row is one Bernoulli trial of the within-bin hazard,
+which is the discrete-hazard likelihood written per bin. Weighting a row by its bin
+width is correct only under a complementary log-log link with an offset of
+$\log w_b$; under the binary log-loss used here it scales one row's loss by $w_b$
+and is not the likelihood of any model. The earlier plan specified width weights,
+they inflated test error on a subsample, and they are not used. The expansion costs
+$O(M)$ rows per request instead of $O(\min(R_i, c))$.
+
+\subsection{Time-Block Split and the LightGBM Hazard}
+
+Requests are split by position into contiguous blocks at 70, 85 and 100\%, never at
+random, because neighbouring requests share keys and an interleaved split lets a
+tree memorise a key it will be scored on. Within the fit block the last 15\% of rows
+is the early-stopping set.
+
+Training rows are a uniform subsample of eligible fit-block requests, sized to a
+fixed grouped-row budget of 20 million rows. A subsample is unbiased for a
+likelihood that is a sum over requests, at the cost of variance; prediction and
+scoring use every request of the validation and test blocks.
+
+One booster is fitted with the bin index appended as a thirteenth column, so a
+single ensemble shares strength across adjacent bins; a per-bin parametrization is
+not used, because it needs $M$ fits and gives up the sharing across adjacent bins.
+The reported runs use one fixed parameter set (\cref{tab:fixed-params}): 63 leaves,
+learning rate 0.05, 300 boosting rounds at most, early stopping after 50 rounds,
+deterministic row-wise construction and a fixed seed.
 
 \subsection{Hyperparameter Search}
 
-Hyperparameters are selected with Optuna \cite{akiba2019} using the tree
-Parzen estimator over the space in \cref{tab:searchspace}. The objective is the
-validation integrated Brier score defined in \cref{sec:metrics}, not the
-training likelihood, because likelihood favors over-confident hazards.
+The search is Optuna with the tree-structured Parzen estimator, seeded and
+persisted to a SQLite study. The objective is validation-block MAE of the curve,
+not the training likelihood, because likelihood rewards an over-confident hazard.
+The capacity grid, bin edges and grouped rows are built once and reused by every
+trial, so a trial refits the booster only.
 
-\begin{table}[ht]
-\centering
-\caption{Optuna search space. Values are placeholders until the sweep is run.}
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Optuna search space, as implemented in
+\texttt{mrc.tuning.search.suggest\_params}.}
 \label{tab:searchspace}
 \begin{tabular}{@{}l l l@{}}
 \toprule
 Hyperparameter & Range & Scale \\
 \midrule
-Number of leaves & $[15, 255]$ & integer, log \\
-Learning rate & $[10^{-3}, 10^{-1}]$ & log \\
-Minimum child samples & $[20, 500]$ & integer, log \\
-Feature fraction & $[0.5, 1.0]$ & linear \\
-Bagging fraction & $[0.5, 1.0]$ & linear \\
-L2 regularization & $[10^{-8}, 10^{1}]$ & log \\
-Max bins & $\{63, 127, 255\}$ & categorical \\
-Hazard bins $K$ & $\{32, 64, 128\}$ & categorical \\
+\texttt{num\_leaves} & $[15, 127]$ & integer, log \\
+\texttt{learning\_rate} & $[0.01, 0.15]$ & log \\
+\texttt{min\_data\_in\_leaf} & $[50, 2000]$ & integer, log \\
+\texttt{feature\_fraction} & $[0.6, 1.0]$ & linear \\
+\texttt{bagging\_fraction} & $[0.6, 1.0]$ & linear \\
+\texttt{lambda\_l2} & $[10^{-3}, 10]$ & log \\
+\texttt{bagging\_freq} & $1$ & constant \\
+boosting rounds per trial & $300$ & constant \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{minipage}
+\end{center}
 
-\subsection{Evaluation Metrics}
-\label{sec:metrics}
+The reported numbers come from the fixed set of \cref{tab:fixed-params}, not from a
+tuned trial, so no result depends on the search; the tuned path is one flag away.
 
-Let $\hat{H}$ be the estimated curve and $H$ the simulated curve on a held-out
-segment of the same trace, evaluated on the capacity grid $\mathcal{C}$.
-\begin{enumerate}[label=(\roman*),nosep]
-    \item \textbf{MRC error:} the maximum absolute deviation
-    $\max_{C \in \mathcal{C}} |\hat{H}(C) - H(C)|$, and the mean absolute
-    deviation over $\mathcal{C}$.
-    \item \textbf{Calibration:} reliability of the hazard predictions, binned by
-    predicted probability, summarized as expected calibration error.
-    \item \textbf{Brier score:} mean squared error of the binary hazard
-    predictions, and the integrated Brier score over bins, which aggregates the
-    score across the survival path rather than at one horizon.
+\subsection{Baselines}
+
+Three baselines are scored on the same capacities, blocks and compulsory mass.
+
+\begin{enumerate}[nosep,leftmargin=*]
+    \item \textbf{Kaplan-Meier.} The empirical hazard of each bin, $h_b = d_b/n_b$,
+    with no covariates, and the survival product of \cref{eq:mrc}. Censoring enters
+    only through the risk set, so the gap to the hazard model is the value of the
+    covariates.
+    \item \textbf{Hit-count regression.} Regress $\log(1+\text{freq})$ on the 12
+    columns, map the prediction through the training deciles of predicted frequency
+    to the median training distance of each decile, and read the curve as the
+    fraction of mapped distances at or above $C$. Frequency is not a distance.
+    \item \textbf{Single-row.} One row per request, labelled at its own bin, with
+    survival read as one minus the predicted event probability where the request's
+    own bin is at or below $k(C)$ and one elsewhere. It drops the product over the
+    bins the request survived, and it needs the scored block's own distances.
 \end{enumerate}
 
-\subsection{Simulation Ground Truth}
+Under the backward target most requests are events, so the single-row probability
+saturates and its curve collapses to the empirical survival of the block it is
+scored on. It isolates the risk-set expansion and stays out of the accuracy table,
+because a curve that reads the scored block's distances is not a prediction.
 
-Ground truth is a full simulation of the trace on the capacity grid, using
-exact stack distance where the trace fits in memory and SHARDS
-\cite{waldspurger2015} with a fixed sampling rate where it does not. The
-sampling rate and the resulting confidence band are recorded with each curve,
-so that model error is never reported below simulation error. Ground truth is
-computed once per trace and capacity, never per model configuration.
+\subsection{Exactness Gates}
+
+Five gates, all at tolerance zero and all upstream of any fit, establish that the
+target and the ground truth are the same object:
+
+\begin{enumerate}[label=\arabic*.,nosep,leftmargin=*]
+    \item the reuse kernel returns the same distances as the naive
+    ordered-dictionary reference (\texttt{tests/test\_smoke.py});
+    \item the object-count MRC computed from $R$ equals single-request LRU replay
+    exactly (\texttt{tests/gt/test\_stackdist.py});
+    \item the grouped risk set and the per-step support give the same survival
+    (\texttt{tests/models/test\_risk\_set.py});
+    \item the block masks are contiguous, ordered and cover every request once
+    (\texttt{tests/models/test\_blocks.py});
+    \item a capacity at or above $b_{M-1}$ is refused, and two fits with the same
+    seed and rows are identical (\texttt{tests/models/test\_hazard\_model.py}).
+\end{enumerate}
+
+Gate 2 is load-bearing: the truth is the empirical survival of the backward
+distance, and the stack property makes it equal to the curve of an actual LRU cache,
+so the comparison is between a model and an identity. Gate 3 licenses the grouped
+fit, without which the unit weight of \cref{eq:loss} would be an approximation of
+unknown sign.

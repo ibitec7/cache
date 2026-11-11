@@ -1,101 +1,222 @@
 \section{Formalization}
 \label{sec:formalization}
 
-We fix a request stream and treat each request's reuse distance as a discrete
-survival time. This section defines the quantities, states the identification
-condition that connects reuse distance to capacity, and records what censoring
-means in this setting.
+\captionsetup{hypcap=false}
 
-\subsection{Notation}
+A miss-ratio curve is the survival function of the backward reuse distance,
+parametrized by a discrete hazard on a log-spaced bin grid. This section states the
+one censoring mechanism and the capacity range it identifies, and fixes the
+metrics.
 
-\begin{table}[ht]
-\centering
-\caption{Notation. All distances are counts of distinct blocks, not bytes.}
-\label{tab:notation}
-\begin{tabular}{@{}l l p{0.55\textwidth}@{}}
+\subsection{Backward Reuse Distance}
+
+For request $i$ with key $k_i$, let $p(i) = \max\{j < i : k_j = k_i\}$ be the
+position of the previous access to the same key, and $p(i) = \bot$ when the key has
+not been requested earlier in the window. The reuse distance is the number of
+distinct keys requested strictly between the two accesses,
+\begin{equation}\label{eq:reuse}
+    R_i \;=\; \bigl|\{\, k_j : p(i) < j < i \,\}\bigr|,
+\end{equation}
+with $R_i = \infty$ when $p(i) = \bot$.
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Symbols of \cref{eq:reuse}.}
+\label{tab:sym-reuse}
+\begin{tabular}{@{}l l l@{}}
 \toprule
-Symbol & Domain & Meaning \\
+Symbol & Domain & Meaning and units \\
 \midrule
-$x_i$ & $\mathcal{B}$ & block identifier of the $i$-th request \\
-$r_i$ & $\mathbb{N}$ & reuse distance of request $i$; distinct blocks referenced since the previous access to $x_i$ \\
-$C$ & $\mathbb{N}$ & cache capacity in blocks \\
-$k$ & $\{0,1,\ldots,K\}$ & hazard bin index, a discretized reuse distance \\
-$h_k$ & $[0,1]$ & discrete hazard, $\Pr(r = k \mid r \ge k)$ \\
-$S(k)$ & $[0,1]$ & survival function, $\Pr(r \ge k)$ \\
-$H(C)$ & $[0,1]$ & miss-ratio curve, hit ratio at capacity $C$ \\
-$\tau_i$ & $\mathbb{N} \cup \{\infty\}$ & censoring time for request $i$ \\
-$\delta_i$ & $\{0,1\}$ & event indicator, $1$ if $r_i$ observed, $0$ if censored \\
-$z_i$ & $\mathbb{R}^d$ & feature vector for request $i$ \\
+$i, j$ & $\{1,\dots,N\}$ & request index in the window (count) \\
+$k_i$ & $\mathcal{K}$ & key of request $i$ (identifier) \\
+$p(i)$ & $\{1,\dots,N\} \cup \{\bot\}$ & previous access to $k_i$ (request index) \\
+$R_i$ & $\mathbb{N}_0 \cup \{\infty\}$ & backward reuse distance (distinct keys, equivalently objects) \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{minipage}
+\end{center}
 
-\subsection{Reuse Distance}
+A backward distance depends on the past only, so it is observed for every request
+whose previous access lies inside the window, and the window end does not censor it.
 
-For a request to block $x_i$ at position $i$, let $j(i) = \max\{j < i : x_j = x_i\}$
-be the position of the previous access, or $\varnothing$ if none exists. The
-reuse distance is the number of distinct blocks referenced strictly between the
-two accesses,
-\begin{equation}\label{eq:reuse-distance}
-    r_i \;=\; \bigl|\{\, x_m : j(i) < m < i \,\}\bigr|,
-\end{equation}
-with $r_i = \infty$ for a first access. A first access is a compulsory miss at
-every capacity and is excluded from the hazard model; it contributes a fixed
-offset to the MRC.
-
-\subsection{Hazard, Survival, and the Miss-Ratio Curve}
-
-Discretize $r$ into bins $0, \ldots, K$ and let
-\begin{equation}\label{eq:hazard}
-    h_k \;=\; \Pr(r = k \mid r \ge k), \qquad k = 0, \ldots, K,
-\end{equation}
-be the discrete hazard, the conditional probability that the reuse distance
-resolves in bin $k$ given that it has not resolved before $k$. The survival
-function is the product of conditional non-resolution probabilities,
-\begin{equation}\label{eq:survival}
-    S(k) \;=\; \Pr(r \ge k) \;=\; \prod_{j=0}^{k-1}\bigl(1 - h_j\bigr),
-    \qquad S(0) = 1,
-\end{equation}
-and the MRC evaluated at capacity $C$ is
-\begin{equation}\label{eq:mrc}
-    H(C) \;=\; \Pr(r < C) \;=\; 1 - S(C).
-\end{equation}
-Capacity enters \cref{eq:mrc} only as an evaluation point of the estimated
-survival function. No model is refitted when $C$ changes.
-
-\subsection{Identification}
+\subsection{Miss Ratio as a Survival Function}
 
 \begin{proposition}[LRU hit condition]\label{prop:lru-hit}
-Under LRU replacement with capacity $C$ blocks, a repeated access $x_i$ hits if
-and only if $r_i < C$.
+Under LRU replacement with capacity $C$ objects, a repeated request $i$ hits if and
+only if $R_i < C$.
 \end{proposition}
 
-\begin{proof}[Proof sketch]
-LRU maintains a recency list of at most $C$ distinct blocks. Immediately before
-request $i$, that list contains exactly the $C$ most recently referenced
-distinct blocks, so $x_i$ is resident iff fewer than $C$ distinct blocks were
-referenced since $j(i)$, which is the condition $r_i < C$. This is the stack
-property established by Mattson et al.~\cite{mattson1970}.
+\begin{proof}
+Before request $i$ the cache holds the $C$ most recently requested distinct keys.
+The keys requested after $p(i)$ are exactly the keys more recent than $k_i$, and
+they are distinct, so they occupy $R_i$ recency positions above $k_i$. The key
+$k_i$ is resident if and only if $R_i < C$, the stack property established by
+Mattson et al.~\cite{mattson1970}.
 \end{proof}
 
-\begin{corollary}\label{cor:mrc-identity}
-For LRU, $H(C) = \Pr(r < C)$ exactly, so an estimator of the reuse-distance
-distribution is an estimator of the MRC at every capacity simultaneously.
-\end{corollary}
+Write $B = \mathrm{bin}(R)$ for the bin index of the reuse distance and $X$ for the
+feature vector of a request. The miss ratio at capacity $C$ is the probability that
+a repeated request misses, averaged over requests, plus the compulsory mass that no
+capacity can recover:
+\begin{equation}\label{eq:mrc}
+    m(C) \;=\; p_c \;+\; (1 - p_c)\,\frac{1}{N}\sum_{i=1}^{N} S_{k(C)}(x_i),
+    \qquad k(C) = \mathrm{bin}(C - 1),
+\end{equation}
+with $S_k(x) = \Pr(R \ge b_{k+1} \mid X = x)$ the survival through bin $k$ and
+$b_{k+1}$ that bin's upper edge.
 
-The corollary is the identification argument and also its boundary: it holds
-for LRU and for policies whose hit condition can be written as a threshold on
-reuse distance. For adaptive policies the map from $r$ to a hit is not a
-threshold, and \cref{eq:mrc} is not the policy's MRC. We return to this in
-Section~\ref{sec:conclusion}.
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Symbols of \cref{eq:mrc}.}
+\label{tab:sym-mrc}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Symbol & Domain & Meaning and units \\
+\midrule
+$C$ & $\mathbb{N}$ & cache capacity (objects) \\
+$m(C)$ & $[0,1]$ & miss ratio at capacity $C$ (dimensionless) \\
+$p_c$ & $[0,1]$ & fraction of requests with no previous access in the window (dimensionless) \\
+$N$ & $\mathbb{N}$ & requests in the scored block (count) \\
+$x_i$ & $\mathbb{R}^{12}$ & feature vector of request $i$ (\cref{tab:features}) \\
+$k(C)$ & $\{0,\dots,M-2\}$ & bin index of the largest distance below capacity $C$ (dimensionless) \\
+$S_k(x)$ & $[0,1]$ & survival through bin $k$ (dimensionless) \\
+$b_k$ & $\mathbb{N}_0$ & lower edge of bin $k$ (objects) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
 
-\subsection{Censoring}
+\subsection{Discrete Hazard on Log-Spaced Bins}
 
-A trace is observed over a finite window. If the previous access to $x_i$ lies
-before the window start, or if fewer than $K$ distinct blocks have been seen
-since that access, the reuse distance is not observed: we know only $r_i \ge \tau_i$.
-Such observations are right-censored, with event indicator $\delta_i = 0$,
-and they enter the likelihood through the survival factor rather than the
-hazard factor. Treating them as misses at a known distance biases the estimated
-curve upward at large capacities, which is precisely the region where sizing
-decisions are made.
+The hazard of bin $b$ is the probability that the distance resolves in that bin
+given that it reached the bin's lower edge, and survival multiplies the
+non-resolution probabilities:
+
+\begin{align}
+    h_b(x) &= \Pr\bigl(B = b \mid B \ge b,\; X = x\bigr),
+    \qquad b = 0, \dots, M-1, \label{eq:hazard}\\
+    S_k(x) &= \prod_{b=0}^{k}\bigl(1 - h_b(x)\bigr),
+    \qquad S_{-1}(x) = 1. \label{eq:survival}
+\end{align}
+The interior edges are a rounded geometric sequence over the observed 99.9th
+percentile: $b_0 = 0$, $b_1 = 1$, and $b_2,\dots,b_M$ are the unique values of
+$\operatorname{round}(2\gamma^{t})$ for $t = 0,\dots,M-1$, with
+$\gamma = (\max(3,q)/2)^{1/(M-1)}$.
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Symbols of \cref{eq:hazard}, \cref{eq:survival} and the edge sequence.}
+\label{tab:sym-hazard}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Symbol & Domain & Meaning and units \\
+\midrule
+$b$ & $\{0,\dots,M-1\}$ & bin index (dimensionless) \\
+$B$ & $\{0,\dots,M-1\}$ & bin index of the observed reuse distance (dimensionless) \\
+$h_b(x)$ & $[0,1]$ & discrete hazard of bin $b$ for features $x$ (dimensionless) \\
+$S_k(x)$ & $[0,1]$ & survival through bins $0,\dots,k$ (dimensionless) \\
+$M$ & $\mathbb{N}$ & requested number of bins (count) \\
+$q$ & $\mathbb{N}$ & 99.9th percentile of $R$ over eligible requests (objects) \\
+$\gamma$ & $\mathbb{R}_{>1}$ & geometric growth factor between interior edges (dimensionless) \\
+$t$ & $\{0,\dots,M-1\}$ & index of the geometric sequence (dimensionless) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+
+Rounding collapses duplicates, so the realised bin count is reported: with $M=32$
+requested the traces of \cref{sec:experiments} realise 33, 33 and 14 bins, the last
+because its 99.9th percentile distance is 14 objects. Since the hazard is constant
+within a bin, the capacity grid sits at interior bin upper edges, where
+$S_{k(C)}$ and $\Pr(R \ge C)$ are the same event.
+
+\subsection{The Only Censoring: the Observation Ceiling}
+
+Two integers are retained per request, a truncated distance and an event indicator,
+and the capacity grid is truncated at the same ceiling:
+\begin{align}
+    \tilde R_i &= \min(R_i,\, c), \qquad
+    \delta_i = \mathbf{1}\{R_i \le c\}, \qquad c = b_{M-1} - 1,
+    \label{eq:truncation}\\
+    \mathcal{C} &\subset \{1, \dots, b_{M-1} - 1\}. \label{eq:limit}
+\end{align}
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Symbols of \cref{eq:truncation} and \cref{eq:limit}.}
+\label{tab:sym-truncation}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Symbol & Domain & Meaning and units \\
+\midrule
+$\tilde R_i$ & $\{0,\dots,c\}$ & truncated reuse distance (objects) \\
+$\delta_i$ & $\{0,1\}$ & event indicator, zero when $R_i$ exceeds the cap (dimensionless) \\
+$c$ & $\mathbb{N}_0$ & truncation cap, one object below the overflow edge (objects) \\
+$\mathcal{C}$ & $2^{\mathbb{N}}$ & capacity grid, at most 24 points (objects) \\
+$b_{M-1}$ & $\mathbb{N}$ & lower edge of the overflow bin (objects) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+
+The only censoring is administrative: distances at or above $b_{M-1}$ are pooled
+into the overflow bin, so such a request is known only to have reached it,
+contributes one row per lower bin labelled zero, and no positive label. A request
+with no previous access inside the window leaves the fit and enters $p_c$, and some
+of those are not compulsory in the workload's history, only in the window. The truth
+uses the same convention, so the comparison is exact but conditional on a warm
+start.
+
+Survival above $b_{M-1}$ is not identified and the estimator refuses a capacity
+there rather than extrapolating. The ceiling is 1{,}110{,}405, 37{,}455 and 13 objects
+on the three traces of \cref{sec:experiments}, so the third is evaluated on 12
+capacities of at most 12 objects.
+
+\subsection{Metrics}
+
+Let $\hat m$ be the estimated curve, $m$ the exact curve on the same block, and
+$e(C) = \hat m(C) - m(C)$ the signed error at capacity $C$. On a grid
+$\mathcal{C}$ of $n$ capacities the reported metrics are
+\begin{align}
+    \mathrm{MAE} &= \frac{1}{n}\sum_{C \in \mathcal{C}} \lvert e(C) \rvert, &
+    \mathrm{MAX} &= \max_{C \in \mathcal{C}} \lvert e(C) \rvert, \label{eq:metrics-abs}\\
+    \mathrm{bias} &= \frac{1}{n}\sum_{C \in \mathcal{C}} e(C), &
+    \mathrm{MRE} &= \frac{1}{n_+}\sum_{C \in \mathcal{C}_+} \frac{\lvert e(C) \rvert}{m(C)},
+    \label{eq:metrics-rel}\\
+    \mathrm{ABC} &= \frac{1}{\log C_n - \log C_1}
+    \int_{\log C_1}^{\log C_n} \lvert e(C) \rvert \; d\log C, & &
+    \label{eq:abc}
+\end{align}
+where $\mathcal{C}_+ = \{C \in \mathcal{C} : m(C) \ge 0.01\}$ and $n_+ =
+\lvert \mathcal{C}_+ \rvert$.
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Symbols of \cref{eq:metrics-abs}, \cref{eq:metrics-rel} and \cref{eq:abc}.}
+\label{tab:sym-metrics}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Symbol & Domain & Meaning and units \\
+\midrule
+$\mathcal{C}$ & $2^{\mathbb{N}}$ & capacity grid, $\lvert\mathcal{C}\rvert = n$ (objects) \\
+$n$ & $\mathbb{N}$ & number of grid points (count) \\
+$C$ & $\mathbb{N}$ & one grid capacity (objects) \\
+$\hat m(C)$ & $[0,1]$ & estimated miss ratio (dimensionless) \\
+$m(C)$ & $[0,1]$ & exact miss ratio, $m(C) = \Pr(R \ge C)$ (dimensionless) \\
+$e(C)$ & $[-1,1]$ & signed error $\hat m(C) - m(C)$ (dimensionless) \\
+$\mathcal{C}_+$ & $2^{\mathbb{N}}$ & grid points with $m(C) \ge 0.01$ (objects) \\
+$n_+$ & $\mathbb{N}$ & number of such points (count) \\
+$C_1, C_n$ & $\mathbb{N}$ & smallest and largest grid capacity (objects) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+
+All five are dimensionless; \cref{tab:metric-roles} says what each measures and
+what failing it would mean. ABC normalises by the log range of the grid, and MRE is
+reported with $n_+$ because dividing by a vanishing miss ratio measures nothing.

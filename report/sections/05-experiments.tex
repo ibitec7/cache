@@ -1,137 +1,169 @@
 \section{Experiments}
 \label{sec:experiments}
 
-\newcommand{\figplaceholder}[1]{%
-  \fbox{\parbox[c][0.24\textheight][c]{0.92\linewidth}{\centering\small #1}}}
+\captionsetup{hypcap=false}
+\sisetup{group-separator={,},group-minimum-digits=4}
 
-The protocol compares estimated curves against simulated curves on production
-traces, at capacities the model never saw during fitting. Every number in this
-section is a placeholder pending the runs described in
-\cref{sec:appendix-repro}.
+Every model is scored against the exact Mattson curve on a held-out time block of
+three production traces. All numbers come from the generated tables of
+\cref{sec:accuracy} and from the metric artefacts they are rendered from.
+
+\subsection{The Three Production Traces}
+
+Each trace is the first 5{,}000{,}000 requests of a sorted shard from the 2020
+production cache analysis of Yang et al.~\cite{yang2020}.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\sisetup{group-separator={,},group-minimum-digits=4}
+\caption{Workload and evaluation design of the three traces. Every trace is the
+first 5{,}000{,}000 requests of one sorted shard. Eligible is the fraction of
+requests with a previous access inside the window; $p_c$ is its complement and
+enters \cref{eq:mrc} as the compulsory mass; $R$ is the backward reuse distance
+in objects. Bins and grid points are realised counts, not the requested
+constants; $b_{M-1}$ is the lower edge of the overflow bin, and every capacity in
+the grid is below it.}
+\label{tab:traces}
+\begin{tabular}{@{}l r r r r r r r r r r@{}}
+\toprule
+Trace & {Keys} & {Mean object (B)} & {Eligible} & {$p_c$} & {$R$ p50} & {$R$ p99} & {$R$ p99.9} & {Bins} & {Grid} & {$b_{M-1}$} \\
+\midrule
+cluster45 & \num{2158200} & \num{91} & 0.568 & 0.432 & \num{4} & \num{1008186} & \num{1725692} & 33 & 24 & \num{1110405} \\
+cluster26 & \num{394747} & \num{1046} & 0.921 & 0.079 & \num{472} & \num{17709} & \num{51990} & 33 & 24 & \num{37455} \\
+cluster10 & \num{2500051} & \num{1289} & 0.500 & 0.500 & \num{1} & \num{8} & \num{14} & 14 & 12 & \num{13} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Protocol}
 
-Each trace is split by time into a fit segment, a validation segment, and a
-held-out segment, in that order, with no interleaving. Reuse distances are
-computed once over the whole trace so that distances crossing a split boundary
-are not truncated. Models are fitted on the fit segment, hyperparameters and
-the censoring correction are chosen on the validation segment, and all reported
-errors are on the held-out segment. Ground truth is simulated on the held-out
-segment only. This ordering prevents the model from observing any reference
-whose distance it is asked to predict.
+Labels, including the backward distance, the eligibility flag and the cap, are
+computed once over the whole window, so no distance is truncated at a split
+boundary. Requests are split by position into contiguous fit, validation and test
+blocks at 70, 85 and 100\%, and the test block is scored once, after every choice is
+fixed. The truth on each block is the empirical survival of $R$, which by
+\cref{prop:lru-hit} is the exact LRU curve for that block.
 
-\subsection{Capacity Grid}
+The capacity grid is truncated below $b_{M-1}$, at most 24 points. Fitting uses the
+grouped rows under a 20-million-row budget, 300 boosting rounds and early stopping,
+and $p_c$ is measured on the block being scored.
 
-Capacities are fixed before any fitting, so that the same grid is used for
-simulation, for evaluation, and for every model.
+Provisioning asks for the smallest capacity whose curve reaches a target hit
+ratio, as a fraction of the achievable ceiling $1-p_c$, interpolated in log
+capacity between bracketing grid points; the ratio of predicted to true capacity is
+reported. Below one
+under-provisions.
 
-\begin{table}[ht]
-\centering
-\caption{Capacity grid used for simulation and evaluation.}
-\label{tab:capacity-grid}
-\begin{tabular}{@{}S[table-format=2.0] l S[table-format=4.0]@{}}
-\toprule
-{$C$ (GiB)} & Regime & {Blocks ($\times 10^3$)} \\
-\midrule
-1  & below knee      & \ldots \\
-2  & below knee      & \ldots \\
-4  & near knee       & \ldots \\
-8  & near knee       & \ldots \\
-16 & above knee      & \ldots \\
-32 & above knee      & \ldots \\
-64 & saturation      & \ldots \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Curve Accuracy}
+\label{sec:accuracy}
 
-\subsection{Clusters}
+\input{tables/cluster45_metrics}
+\input{tables/cluster26_metrics}
+\input{tables/cluster10_metrics}
 
-Traces come from the 2020 production cache analysis of \cite{yang2020}. Only
-clusters whose traces are complete over the fit and held-out windows are used,
-and the selection rule is applied before any model is fitted.
+The hazard model is the most accurate of the three on every trace
+(\cref{tab:cluster45-test,tab:cluster26-test,tab:cluster10-test}): mean absolute
+error 0.00027, 0.00548 and 0.00772, against 0.02000, 0.01178 and 0.04387 for the
+marginal curve and 0.10968, 0.07927 and 0.07930 for the hit-count regression. A
+frequency model never sees a distance, so it cannot recover where a curve bends.
 
-\begin{table}[ht]
-\centering
-\caption{Clusters under study. Values are placeholders.}
-\label{tab:clusters}
-\begin{tabular}{@{}l S[table-format=5.1] S[table-format=4.1] S[table-format=2.2] l@{}}
-\toprule
-Cluster & {Requests ($\times 10^6$)} & {Distinct keys ($\times 10^3$)} & {Mean object (KiB)} & Workload class \\
-\midrule
-C1 & \ldots & \ldots & \ldots & placeholder \\
-C2 & \ldots & \ldots & \ldots & placeholder \\
-C3 & \ldots & \ldots & \ldots & placeholder \\
-C4 & \ldots & \ldots & \ldots & placeholder \\
-\bottomrule
-\end{tabular}
-\end{table}
+The marginal curve's error is almost entirely a level shift: on two traces its bias
+and its mean absolute error agree to four decimal places and are negative, so it
+places the whole curve above the truth by a nearly constant offset. The hazard error
+is signed the same way but concentrated near the knee: its worst point is 0.021 on
+the trace where it is weakest (cluster26), against 0.034 and 0.120 for the marginal
+curve on the other two, where the marginal curve is the second-best model rather
+than a competitor.
 
-\subsection{Results}
-
-\Cref{tab:mrc-error} reports curve error against simulation, per cluster, for
-both hazard parametrizations. \Cref{tab:calibration} reports hazard calibration
-and the integrated Brier score. Neither table carries a value until the runs
-complete.
-
-\begin{table}[ht]
-\centering
-\caption{MRC error against simulation on the held-out segment. Lower is better.}
-\label{tab:mrc-error}
-\begin{tabular}{@{}l S[table-format=1.3] S[table-format=1.3] S[table-format=1.3] S[table-format=1.3]@{}}
-\toprule
-& \multicolumn{2}{c}{R-as-feature} & \multicolumn{2}{c}{Per-bin} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
-Cluster & {Max} & {Mean} & {Max} & {Mean} \\
-\midrule
-C1 & \ldots & \ldots & \ldots & \ldots \\
-C2 & \ldots & \ldots & \ldots & \ldots \\
-C3 & \ldots & \ldots & \ldots & \ldots \\
-C4 & \ldots & \ldots & \ldots & \ldots \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[ht]
-\centering
-\caption{Hazard calibration and integrated Brier score on the held-out segment.}
-\label{tab:calibration}
-\begin{tabular}{@{}l S[table-format=1.3] S[table-format=1.4] S[table-format=1.4]@{}}
-\toprule
-Cluster & {ECE} & {Brier} & {IBS} \\
-\midrule
-C1 & \ldots & \ldots & \ldots \\
-C2 & \ldots & \ldots & \ldots \\
-C3 & \ldots & \ldots & \ldots \\
-C4 & \ldots & \ldots & \ldots \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[ht]
-\centering
-\IfFileExists{../artifacts/figures/mrc-curves.pdf}{%
-  \includegraphics[width=\linewidth]{../artifacts/figures/mrc-curves.pdf}%
-}{\figplaceholder{PLACEHOLDER: estimated and simulated MRCs per cluster, generated by \texttt{src/mrc/plots/}}}
-\caption{Estimated and simulated miss-ratio curves. Simulation is the solid
-line, the two parametrizations are dashed.}
+\begin{center}
+\begin{minipage}{\linewidth}
+\includegraphics[width=\linewidth]{figures/mrc-curves.pdf}
+\captionof{figure}{Estimated and exact miss-ratio curves on the test block, panels
+cluster45, cluster26 and cluster10. Exact Mattson curve in black, hazard model
+solid, Kaplan-Meier dashed. Window
+5{,}000{,}000 requests; capacities below $b_{M-1}$ (\num{1110405}, \num{37455} and
+13 objects).}
 \label{fig:mrc-curves}
-\end{figure}
+\end{minipage}
+\end{center}
 
-\begin{figure}[ht]
-\centering
-\IfFileExists{../artifacts/figures/calibration.pdf}{%
-  \includegraphics[width=0.7\linewidth]{../artifacts/figures/calibration.pdf}%
-}{\figplaceholder{PLACEHOLDER: reliability diagram for the hazard model, generated by \texttt{src/mrc/plots/}}}
-\caption{Reliability diagram for the discrete hazard, pooled over bins.}
-\label{fig:calibration}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\IfFileExists{../artifacts/figures/cluster-error.pdf}{%
-  \includegraphics[width=\linewidth]{../artifacts/figures/cluster-error.pdf}%
-}{\figplaceholder{PLACEHOLDER: per-cluster error against capacity, generated by \texttt{src/mrc/plots/}}}
-\caption{Curve error against capacity, per cluster, for the per-bin
-parametrization.}
+\begin{center}
+\begin{minipage}{\linewidth}
+\includegraphics[width=\linewidth]{figures/cluster-error.pdf}
+\captionof{figure}{Absolute curve error against capacity on the test block, same
+panels. Hazard model solid, Kaplan-Meier dashed. Window 5{,}000{,}000 requests; capacities below
+$b_{M-1}$ (\num{1110405}, \num{37455} and 13 objects). The marginal error is flat
+in capacity, the signature of a level shift.}
 \label{fig:cluster-error}
-\end{figure}
+\end{minipage}
+\end{center}
+
+\subsection{Provisioning}
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\footnotesize
+\captionof{table}{Capacity ratio, model over truth, for a target hit ratio expressed as a
+fraction of the achievable ceiling $1-p_c$. Below one under-provisions. Window
+5{,}000{,}000 requests per trace.}
+\label{tab:provisioning}
+\begin{tabular}{@{}l l r r r@{}}
+\toprule
+Trace & Model & {60\%} & {80\%} & {95\%} \\
+\midrule
+cluster45 & hazard & 1.003 & 0.976 & 1.004 \\
+cluster45 & Kaplan-Meier & 0.922 & 0.239 & 0.524 \\
+cluster26 & hazard & 0.977 & 0.981 & 0.999 \\
+cluster26 & Kaplan-Meier & 0.971 & 0.985 & 0.996 \\
+cluster10 & hazard & 0.947 & 0.935 & 0.925 \\
+cluster10 & Kaplan-Meier & 0.635 & 0.681 & 0.744 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+
+The hazard model places the crossing within 7.5\% of the true capacity at every
+target and trace, and within 2.5\% on the first two; its worst case is the
+cold-heavy trace at the 95\% target. The marginal curve provisions less than a
+quarter of the capacity needed at the 80\% target on the large-cardinality
+trace.
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\includegraphics[width=0.42\linewidth]{figures/capacity-ratio.pdf}
+\captionof{figure}{Capacity ratio at three targets, median over the three traces,
+with parity dotted. Window 5{,}000{,}000 requests; targets as fractions of the
+achievable ceiling.}
+\label{fig:capacity-ratio}
+\end{minipage}
+\end{center}
+
+\subsection{Interpretability}
+\label{sec:ablation}
+
+Recency dominates (\cref{fig:importance}, values in \cref{tab:shap}): the gap since
+the previous access and the hazard step carry almost all of the SHAP contribution,
+and the next column is an order of magnitude smaller. On the cold-heavy trace the two
+leading columns tie, consistent with near-collinearity, since a 99.9th percentile
+distance of 14 objects makes the bin index nearly a function of the gap.
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\includegraphics[width=\linewidth]{figures/importance.pdf}
+\captionof{figure}{Mean absolute SHAP contribution, six leading columns per trace, on
+validation grouped rows. Window 5{,}000{,}000 requests; the hazard step is the
+bin index, not a request feature.}
+\label{fig:importance}
+\end{minipage}
+\end{center}
+
+\subsection{Limitations}
+
+Three limits bound the claims directly; \cref{tab:limitations} adds three
+design limits. The cold-heavy trace has $p_c = 0.500$, so an absolute 90\% hit
+target is unreachable and every target is a fraction of $1-p_c$. The
+target is the backward distance: a forward bound labels never-reused keys as
+resolved, so the model does not estimate when a key will next be requested. And
+each trace is a 5-million-request prefix, so a request whose previous access
+predates it counts as compulsory; nothing above $b_{M-1}$ is claimed.
