@@ -45,3 +45,5 @@ wiki/site/
 
 # trained boosters (regenerable, multi-MB text)
 artifacts/models/
+artifacts/figures/fig_*.pdf
+artifacts/truth/
