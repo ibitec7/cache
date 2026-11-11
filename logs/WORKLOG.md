@@ -173,3 +173,36 @@ statistical skeleton, experiment pipeline, telemetry, docs, wiki, report templat
   commits). No scientific artifact exists yet: `artifacts/mlflow` and `artifacts/optuna`
   empty, `artifacts/tables` empty, `data/processed` empty, one figure and it is from the
   44 MB GitHub sample, and every table/figure in report and slides is a placeholder.
+
+## 2026-11-10T22:27Z · plan · mrc-plan expands the master plan into an eight-phase set
+
+Commit: none for this work (planning documents are uncommitted at the time of writing).
+
+Produced, all under planner ownership:
+- `.hermes/plans/mrc/00-index.md` and eight phase plans, A through H.
+- `docs/GATES.md` (one row per gate), `docs/CARDS.md` (29 card specs), `docs/OPEN_QUESTIONS.md`.
+- `logs/DECISIONS.md` (master-plan audit plus the seven required decision blocks).
+
+Audit, sections 1.1 to 1.3 checked against HEAD `3d27271`:
+- Reproduced exactly: `10 passed`, module line counts, cluster sizes, `cluster45` sha1, the 13.06 / 8.80 /
+  4.26 / 86.94 % rates, and the 21,174,922 / 745,784 / 3.73 / 28.39x row counts from `data/interim/s45.npz`.
+- Does not reproduce: the four `R` percentile rows in master §1.2 (5,921 / 60,358 / 129,739 / 162,099
+  measured; 2,812 / 34,379 / 90,134 / 131,873 claimed). No downstream number depends on them.
+- 26 defects logged, M-1 to M-26. The load-bearing ones: `N_BINS`/`N_CAPACITIES` are requested, not
+  realised (31 bins, 22 capacities); the `CAP_QUANTILE` = `b_{M-1} - 1` reading is self-contradictory and
+  was resolved to `b_{M-1} = edges[-2]` = 837; labels carry int key codes so two of the twelve features
+  would have been constant; A1's cap test, A2's hand table, D5's and E3's monotonicity assertions cannot
+  pass as written; the baselines and `run_one` both violated the train/test protocol; `libcachesim`'s
+  constructor takes `obj_size` first, so the master's positional call raises.
+
+Worked: the frozen constants, the DAG, and the exact-first framing needed no change. Failed nothing that
+blocks a phase; every discrepancy has a resolution recorded rather than a silent correction.
+
+## 2026-11-11T10:15Z · contract · rtilde ceiling raised from 1023 to 2^21-1
+
+Changed: `CAP_QUANTILE` in `src/mrc/config.py`, 1023 -> 2_097_151. Evidence: 5M-request prefixes,
+`compute_reuse(..., cap=10**9)` on cluster45/26/10, reuse distance percentiles p50/p90/p99/p99.9 =
+4/208853/1008186/1725692, 472/7938/17709/51990, 1/4/8/14. The old ceiling put 90 % of cluster45 and
+about 99 % of cluster26 mass in the overflow bin, leaving the hazard model no resolution.
+Consequence: `rtilde` now spans the observable range; grouped risk-set rows stay bounded by
+N_BINS+1 per request, so the row budget is unchanged. Stale artefacts: none existed.
