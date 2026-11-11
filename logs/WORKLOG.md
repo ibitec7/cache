@@ -206,3 +206,28 @@ Changed: `CAP_QUANTILE` in `src/mrc/config.py`, 1023 -> 2_097_151. Evidence: 5M-
 about 99 % of cluster26 mass in the overflow bin, leaving the hazard model no resolution.
 Consequence: `rtilde` now spans the observable range; grouped risk-set rows stay bounded by
 N_BINS+1 per request, so the row budget is unchanged. Stale artefacts: none existed.
+
+## 2026-11-11T10:55Z · method · the hazard target is the backward reuse distance
+
+Measured on cluster45 (5M prefix, cached labels): a hazard fitted on the forward event
+(`delta = eligible and next access inside the window`) reaches test MAE 0.170 with bias +0.170,
+because 43 % of requests are cold and the forward-event distribution is not the backward distribution
+the MRC curve is a survival function of. The same model, same features, fitted on the backward
+distance (`rtilde = min(R, cap)`, event = `R <= cap`, only 38 of 2.84 M eligible requests censored at
+the ceiling) reaches test MAE 0.005. The forward formulation is therefore not used by the pipeline.
+`compute_reuse` still returns `gamma`, `delta` and `censor` so the ablation and the report can quantify
+the difference; nothing on the critical path consumes them.
+
+Consequence: MRC(C) = p_c + (1 - p_c) * E[S_R(bin(C-1) | x)] with S_R estimated from the conditional
+distribution of the observed backward reuse distance. The only censoring is at the observation
+ceiling. The 1M sample confirms the ordering: GBDT test MAE 0.0022 against Kaplan-Meier 0.0183.
+
+## 2026-11-11T11:40Z · method · capacity grid aligned to bin upper edges
+
+The reported grid was log-spaced independently of the hazard bins. A binned hazard is a step
+function, so evaluating it inside a wide bin charges the model for the bin width. Measured on
+cluster26 at C=5999 (inside a bin spanning the trace's reuse cliff): truth 0.473, prediction 0.327,
+max error 0.147. Re-evaluating the same fitted booster on the bin upper edges gives test MAE 0.0055
+and max 0.0206; cluster45 improves from 0.0046 to 0.0003, cluster10 is unchanged at 0.0077.
+The grid is now `capacity_grid_from_edges(edges, 24)`, edges[1:-2], which keeps every capacity below
+the overflow edge and makes `S_b` and `P(R >= e_{b+1})` the same event.

@@ -1,0 +1,202 @@
+{
+ "cluster": "cluster26",
+ "block": "valid",
+ "n_requests": 600000,
+ "n_repeats": 5,
+ "base_score": -0.023463493510492827,
+ "features": [
+  {
+   "feature": "log_gap",
+   "drop": 0.0002355456113545068,
+   "std": 1.6227475860699164e-06
+  },
+  {
+   "feature": "log_obj_size",
+   "drop": 9.486503844897687e-05,
+   "std": 1.945728589102548e-06
+  },
+  {
+   "feature": "log_val_size",
+   "drop": 7.222606724569536e-05,
+   "std": 1.6847401531095798e-06
+  },
+  {
+   "feature": "op",
+   "drop": 5.940369968832626e-05,
+   "std": 1.567949051646651e-06
+  },
+  {
+   "feature": "log_ttl",
+   "drop": 4.355509319610637e-05,
+   "std": 1.4090135220915792e-06
+  },
+  {
+   "feature": "log_freq",
+   "drop": 4.266879059504486e-05,
+   "std": 4.883528283213336e-06
+  },
+  {
+   "feature": "log_key_size",
+   "drop": 3.5449252089519295e-05,
+   "std": 6.758171248436907e-07
+  },
+  {
+   "feature": "is_write",
+   "drop": 9.416435690572795e-06,
+   "std": 1.1799481114426322e-07
+  },
+  {
+   "feature": "ns_code",
+   "drop": 3.8085458402101204e-06,
+   "std": 2.0263600836996373e-07
+  },
+  {
+   "feature": "has_ttl",
+   "drop": 0.0,
+   "std": 0.0
+  },
+  {
+   "feature": "log_age",
+   "drop": 0.0,
+   "std": 0.0
+  },
+  {
+   "feature": "client_bucket",
+   "drop": -1.6214647599599453e-08,
+   "std": 1.8544822231689072e-08
+  }
+ ],
+ "shap_top": [
+  {
+   "feature": "log_gap",
+   "mean_abs_contribution": 1.3186002063605178
+  },
+  {
+   "feature": "hazard_step",
+   "mean_abs_contribution": 1.0320605368379467
+  },
+  {
+   "feature": "log_age",
+   "mean_abs_contribution": 0.09887146516200578
+  },
+  {
+   "feature": "log_freq",
+   "mean_abs_contribution": 0.03394747668217694
+  },
+  {
+   "feature": "log_ttl",
+   "mean_abs_contribution": 0.02332066599629726
+  },
+  {
+   "feature": "log_val_size",
+   "mean_abs_contribution": 0.018412956169250056
+  },
+  {
+   "feature": "op",
+   "mean_abs_contribution": 0.013202667775773221
+  },
+  {
+   "feature": "log_obj_size",
+   "mean_abs_contribution": 0.010264942098758893
+  },
+  {
+   "feature": "log_key_size",
+   "mean_abs_contribution": 0.006431353356118875
+  },
+  {
+   "feature": "is_write",
+   "mean_abs_contribution": 0.0006903029542234516
+  },
+  {
+   "feature": "ns_code",
+   "mean_abs_contribution": 0.0005584690449296582
+  },
+  {
+   "feature": "client_bucket",
+   "mean_abs_contribution": 2.4195248850588275e-06
+  }
+ ],
+ "ablation": [
+  {
+   "group": "no_timing",
+   "mae": 0.020980651053751728,
+   "max_abs": 0.16473765172285781,
+   "bias": -0.020980651053751728,
+   "dropped_features": [
+    "log_ttl",
+    "has_ttl",
+    "log_gap",
+    "log_age"
+   ]
+  },
+  {
+   "group": "no_client",
+   "mae": 0.021381655100370687,
+   "max_abs": 0.24218215804850574,
+   "bias": -0.021381655100370687,
+   "dropped_features": [
+    "client_bucket"
+   ]
+  },
+  {
+   "group": "no_sizes",
+   "mae": 0.021664214512214366,
+   "max_abs": 0.22754701605378935,
+   "bias": -0.021664214512214366,
+   "dropped_features": [
+    "log_obj_size",
+    "log_key_size",
+    "log_val_size"
+   ]
+  },
+  {
+   "group": "no_namespace",
+   "mae": 0.021796225308516725,
+   "max_abs": 0.24172592034046456,
+   "bias": -0.021796225308516725,
+   "dropped_features": [
+    "ns_code"
+   ]
+  },
+  {
+   "group": "no_popularity",
+   "mae": 0.021979463674841195,
+   "max_abs": 0.24851541219628628,
+   "bias": -0.021979463674841195,
+   "dropped_features": [
+    "log_freq"
+   ]
+  },
+  {
+   "group": "all",
+   "mae": 0.023033806271347594,
+   "max_abs": 0.2444034597686083,
+   "bias": -0.023033806271347594,
+   "dropped_features": []
+  }
+ ],
+ "groups": {
+  "all": [],
+  "no_namespace": [
+   "ns_code"
+  ],
+  "no_sizes": [
+   "log_obj_size",
+   "log_key_size",
+   "log_val_size"
+  ],
+  "no_timing": [
+   "log_ttl",
+   "has_ttl",
+   "log_gap",
+   "log_age"
+  ],
+  "no_popularity": [
+   "log_freq"
+  ],
+  "no_client": [
+   "client_bucket"
+  ]
+ },
+ "created_utc": "2026-11-11T18:26:15Z"
+}

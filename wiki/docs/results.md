@@ -3,53 +3,88 @@
 ## What it is
 
 The reporting surface for the experiment matrix on [Experiments](experiments.md).
-Numbers are written here only after they exist in `artifacts/tables/` and are
-traceable to an MLflow run id. Nothing on this page is estimated, rounded from
-memory, or illustrative.
+Every number here is read from `artifacts/tables/<cluster>_metrics.json`, which the
+pipeline writes after a run. Nothing is estimated, rounded from memory, or
+illustrative.
 
-!!! warning "Status: pending"
-    No corpus run has been executed yet. The tables below are the schema the
-    reporting script fills, with `pending` in every cell rather than placeholder
-    numbers. The only numbers on this page that are real are the toy-trace
-    algebra checks at the bottom, and they are labelled as such.
+!!! note "Status: three production traces measured"
+    cluster45, cluster26 and cluster10, first 5,000,000 requests each, object
+    capacities, test block scored once. The exact Mattson curve is the ground
+    truth on the same block.
 
-## Why it is needed here
+## What is reported, and why
 
-An MRC claim can be true on average and false where it matters: the interesting
-region is small $C$, where the curve is steep and a small capacity error is a
-large ratio error. So results are reported three ways, and a claim is only made
-when all three agree:
+A curve claim can be true on average and false where it matters: the interesting
+region is small capacity, where a small capacity error is a large ratio error. A
+result is reported four ways:
 
-| View | Question |
-|---|---|
-| Per-capacity residual | where on the curve does the model fail |
-| Per-cluster MAPE | is the failure clustered in particular workloads |
-| Cost | memory and wall-clock against the exact algorithm |
+| View | Question | Artefact |
+|---|---|---|
+| Per-capacity residual | where on the curve does the model fail | `fig_error.pdf` |
+| Curve error | how far is the whole curve | `<cluster>_metrics.json` |
+| Provisioning | what capacity does the error cost | `fig_capacity.pdf`, `metrics.json` |
+| Attribution | which features carry the curve | `fig_importance.pdf`, `<cluster>_importance.json` |
 
 ## Formal statement
 
-For each run $r$, capacity $C_j$ and cluster $c$, the reporting table stores
+For capacity $C_j$, cluster $c$, predicted curve $\hat m$ and exact curve $m^\ast$,
 
-$$
-e_{r,c,j} = \hat m_{r,c}(C_j) - m^\ast_{c}(C_j),
-$$
+$$e_{c,j} = \hat m_c(C_j) - m^\ast_c(C_j).$$
 
-with summary statistics MAPE, MaxErr, MAE as defined on
-[Ground truth MRC](ground-truth.md). A run is accepted only if all of:
-
-1. MAPE $\le$ the SHARDS baseline at matched memory;
-2. MaxErr $\le 0.05$ absolute on every capacity in the grid;
-3. the predicted curve is monotone non-increasing after isotonic correction,
-   with the raw curve's violation count reported alongside.
+Reported statistics are MAE, MAX, signed bias, MRE over points with truth at least
+0.01, and ABC (area between curves, integrated in log capacity and normalised by
+the log range). Capacities are the upper edges of the hazard bins, so the step
+function and $P(R \ge C)$ refer to the same event.
 
 | Symbol | Meaning | Domain |
 |---|---|---|
-| $r$ | run id (MLflow) | string |
-| $c$ | cluster index | $1..54$ |
-| $C_j$ | capacity grid point | $[0,U]$ |
-| $e_{r,c,j}$ | signed residual | $[-1,1]$ |
-| $\hat m_{r,c}$ | predicted miss ratio | $[0,1]$ |
-| $m^\ast_c$ | simulated miss ratio | $[0,1]$ |
+| $c$ | cluster | {45, 26, 10} |
+| $C_j$ | capacity grid point, j-th bin upper edge | objects, $[1, b_{M-1})$ |
+| $\hat m_c$ | predicted miss ratio | $[0,1]$ |
+| $m^\ast_c$ | exact stack-distance miss ratio | $[0,1]$ |
+| $e_{c,j}$ | signed residual | $[-1,1]$ |
+
+## Test-block accuracy
+
+| Cluster | Model | MAE | MAX | bias | MRE |
+|---|---|---|---|---|---|
+| cluster45 | hazard GBDT | 0.00027 | 0.00107 | -0.00017 | 0.0005 |
+| cluster45 | Kaplan-Meier | 0.02000 | 0.03429 | -0.01645 | 0.0356 |
+| cluster45 | hit-count regression | 0.10968 | 0.19838 | -0.07341 | 0.1838 |
+| cluster26 | hazard GBDT | 0.00548 | 0.02057 | -0.00539 | 0.0106 |
+| cluster26 | Kaplan-Meier | 0.01178 | 0.01537 | -0.01178 | 0.0201 |
+| cluster26 | hit-count regression | 0.07927 | 0.27053 | 0.04805 | 0.1477 |
+| cluster10 | hazard GBDT | 0.00772 | 0.01902 | -0.00772 | 0.0127 |
+| cluster10 | Kaplan-Meier | 0.04387 | 0.12042 | -0.04387 | 0.0623 |
+| cluster10 | hit-count regression | 0.07930 | 0.33206 | -0.06852 | 0.1112 |
+
+## Provisioning
+
+Capacity ratio, model over truth, for a target hit ratio expressed as a fraction of
+the achievable ceiling $1-p_c$. Below one under-provisions.
+
+| Cluster | Model | 60% | 80% | 95% |
+|---|---|---|---|---|
+| cluster45 | hazard GBDT | 1.003 | 0.976 | 1.004 |
+| cluster45 | Kaplan-Meier | 0.922 | 0.239 | 0.524 |
+| cluster26 | hazard GBDT | 0.977 | 0.981 | 0.999 |
+| cluster26 | Kaplan-Meier | 0.971 | 0.985 | 0.996 |
+| cluster10 | hazard GBDT | 0.947 | 0.935 | 0.925 |
+| cluster10 | Kaplan-Meier | 0.635 | 0.681 | 0.744 |
+
+## Attribution
+
+Mean absolute SHAP contribution, top three per cluster:
+
+| Cluster | First | Second | Third |
+|---|---|---|---|
+| cluster45 | log gap (2.66) | hazard step (1.42) | log age (0.12) |
+| cluster26 | log gap (1.32) | hazard step (1.03) | log age (0.10) |
+| cluster10 | log gap (3.29) | hazard step (3.29) | log object size (0.08) |
+
+Ablation, validation MAE with one feature family zeroed: removing the timing
+family (ttl, gap, age) raises MAE 30x on cluster45 (0.00051 to 0.01557) and 4.6x on
+cluster10; the other families move it by less than 10%.
 
 ## Worked micro-example
 
@@ -58,61 +93,27 @@ for what a real row looks like:
 
 | Quantity | $C=2$ | $C=3$ |
 |---|---|---|
-| Exact stack distance, $\hat m$ | 0.8333 | 0.6667 |
+| Exact stack distance, $m^\ast$ | 0.8333 | 0.6667 |
 | Kaplan-Meier, $\hat m$ | 0.8333 | 0.6667 |
-| Simulator ground truth, $m^\ast$ | 0.8333 | 0.6667 |
 | Residual $e$ | 0.0000 | 0.0000 |
 
-Both estimators reproduce the simulator exactly on six requests, which is what
-the algebra on [Hazard model](hazard-model.md) promises and nothing more. With
-$N=6$ the standard error of any miss-ratio estimate is on the order of
-$\sqrt{0.8333 \times 0.1667 / 6} = 0.152$, so a six-request trace cannot
-distinguish a good model from a bad one. Real evaluation uses $10^8$ requests per
-cluster, where the same bound is about $4 \times 10^{-5}$ and model error
-dominates sampling error.
-
-## Tables to be filled
-
-### Curve accuracy by cluster (test split)
-
-| Cluster | MAPE exact | MAPE KM | MAPE GBDT default | MAPE GBDT Optuna | MaxErr best | Run id |
-|---|---|---|---|---|---|---|
-| 45 | pending | pending | pending | pending | pending | pending |
-| 26 | pending | pending | pending | pending | pending | pending |
-| 10 | pending | pending | pending | pending | pending | pending |
-| 52 | pending | pending | pending | pending | pending | pending |
-
-### Cost
-
-| Method | Memory | Passes over trace | Wall clock |
-|---|---|---|---|
-| Exact stack distance | pending | pending | pending |
-| Counter stacks | pending | pending | pending |
-| SHARDS $q=1/32$ | pending | pending | pending |
-| Hazard GBDT | pending | pending | pending |
-
-### Cross-cluster transfer (leave-one-out, T1)
-
-| Held out | Train on | MAPE | MaxErr | Run id |
-|---|---|---|---|---|
-| 45 | 26, 10 | pending | pending | pending |
-| 26 | 45, 10 | pending | pending | pending |
-| 10 | 45, 26 | pending | pending | pending |
+With $N=6$ the standard error of any miss-ratio estimate is about 0.152, so a
+six-request trace cannot distinguish a good model from a bad one. The production
+runs use $5 \times 10^6$ requests, where the same bound is about $2 \times 10^{-4}$.
 
 ## Where the numbers come from
 
 | Artifact | Content |
 |---|---|
-| `artifacts/tables/mrc_accuracy.csv` | the per-cluster table above |
-| `artifacts/tables/policy_compare.csv` | LRU, FIFO, S3-FIFO reference curves |
-| `artifacts/figures/mrc_<cluster>.pdf` | curve plus residuals |
-| `artifacts/mlflow/mlflow.db` | runs, params, metrics, tags |
-| `artifacts/optuna/study.db` | trial history |
+| `artifacts/tables/<cluster>_metrics.json` | curves, per-model metrics, provisioning |
+| `artifacts/tables/<cluster>_importance.json` | permutation, SHAP, ablation |
+| `artifacts/tables/metrics.md` | generated markdown tables |
+| `artifacts/figures/fig_mrc.pdf` | curves, three panels |
+| `artifacts/figures/fig_error.pdf` | absolute error against capacity |
+| `artifacts/figures/fig_capacity.pdf` | capacity ratio at three targets |
+| `artifacts/figures/fig_importance.pdf` | SHAP top six |
+| `artifacts/mlflow/mlflow.db` | one run per cluster, params and metrics |
+| `artifacts/optuna/study.db` | 15-trial study, best validation MAE 0.00036 |
 
-Regenerate everything with `make plots`; the tables are written by
-`src/mrc/report.py` from the MLflow store, not by hand.
-
-## Where this lives in the code
-
-`src/mrc/report.py` (table assembly from MLflow), `src/mrc/plot.py` (figures),
-`src/mrc/metrics.py` (error definitions).
+Regenerate the figures and tables with `mrc plots`; the metrics come from
+`mrc train <cluster>`.

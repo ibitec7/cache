@@ -1,0 +1,53 @@
+{
+  "top": [
+    {
+      "feature": "log_gap",
+      "mean_abs_contribution": 1.3186002063605178
+    },
+    {
+      "feature": "hazard_step",
+      "mean_abs_contribution": 1.0320605368379467
+    },
+    {
+      "feature": "log_age",
+      "mean_abs_contribution": 0.09887146516200578
+    },
+    {
+      "feature": "log_freq",
+      "mean_abs_contribution": 0.03394747668217694
+    },
+    {
+      "feature": "log_ttl",
+      "mean_abs_contribution": 0.02332066599629726
+    },
+    {
+      "feature": "log_val_size",
+      "mean_abs_contribution": 0.018412956169250056
+    },
+    {
+      "feature": "op",
+      "mean_abs_contribution": 0.013202667775773221
+    },
+    {
+      "feature": "log_obj_size",
+      "mean_abs_contribution": 0.010264942098758893
+    },
+    {
+      "feature": "log_key_size",
+      "mean_abs_contribution": 0.006431353356118875
+    },
+    {
+      "feature": "is_write",
+      "mean_abs_contribution": 0.0006903029542234516
+    },
+    {
+      "feature": "ns_code",
+      "mean_abs_contribution": 0.0005584690449296582
+    },
+    {
+      "feature": "client_bucket",
+      "mean_abs_contribution": 2.4195248850588275e-06
+    }
+  ],
+  "n_rows": 200000
+}
