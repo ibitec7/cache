@@ -259,7 +259,7 @@ Protocol is identical to the other three traces: 5M-request prefix, 33 bins from
 observed p99.9, capacity grid on bin upper edges, 70/85/100 contiguous blocks, one
 seed. Nothing about the model, grid, or features is tuned on cluster52.
 
-## 2026-11-17T15:50Z · result · cluster52 scored: the ordering holds, my regime prediction did not
+## 2026-11-17T07:05Z · result · cluster52 scored: the ordering holds, my regime prediction did not
 
 Commit: working tree (this entry's commit is the one that follows).
 
@@ -313,7 +313,7 @@ Also this session:
 - Body is back to 10 pages after moving the residual figure and the noise table to
   the appendix; 15 pages total, 0 LaTeX errors, 0 overfull boxes, 88 tests pass.
 
-## 2026-11-17T16:35Z · result · the four-trace ablation, and it reproduces exactly
+## 2026-11-17T07:22Z · result · the four-trace ablation, and it reproduces exactly
 
 Commit: this entry's commit.
 

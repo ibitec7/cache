@@ -1,10 +1,5 @@
 \begin{thebibliography}{10}
 
-\bibitem{yang2020}
-Juncheng Yang, Yao Yue, and K.~V. Rashmi.
-\newblock A large scale analysis of hundreds of in-memory cache clusters at {Twitter}.
-\newblock In {\em Proceedings of the 14th USENIX Symposium on Operating Systems Design and Implementation (OSDI 20)}, 2020.
-
 \bibitem{mattson1970}
 R.~L. Mattson, J.~Gecsei, D.~R. Slutz, and I.~L. Traiger.
 \newblock Evaluation techniques for storage hierarchies.
@@ -35,6 +30,11 @@ Nathan Beckmann and Daniel Sanchez.
 \newblock Maximizing cache performance under uncertainty.
 \newblock In {\em 2017 IEEE International Symposium on High Performance Computer Architecture (HPCA)}, pages 109--120, 2017.
 
+\bibitem{yang2020}
+Juncheng Yang, Yao Yue, and K.~V. Rashmi.
+\newblock A large scale analysis of hundreds of in-memory cache clusters at {Twitter}.
+\newblock In {\em Proceedings of the 14th USENIX Symposium on Operating Systems Design and Implementation (OSDI 20)}, 2020.
+
 \bibitem{kaplan1958}
 Edward~L. Kaplan and Paul Meier.
 \newblock Nonparametric estimation from incomplete observations.
@@ -59,10 +59,5 @@ Jerome~H. Friedman.
 Guolin Ke, Qi~Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, and Tie-Yan Liu.
 \newblock {LightGBM}: A highly efficient gradient boosting decision tree.
 \newblock In {\em Advances in Neural Information Processing Systems 30 (NIPS 2017)}, 2017.
-
-\bibitem{akiba2019}
-Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama.
-\newblock Optuna: A next-generation hyperparameter optimization framework.
-\newblock In {\em Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, pages 2623--2631, 2019.
 
 \end{thebibliography}
