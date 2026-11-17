@@ -160,14 +160,28 @@ class HazardModel:
         self.validation_logloss = float(score.get("binary_logloss", np.nan))
         return self
 
-    def predict_survival(self, X, steps):
-        """S_R(k | x) for every request at every step k in `steps` (sorted)."""
+    def predict_survival(self, X, steps, max_grid_rows: int = 2_000_000):
+        """S_R(k | x) for every request at every step k in `steps` (sorted).
+
+        Prediction is chunked so peak memory is `max_grid_rows` float32 rows rather
+        than n_requests * len(steps): at 650k eligible requests and 33 steps the
+        unchunked grid is 1.1 GB, which is what a 20M-request run can no longer hold.
+        """
         X = np.asarray(X, dtype=np.float32)
         n, K = X.shape[0], len(steps)
-        grid = np.repeat(X, K, axis=0)
-        grid = np.column_stack([grid, np.tile(np.asarray(steps, dtype=np.int64), n)]).astype(np.float32)
-        h = self.booster.predict(grid).reshape(n, K).astype(np.float64)
-        return np.cumprod(1.0 - np.clip(h, 1e-9, 1 - 1e-9), axis=1)
+        if self.booster is None:
+            raise RuntimeError("predict_survival needs a fitted model")
+        step = np.asarray(steps, dtype=np.int64)
+        out = np.empty((n, K), dtype=np.float64)
+        per = max(1, int(max_grid_rows) // max(K, 1))
+        for start in range(0, n, per):
+            block = X[start:start + per]
+            grid = np.column_stack([np.repeat(block, K, axis=0), np.tile(step, block.shape[0])])
+            pred = np.asarray(self.booster.predict(grid.astype(np.float32)), dtype=np.float64)
+            h = pred.reshape(-1, K)
+            out[start:start + block.shape[0]] = np.cumprod(
+                1.0 - np.clip(h, 1e-9, 1 - 1e-9), axis=1)
+        return out
 
     def predict_mrc(self, X, capacities, edges, p_compulsory=0.0):
         """MRC at each capacity.

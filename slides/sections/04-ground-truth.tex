@@ -1,28 +1,33 @@
 \section{Ground truth}
 
-\begin{frame}{Simulation is the reference}
+\begin{frame}{Ground truth is exact, not simulated}
   \begin{itemize}
-    \item Full simulation of the held-out segment on a fixed capacity grid.
-    \item Exact stack distance where the trace fits in memory.
-    \item SHARDS with a fixed sampling rate where it does not.
-    \item The sampling rate and its confidence band ship with every curve.
+    \item The curve is $\mathrm{MRC}(C) = \Pr(R \ge C)$ over the held-out
+      block's own backward reuse distances.
+    \item Exact for LRU: a request hits iff its reuse distance is below the
+      capacity (stack property).
+    \item Verified against a full LRU replay on the same trace: identical.
+    \item No sampling and no simulator, so no sampling correction and no band.
   \end{itemize}
   \vspace{1em}
-  \begin{block}{Rule}
-    Model error is never reported below simulation error.
+  \begin{block}{Identification limit}
+    A distance beyond $b_{M-1}$ is not observable in a finite window, so every
+    reported capacity sits below it.
   \end{block}
 \end{frame}
 
 \begin{frame}{Metrics}
   \begin{description}
-    \item[MRC error] max and mean absolute deviation from the simulated curve
-      over the capacity grid.
-    \item[Calibration] reliability of hazard predictions, summarized as
-      expected calibration error.
-    \item[Brier / IBS] squared error of the hazard, integrated over bins.
+    \item[Curve error] MAE and MAX absolute deviation from the exact curve
+      over the frozen capacity grid.
+    \item[Shape error] signed bias, mean relative error, and the area between
+      curves, integrated in log capacity.
+    \item[Decision error] capacity needed to reach a target hit ratio, as a
+      ratio to the true capacity.
   \end{description}
-  \vspace{1em}
-  \begin{block}{Why not likelihood}
-    Likelihood rewards over-confident hazards; the Brier score does not.
+  \vspace{0.6em}
+  \begin{block}{Rule}
+    An error is never read below the truth's own sampling error,
+    $\sqrt{p(1-p)/n}$ on the block. On cluster45 the hazard sits inside it.
   \end{block}
 \end{frame}

@@ -75,9 +75,9 @@ test:  ## full test suite
 	$(PY) pytest -q
 
 lint:  ## ruff + mypy
-	$(PY) ruff check src tests && $(PY) mypy src
+	$(PY) ruff check src tests scripts && $(PY) mypy src
 
 check:  ## the full gate: ruff, mypy, pytest
-	$(PY) ruff check src tests
+	$(PY) ruff check src tests scripts
 	$(PY) mypy src
 	$(PY) pytest -q

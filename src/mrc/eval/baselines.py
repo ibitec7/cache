@@ -51,7 +51,7 @@ import lightgbm as lgb
 import numpy as np
 from numpy.typing import ArrayLike
 
-from mrc.config import N_BINS, SEED
+from mrc.config import N_BINS, NUM_THREADS, SEED
 from mrc.models.hazard import assign_bins, bin_edges
 
 PARAMS_CLF: dict[str, Any] = {
@@ -60,7 +60,7 @@ PARAMS_CLF: dict[str, Any] = {
     "verbosity": -1,
     "num_leaves": 31,
     "learning_rate": 0.05,
-    "num_threads": 4,
+    "num_threads": NUM_THREADS,
     "seed": SEED,
     "deterministic": True,
     "force_row_wise": True,

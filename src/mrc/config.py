@@ -1,6 +1,7 @@
 """Frozen run constants. One source of truth; nothing else may hardcode these."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -31,4 +32,11 @@ MAX_GROUPED_ROWS = 60_000_000
 PER_STEP_MAX_REQUESTS = 200_000
 
 SEED = 7
-NUM_THREADS = 12
+# LightGBM threads. Measured on this 12-core box under ordinary desktop load, three
+# boosting rounds on 4.5M rows: 12 threads 12.1 s, 8 threads 7.5 s, 4 threads 4.4 s;
+# a full cluster10 run is 54 s at 4 threads against 15 min at 12. Oversubscription
+# costs more than it buys here, so the default is 8 and a background run sets
+# MRC_THREADS=4. Thread count is recorded in every artifact's meta.params, because
+# it is part of the computation: the same count is bit-identical, a different count
+# moves the last bits (measured 2e-15 relative on cluster10 MAE, below print precision).
+NUM_THREADS = int(os.environ.get("MRC_THREADS", "8"))

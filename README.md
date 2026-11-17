@@ -43,17 +43,21 @@ Telemetry: `make ui` starts MLflow on :5000 and the Optuna dashboard on :8080.
 
 ## Status
 
-Measured on the 200,000-request `cluster045` sample, not the final T2 numbers. Recorded
-here so the pipeline is auditable end to end.
+Test block, four production traces, first 5,000,000 requests each, 24-point capacity grid
+(12 on cluster10). MAE against the exact Mattson curve, read from
+`artifacts/tables/*_metrics.json`. cluster52 was held out: the model, grid, features and
+hyperparameters were frozen before its labels were read.
 
-| Curve | MAE vs empirical MRC (16 capacities) | Max abs error | Bias |
-|---|---|---|---|
-| Kaplan-Meier hazard, no features | 0.0018 | 0.0073 | -0.0018 |
-| GBDT hazard, 5 features, default params | 0.0057 | 0.0099 | +0.0057 |
+| Estimator | cluster45 | cluster26 | cluster52 | cluster10 |
+|---|---|---|---|---|
+| Hazard GBDT | 0.00027 | 0.00548 | 0.00027 | 0.00772 |
+| Kaplan-Meier | 0.02000 | 0.01178 | 0.02481 | 0.04387 |
+| Hit-count regression | 0.10968 | 0.07927 | 0.11342 | 0.07930 |
 
-The GBDT overestimates the miss ratio here because it is fitted on five coarse features
-and has not been tuned; the KM baseline is unbiased by construction. Closing that gap is
-the modelling work.
+The hazard GBDT is the finished model, and the capacity it implies is within 7.5% of truth
+on all four traces: the model-over-truth capacity ratio spans 0.925 to 1.009
+(`report/tables/provisioning.tex`). On cluster45 and cluster52 the curve error is inside the
+sampling noise of the truth block (`scripts/noise_floor.py`, `report/tables/noise_floor.tex`).
 
 ## Documentation
 

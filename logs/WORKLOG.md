@@ -231,3 +231,84 @@ max error 0.147. Re-evaluating the same fitted booster on the bin upper edges gi
 and max 0.0206; cluster45 improves from 0.0046 to 0.0003, cluster10 is unchanged at 0.0077.
 The grid is now `capacity_grid_from_edges(edges, 24)`, edges[1:-2], which keeps every capacity below
 the overflow edge and makes `S_b` and `P(R >= e_{b+1})` the same event.
+
+## 2026-11-17T05:52Z · prereg · cluster52 as the fourth-trace falsification test
+
+Commit: working tree (uncommitted at the time of writing).
+
+Pre-registered before any cluster52 model result existed. Design numbers only, from
+`data/processed/cluster52/labels.manifest.json` (5,000,000 requests, first prefix of
+the 93.09 GB shard): 932,119 distinct keys, eligible 4,067,881, p_compulsory 0.1864,
+so the hit-ratio ceiling is 0.814.
+
+The four existing traces split into two regimes: cluster45 has a long reuse tail
+(R p99 1.01M) where the marginal curve must fail, cluster26 has dense reuse
+(R p99 17.7k) where it nearly succeeds. cluster52 has 5.4 requests per key, i.e.
+dense reuse, so it belongs to the cluster26 regime.
+
+Predictions, stated before the fit:
+1. Ordering holds: hazard MAE < Kaplan-Meier MAE < hit-count MAE on cluster52.
+2. Margin is cluster26-like, not cluster45-like: hazard/KM MAE ratio under 3, against
+   1.95 on cluster26 and 74 on cluster45. A ratio above 10 falsifies it.
+3. Provisioning ratio for the hazard stays inside [0.9, 1.1] at 60, 80 and 95 % of
+   the ceiling. Outside that band at any target is the falsifier named in the report.
+4. Kaplan-Meier will be close at the 60 % target and worse at 95 %, because a short
+   tail makes the level shift matter only high on the curve.
+
+Protocol is identical to the other three traces: 5M-request prefix, 33 bins from the
+observed p99.9, capacity grid on bin upper edges, 70/85/100 contiguous blocks, one
+seed. Nothing about the model, grid, or features is tuned on cluster52.
+
+## 2026-11-17T15:50Z · result · cluster52 scored: the ordering holds, my regime prediction did not
+
+Commit: working tree (this entry's commit is the one that follows).
+
+Cluster52 scored with the frozen protocol, no retuning: 5M-request prefix, 33 bins,
+24-point grid, 70/85/100 blocks, seed 7, `MRC_THREADS=4`. Test-block MAE hazard
+0.00027, Kaplan-Meier 0.02481, hit-count 0.11342 (`artifacts/tables/cluster52_metrics.json`).
+
+Scored against the four predictions in the 05:52Z entry:
+
+| # | Prediction | Outcome |
+|---|---|---|
+| 1 | hazard < KM < hit-count | holds |
+| 2 | hazard/KM MAE ratio under 3, falsified above 10 | **falsified: 90.9** |
+| 3 | hazard provisioning ratio inside [0.9, 1.1] | holds: 1.005, 1.004, 1.009 |
+| 4 | KM close at the 60% target, worse at 95% | fails: 0.657, 0.563, 0.522, wrong end of the curve |
+
+Why prediction 2 missed: I used requests-per-key (5.4) as a proxy for reuse density.
+The measured statistic is R p99 = 488,644 against 932,119 keys, so the tail reaches
+52% of the key space, statistically indistinguishable from cluster45's 47%. Requests
+per key measures how often a key recurs, not how far into the key space a single
+reuse reaches; only the second determines whether a marginal curve can work. The
+proxy was the error, not the model.
+
+Prediction 3 is the one that matters for the report, and it held at every target on
+every trace, including the held-out one.
+
+Also this session:
+
+- **`NUM_THREADS` was hardcoded in four places** (`pipeline.DEFAULT_PARAMS`, two in
+  `cli.py`, `eval/baselines.py`) despite `config.py` claiming to be the single source.
+  Consequence: `MRC_THREADS` never reached LightGBM, and 12 threads on this box ran
+  cluster10 in 15+ minutes against 54 s at 4. Measured, 3 rounds on 4.5M rows: 12
+  threads 12.1 s, 8 threads 7.5 s, 4 threads 4.4 s. All four sites now read
+  `config.NUM_THREADS`; the default is 8 and a background run sets 4.
+- **Determinism is thread-count-conditional.** A same-thread rerun of cluster10 is
+  bit-identical (0 differing fields). Changing the count moves the last bits:
+  cluster10 gbdt MAE 0.005170615270493756 -> 0.005170615270493765, 2e-15 relative,
+  below print precision. `deterministic=True` fixes the order for a given count, not
+  across counts. The thread count is recorded in every artifact's `meta.params`.
+- **Four-panel figures** now use a 2x2 grid (`_panels`); four abreast at 7.0 in left
+  1.7 in per panel and the legend collided with the tick labels. `plot_importance`
+  refuses a cluster without a SHAP artifact instead of drawing a blank panel.
+- **Tables and figures default to `reported_clusters()`** (glob over the metrics
+  artifacts), so a new trace appears in every table without editing a list.
+- Other lanes' uncommitted work reviewed and kept: `read_trace` streams with an early
+  stop at `limit` (93 GB shard: 29 s, 4.3 GB peak, bit-identical labels on cluster45),
+  `predict_survival` chunks its grid, `pyproject.toml` drops nine unused dependencies
+  (verified: no import of any of them in `src/`, `scripts/`, `tests/`), `configs/`
+  removed (its constants live in `src/mrc/config.py`), `docs/GATES.md` paths updated
+  to `artifacts/truth/`.
+- Body is back to 10 pages after moving the residual figure and the noise table to
+  the appendix; 15 pages total, 0 LaTeX errors, 0 overfull boxes, 88 tests pass.

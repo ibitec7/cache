@@ -37,7 +37,49 @@ the same distribution only under stationarity, and the window truncates them
 differently. A request early in the window whose key never recurs is censored at a
 large bound, while the same request's backward distance may be small. Fitting the
 forward hazard therefore estimates the distribution of a quantity the curve is not a
-survival function of. The measured gap is in \cref{sec:limitations}.
+survival function of. The measured gap is in \cref{app:limitations}.
+
+\subsection{Corrections and limitations}
+\label{app:limitations}
+
+\textbf{The forward-event target is biased.} The first implementation modelled
+whether a key would be requested again before the window ended. That is a different
+distribution from the backward distance the curve is a survival function of. It
+produced test MAE 0.170 with a systematic optimistic bias of +0.170 on cluster45;
+targeting the backward distance produced 0.005. The comparison is reported because
+the error is not visible from the fitted model alone.
+
+\textbf{A capacity grid inside a bin is a measurement error, not a model error.} The
+first grid was log-spaced independently of the bins. Re-evaluating the same fitted
+booster on bin upper edges cut cluster26's worst error from 0.147 to 0.021 and
+cluster45's from 0.005 to 0.0003. The grid is now aligned.
+
+\textbf{Four traces, one window each.} Every number is a within-trace fit on a
+five-million-request window. Distances above the window are unobservable, which is
+why every caption states the window and why the grid stops below $b_{M-1}$. The
+cluster52 shard is 13.4 billion requests (93 GB compressed); only its first five
+million are analysed, so nothing here is a claim about that cluster's full week or
+about the reuse distances beyond the window.
+
+\textbf{Cold-heavy workloads have a ceiling.} The hit ratio cannot exceed $1-p_c$.
+On cluster10 that ceiling is 50\%, so a 90\% target is not a modelling problem. This
+is why provisioning targets are stated relative to the ceiling.
+
+\textbf{Tuning is bounded.} Optuna ran 15 trials on a four-million-row subsample of
+cluster45, not 60 at full budget. The default parameters already reached the accuracy
+gate, so the study is evidence that the search works, not the source of the headline
+model. The best trial reached validation MAE 0.00036 against 0.00042 for the shipped
+defaults, a 13\% improvement that is available but not used, so that every row of
+\cref{tab:methods} shares one protocol.
+
+\textbf{The single-row row of \cref{tab:methods} is an oracle.} It is included to
+bound the risk-set expansion, and it is excluded from every headline comparison.
+
+\textbf{Calibration was pre-registered and is not reported.} The statistical skeleton
+pre-registered per-request calibration, Brier score and its integral over the bins, as
+a secondary acceptance metric; neither is reported in this document, every reported
+metric is curve-level (MAE, MAX, bias, MRE, ABC) or the provisioning decision, and the
+calibration figure code was removed as unused.
 
 \subsection{Reproduction}
 \label{app:repro}
@@ -57,3 +99,52 @@ cd report && latexmk -pdf main.tex
 
 \Cref{tab:full-metrics} lists every metric on every trace, including the bias and
 the log-normalised area between curves that the main text omits.
+
+\input{tables/noise_floor}
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\includegraphics[width=\linewidth]{figures/cluster-error.pdf}
+\captionof{figure}{Absolute curve error against capacity, log-log, one panel per
+trace. Hazard GBDT solid, Kaplan-Meier dashed, hit-count dotted. Exact zeros are
+floored at $3\times10^{-5}$, below every measured hazard error.}
+\label{fig:cluster-error}
+\end{minipage}
+\end{center}
+
+\subsection{Capacity ratio figure}
+\label{app:capacity-figure}
+
+\begin{center}
+\begin{minipage}{0.62\linewidth}
+\includegraphics[width=\linewidth]{figures/capacity-ratio.pdf}
+\captionof{figure}{Capacity ratio at three targets, median over the four traces,
+with parity dotted. Below one is under-provisioning.}
+\label{fig:capacity-ratio}
+\end{minipage}
+\end{center}
+
+\subsection{Trace design numbers}
+\label{app:traces}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\sisetup{group-separator={,},group-minimum-digits=4}
+\caption{The four traces, first 5{,}000{,}000 requests each. Eligible is the
+fraction with a previous access inside the window; $p_c$ is its complement and is
+the compulsory mass. $R$ is the backward reuse distance in objects. Bins and grid
+points are realised counts; $b_{M-1}$ is the lower edge of the overflow bin, and
+every reported capacity is below it.}
+\label{tab:traces}
+\begin{tabular}{@{}l r r r r r r r r@{}}
+\toprule
+Trace & {Keys} & {Mean object (B)} & {Eligible} & {$p_c$} & {$R$ p50} & {$R$ p99} & {Bins / grid} \\
+\midrule
+cluster45 & \num{2158200} & \num{91} & 0.568 & 0.432 & \num{4} & \num{1008186} & 33 / 24 \\
+cluster26 & \num{394747} & \num{1046} & 0.921 & 0.079 & \num{472} & \num{17709} & 33 / 24 \\
+cluster52 & \num{932119} & \num{252} & 0.814 & 0.186 & \num{1097} & \num{488644} & 33 / 24 \\
+cluster10 & \num{2500051} & \num{1289} & 0.500 & 0.500 & \num{1} & \num{8} & 14 / 12 \\
+\bottomrule
+\end{tabular}
+\end{table}

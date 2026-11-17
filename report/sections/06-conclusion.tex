@@ -5,10 +5,10 @@ A miss-ratio curve is the survival function of the backward reuse distance. Mode
 that way, it is one distribution per workload, estimated once from request features,
 and read at any capacity. The measured consequence is a curve whose mean absolute
 error is one to two orders of magnitude below a hit-count regression and two to
-seventy times below a marginal estimator, with a provisioning decision inside 7.5\%
+fifty times below a marginal estimator, with a provisioning decision inside 7.5\%
 of the true capacity.
 
-The claim is narrow on purpose. It is about within-trace prediction on three
+The claim is narrow on purpose. It is about within-trace prediction on four
 production traces, not about transfer, and it is stated with the two corrections that
 made it measurable: the model targets the backward distance, and the capacity grid
 is aligned to the hazard bins. Both corrections are evidence that the estimator is

@@ -160,3 +160,12 @@ setup completeness"), working tree clean apart from untracked `.hermes/`.
 2026-11-10T22:27Z | every config constant is read from mrc.config, including NUM_THREADS inside the Optuna suggest function | audit M-25; master §2 "nothing else may hardcode these" | no |
 2026-11-10T22:27Z | src/mrc/config.py is created in A1 verbatim, not in A3, so compute_reuse's default cap is the frozen constant rather than a literal | audit M-26; A1 must run before A3 in the DAG | no, the file is frozen on creation |
 ```
+
+### Dependency, config and threading decisions
+
+```
+2026-11-17T15:55Z | pyproject drops pandas, scipy, polars, duckdb, zstandard, pyyaml, tqdm and libcachesim | none of them is imported anywhere in src/, scripts/ or tests/ (checked with grep, then uv lock --check); .zst shards are decompressed by pyarrow's built-in zstd, so the trace reader never needed the zstandard package | no, uv.lock regenerates |
+2026-11-17T15:55Z | libcachesim leaves the dependency set | R2 in docs/RISKS.md: 0.3.5 returns miss ratio 1.0 regardless of capacity and its insert() double-counts objects, so it never served as truth; docs/DATA.md section 9 kept it installed "for its C trace reader", which the pyarrow reader replaced | supersedes DATA.md section 9's retention note |
+2026-11-17T15:55Z | configs/ removed; every constant lives in src/mrc/config.py | the yaml files were never read at run time (no yaml import after the trim), so they were a second, dead source of the same constants | yes, R6's "pre-register the bin grid in configs/" now means the frozen constants in src/mrc/config.py |
+2026-11-17T15:55Z | NUM_THREADS is read from the MRC_THREADS environment variable, default 8 | measured on this 12-core box, 3 rounds on 4.5M rows: 12 threads 12.1 s, 8 threads 7.5 s, 4 threads 4.4 s, and a full cluster10 run 15 min versus 54 s; oversubscription costs more than it buys | the count is written into every artifact's meta.params, and the same count is bit-identical while a different count moves the last bits (2e-15 relative) |
+```

@@ -1,0 +1,106 @@
+[
+  {
+    "cluster": "cluster45",
+    "n_eligible_test": 444781,
+    "se_median": 0.000734701732797089,
+    "se_max": 0.0007496603232677694,
+    "models": {
+      "gbdt": {
+        "mae": 0.0002660691668428782,
+        "mae_over_se_median": 0.362145827300453,
+        "caps_below_1se": 23,
+        "caps": 24
+      },
+      "km": {
+        "mae": 0.019995245146744615,
+        "mae_over_se_median": 27.215459354669754,
+        "caps_below_1se": 0,
+        "caps": 24
+      },
+      "hitcount": {
+        "mae": 0.10967927777777775,
+        "mae_over_se_median": 149.28408751700758,
+        "caps_below_1se": 0,
+        "caps": 24
+      }
+    }
+  },
+  {
+    "cluster": "cluster26",
+    "n_eligible_test": 692522,
+    "se_median": 0.0005530280153154054,
+    "se_max": 0.0006008168574842349,
+    "models": {
+      "gbdt": {
+        "mae": 0.005481235759388691,
+        "mae_over_se_median": 9.911316619760408,
+        "caps_below_1se": 1,
+        "caps": 24
+      },
+      "km": {
+        "mae": 0.011782786533663235,
+        "mae_over_se_median": 21.305948717522426,
+        "caps_below_1se": 0,
+        "caps": 24
+      },
+      "hitcount": {
+        "mae": 0.0792666666666667,
+        "mae_over_se_median": 143.33209976977201,
+        "caps_below_1se": 0,
+        "caps": 24
+      }
+    }
+  },
+  {
+    "cluster": "cluster52",
+    "n_eligible_test": 637941,
+    "se_median": 0.0005442879494871547,
+    "se_max": 0.0006245889031838142,
+    "models": {
+      "gbdt": {
+        "mae": 0.00027303543584351425,
+        "mae_over_se_median": 0.5016378483131528,
+        "caps_below_1se": 21,
+        "caps": 24
+      },
+      "km": {
+        "mae": 0.024811505289955627,
+        "mae_over_se_median": 45.58525558637448,
+        "caps_below_1se": 0,
+        "caps": 24
+      },
+      "hitcount": {
+        "mae": 0.1134155,
+        "mae_over_se_median": 208.37407865976763,
+        "caps_below_1se": 0,
+        "caps": 24
+      }
+    }
+  },
+  {
+    "cluster": "cluster10",
+    "n_eligible_test": 375008,
+    "se_median": 0.0008141512378390754,
+    "se_max": 0.0008164856643207757,
+    "models": {
+      "gbdt": {
+        "mae": 0.007721979305419753,
+        "mae_over_se_median": 9.484698845285148,
+        "caps_below_1se": 3,
+        "caps": 12
+      },
+      "km": {
+        "mae": 0.04386628954860561,
+        "mae_over_se_median": 53.87977995960032,
+        "caps_below_1se": 1,
+        "caps": 12
+      },
+      "hitcount": {
+        "mae": 0.07929599999999999,
+        "mae_over_se_median": 97.3971374292421,
+        "caps_below_1se": 0,
+        "caps": 12
+      }
+    }
+  }
+]

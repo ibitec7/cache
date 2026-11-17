@@ -97,13 +97,15 @@ time, the miss-ratio curve is its survival function, and capacity is a threshold
 that function rather than an input to a regressor. A discrete-time hazard on twelve
 request features estimates the function once, and every capacity is read from it.
 
-On three production traces of five million requests each, the hazard curve has mean
-absolute error 0.0003 to 0.0077, against 0.0118 to 0.0439 for a Kaplan-Meier curve
-and 0.079 to 0.110 for a hit-count regression, and it beats both on every trace. The
+On four production traces of five million requests each, one of them held out from
+every design choice, the hazard curve has mean absolute error 0.0003 to 0.0077,
+against 0.0118 to 0.0439 for a Kaplan-Meier curve and 0.079 to 0.113 for a hit-count
+regression, and it beats both on every trace. The
 error is a decision, not only a number: to reach a target hit ratio, the model sizes
 the cache within 7.5\% of the true requirement, while the marginal curve
 under-provisions by up to a factor of four. Recency is the dominant feature on all
-three traces, and removing the timing family raises error 51-fold on one trace. The
+four traces, and, on the three where the ablation was run, removing the timing
+family raises error 51-fold on one trace. The
 report also documents two corrections that made the result measurable: the model
 must target the backward distance, not the next access, and the capacity grid must
 align with the hazard bins. Both are reported with their evidence.

@@ -25,6 +25,7 @@ from mrc.config import (
     LABEL_REQUESTS,
     N_BINS,
     N_CAPACITIES,
+    NUM_THREADS,
     PROCESSED,
     REPO,
     SEED,
@@ -42,7 +43,6 @@ ARTIFACTS = REPO / "artifacts"
 ROW_BUDGET = 20_000_000          # grouped rows held in memory for one fit
 TRUTH_DIR = ARTIFACTS / "truth"
 TABLE_DIR = ARTIFACTS / "tables"
-FIG_DIR = ARTIFACTS / "figures"
 
 DEFAULT_PARAMS: dict = {
     "objective": "binary",
@@ -55,7 +55,7 @@ DEFAULT_PARAMS: dict = {
     "bagging_fraction": 0.8,
     "bagging_freq": 1,
     "lambda_l2": 1.0,
-    "num_threads": 12,
+    "num_threads": NUM_THREADS,
     "seed": SEED,
     "deterministic": True,
     "force_row_wise": True,
@@ -368,15 +368,18 @@ def run_one(cluster: str, source: str | Path, limit: int | None = LABEL_REQUESTS
 
     metrics: dict[str, dict] = {"valid": {}, "test": {}}
     curves: dict[str, np.ndarray] = {"capacities": caps}
-    for block in ("train", "valid", "test"):
+    # Only the reported blocks. A train-block row would fit the baselines on the
+    # block they are scored on, and no table reads it: it cost 70 % of this stage.
+    for block in ("valid", "test"):
         truth_b = truth_block(prep, block)
         pred = predict_block(model, prep, block)
+        km = km_curve(prep, block)
         metrics.setdefault(block, {})
         metrics[block]["gbdt"] = score(pred, truth_b, caps)
-        metrics[block]["km"] = score(km_curve(prep, block), truth_b, caps)
+        metrics[block]["km"] = score(km, truth_b, caps)
         curves[f"truth_{block}"] = truth_b
         curves[f"gbdt_{block}"] = pred
-        curves[f"km_{block}"] = km_curve(prep, block)
+        curves[f"km_{block}"] = km
 
         sel = dict(zip(("train", "valid", "test"), prep.masks))[block] & prep.eligible
         pc = prep.p_compulsory[block]

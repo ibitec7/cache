@@ -51,32 +51,34 @@ question about a classifier.
   Only the observation ceiling censors a distance, which removes the boundary bias
   of modelling the next access instead of the previous one
   (\cref{sec:formalization,sec:methods}).
-  \item \textbf{Measured accuracy.} On three production traces, one protocol and
+  \item \textbf{Measured accuracy.} On four production traces, one protocol and
   one capacity grid, the hazard model reaches test-block MAE 0.0003 to 0.0077,
-  against 0.0118 to 0.0439 for a Kaplan-Meier curve and 0.079 to 0.110 for a
-  hit-count regression (\cref{tab:accuracy}).
+  against 0.0118 to 0.0439 for a Kaplan-Meier curve and 0.079 to 0.113 for a
+  hit-count regression (\cref{tab:accuracy}). The fourth trace was held out: the
+  model and the grid were frozen before it was read, so the result is a test of the
+  method rather than another fit to it.
   \item \textbf{A decision, not just an error.} To reach a target hit ratio, the
   model chooses capacity within 7.5\% of the true requirement. The marginal curve
   under-provisions by up to a factor of four on the trace where capacity matters
   most (\cref{tab:provisioning}).
   \item \textbf{Attribution.} Recency, the time since the previous access to the
-  same key, is the dominant feature on all three traces. Removing the timing family
-  raises error 51-fold on one trace and 5.4-fold on another; on the dense trace it
-  changes nothing, and there the feature set is over-specified
-  (\cref{fig:importance,tab:methods}).
+  same key, is the dominant feature on all four traces. Removing the timing family,
+  measured on three of them, raises error 51-fold on one trace and 5.4-fold on
+  another; on the dense trace it changes nothing, and there the feature set is
+  over-specified (\cref{fig:importance,tab:methods}).
 \end{enumerate}
 
 \subsection{What the report does not claim}
 \label{sec:nonclaims}
 
-The evidence is three traces, each a five-million-request window, and a model
+The evidence is four traces, each a five-million-request window, and a model
 fitted within a trace and scored on a later block of the same trace. Nothing here
 shows transfer to an unseen workload. The hit ratio is bounded by
 $1-p_c$, where $p_c$ is the fraction of requests with no previous access, so a
 target above that ceiling is unreachable by any cache; the report states targets as
 a fraction of the ceiling for that reason. Two measurement errors found during the
 build, a biased forward-event target and a capacity grid misaligned with the hazard
-bins, are reported with their evidence in \cref{sec:limitations} because they
+bins, are reported with their evidence in \cref{app:limitations} because they
 changed the method and because they are the reason the remaining numbers are
 credible.
 
@@ -86,6 +88,6 @@ credible.
 sampling and learned estimators. \Cref{sec:formalization} states the quantity and
 the identification condition. \Cref{sec:methods} describes the estimator that was
 built, including the alternatives it is compared against.
-\Cref{sec:experiments} reports the three traces, the accuracy, the method ablation,
+\Cref{sec:experiments} reports the four traces, the accuracy, the method ablation,
 the provisioning result and the attribution. \Cref{sec:conclusion} states what
 would falsify the claim.

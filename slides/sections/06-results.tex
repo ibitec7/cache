@@ -1,45 +1,43 @@
 \section{Results}
 
-\begin{frame}{Results: placeholders}
-  \begin{block}{Status}
-    All tables and figures in this section are placeholders. No number is
-    reported until the held-out runs complete.
-  \end{block}
-  \begin{table}
-    \centering
-    \caption{MRC error against simulation, held-out segment.}
-    \begin{tabular}{@{}l S[table-format=1.3] S[table-format=1.3]@{}}
-      \toprule
-      Cluster & {Max err} & {Mean err} \\
-      \midrule
-      C1 & \ldots & \ldots \\
-      C2 & \ldots & \ldots \\
-      C3 & \ldots & \ldots \\
-      C4 & \ldots & \ldots \\
-      \bottomrule
-    \end{tabular}
-  \end{table}
+\begin{frame}{Results: error against the exact curve}
+  \input{../report/tables/accuracy}
+  \vspace{0.4em}
+  \begin{itemize}
+    \item Each cell is MAE / MAX on the held-out block, over the same 24-point
+      capacity grid for every estimator.
+    \item The ordering is the same in every column: the hazard model is the most
+      accurate of the three on all four traces, including the held-out cluster52.
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Results: curve and calibration}
+\begin{frame}{Results: what the error costs in capacity}
   \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.54\textwidth}
-      \begin{block}{Figure placeholder}
-        Estimated vs simulated MRC per cluster, from
-        \texttt{artifacts/figures/mrc-curves.pdf}.
-      \end{block}
+    \begin{column}{0.56\textwidth}
+      \includegraphics[width=\linewidth]{../report/figures/capacity-ratio.pdf}
     \end{column}
-    \begin{column}{0.42\textwidth}
-      \begin{block}{Figure placeholder}
-        Reliability diagram, from
-        \texttt{artifacts/figures/calibration.pdf}.
-      \end{block}
+    \begin{column}{0.40\textwidth}
+      \begin{itemize}
+        \item Hazard GBDT: ratio between 0.925 and 1.009 at 60, 80 and 95\% of
+          the ceiling, so within 7.5\% at every target on every trace.
+        \item Kaplan-Meier on cluster45: 0.239 at the 80\% target, a factor of
+          four under-provisioning.
+      \end{itemize}
+      \vspace{0.3em}
+      {\footnotesize Capacity ratio is model capacity over the capacity the
+      exact curve needs for the same hit ratio; 1.0 is exact.}
     \end{column}
   \end{columns}
-  \vspace{1em}
+\end{frame}
+
+\begin{frame}{Results: what carries the curve}
+  \begin{block}{Recency dominates}
+    \texttt{log\_gap}, the log of the requests since the previous access, has the
+    largest mean $|\mathrm{SHAP}|$ on every trace.
+  \end{block}
   \begin{itemize}
-    \item Three outcomes distinguished in advance: both track, one tracks,
-      neither tracks.
-    \item Reported error carries the simulation band.
+    \item cluster45: 2.66 against 1.42 for the bin step, the next feature.
+    \item cluster26: 1.32 against 1.03.
+    \item cluster10: 3.29 against 3.29, level with the bin step.
   \end{itemize}
 \end{frame}

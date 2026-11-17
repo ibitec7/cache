@@ -11,10 +11,14 @@ from pathlib import Path
 import numpy as np
 
 from mrc.analysis import load_metrics
-from mrc.config import ARTIFACTS
+from mrc.config import ARTIFACTS, REPO
 from mrc.plots.style import DOUBLE_COL, PALETTE, SINGLE_COL, apply_style, label_mrc
 
-FIG_DIR = ARTIFACTS / "figures"
+# One home for the figures. `report/main.tex` sets \graphicspath{{figures/}} and
+# `report/sections/05-experiments.tex` includes `figures/<name>.pdf`, so the
+# producer writes straight into the directory the report reads. Do not add a
+# second output directory: a copy would drift from the LaTeX.
+REPORT_FIG_DIR = REPO / "report" / "figures"
 
 
 def _plt():
@@ -24,11 +28,28 @@ def _plt():
     return plt
 
 
+def _panels(n: int, sharey: bool = False, height: float = 2.0):
+    """Axes for `n` traces: one row up to three, a 2x2 block beyond that.
+
+    Four panels abreast at 7.0 in leave 1.7 in each, where the tick labels and the
+    legend collide. The grid only changes the layout, never the data or the panel set.
+    """
+    plt = _plt()
+    if n <= 3:
+        fig, axes = plt.subplots(1, n, figsize=(DOUBLE_COL, height), sharey=sharey)
+    else:
+        rows = (n + 1) // 2
+        fig, axes = plt.subplots(rows, 2, figsize=(DOUBLE_COL, 1.55 * rows),
+                                 sharey=sharey, squeeze=False)
+        # The top row's tick labels sit directly above the bottom row's titles at the
+        # default spacing, so the two collide in the PDF text layer.
+        fig.subplots_adjust(hspace=0.55, wspace=0.22)
+    return fig, np.atleast_1d(axes).ravel()
+
+
 def plot_curves(clusters: list[str], path: Path | None = None) -> Path:
     """Ground truth, hazard model and Kaplan-Meier on the test block."""
-    plt = _plt()
-    fig, axes = plt.subplots(1, len(clusters), figsize=(DOUBLE_COL, 2.0), sharey=True)
-    axes = np.atleast_1d(axes)
+    fig, axes = _panels(len(clusters), sharey=True)
     for ax, cluster in zip(axes, clusters):
         payload = load_metrics(cluster)
         caps = np.asarray(payload["curves"]["capacities"])
@@ -44,10 +65,10 @@ def plot_curves(clusters: list[str], path: Path | None = None) -> Path:
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
                fontsize=7, bbox_to_anchor=(0.5, -0.06))
-    path = Path(path or FIG_DIR / "fig_mrc.pdf")
+    path = Path(path or REPORT_FIG_DIR / "mrc-curves.pdf")
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path)
-    plt.close(fig)
+    _plt().close(fig)
     return path
 
 
@@ -61,9 +82,7 @@ def plot_error(clusters: list[str], path: Path | None = None) -> Path:
     error sits one to two decades below the marginal curve. Exact zeros are
     floored at `FLOOR`, which is below every measured hazard error.
     """
-    plt = _plt()
-    fig, axes = plt.subplots(1, len(clusters), figsize=(DOUBLE_COL, 2.0), sharey=True)
-    axes = np.atleast_1d(axes)
+    fig, axes = _panels(len(clusters), sharey=True)
     styles = (("gbdt_test", PALETTE[1], "Hazard GBDT", "-"),
               ("km_test", PALETTE[2], "Kaplan-Meier", "--"),
               ("hitcount_test", PALETTE[3], "Hit-count", ":"))
@@ -85,14 +104,14 @@ def plot_error(clusters: list[str], path: Path | None = None) -> Path:
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
                fontsize=7, bbox_to_anchor=(0.5, -0.06))
-    path = Path(path or FIG_DIR / "fig_error.pdf")
+    path = Path(path or REPORT_FIG_DIR / "cluster-error.pdf")
     fig.savefig(path)
-    plt.close(fig)
+    _plt().close(fig)
     return path
 
 
 def plot_provisioning(clusters: list[str], path: Path | None = None) -> Path:
-    """Capacity ratio (model / truth) for 80, 90 and 95 % hit targets."""
+    """Capacity ratio (model / truth) at 60, 80 and 95 % of the hit ceiling."""
     plt = _plt()
     fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.1))
     fractions = (0.60, 0.80, 0.95)
@@ -112,11 +131,13 @@ def plot_provisioning(clusters: list[str], path: Path | None = None) -> Path:
         ax.bar(x + (offset - 0.5) * width, ratios, width=width, color=colour, label=label)
     ax.axhline(1.0, color="black", lw=0.8, ls=":")
     ax.set_xticks(x)
-    ax.set_xticklabels([f"{int(t * 100)}%\nof ceiling" for t in fractions], fontsize=7)
-    ax.set_xlabel("Target hit ratio")
+    ax.set_xticklabels([f"{int(t * 100)}%" for t in fractions], fontsize=7)
+    ax.set_xlabel("Target hit ratio (% of ceiling)")
     ax.set_ylabel("Capacity ratio (model / truth)")
-    ax.legend(loc="upper left", fontsize=7)
-    path = Path(path or FIG_DIR / "fig_capacity.pdf")
+    # Below the axes, not inside: the bars reach 1.0, so an in-axes legend would
+    # sit on a bar and on the 1.0 reference line.
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=2, fontsize=7)
+    path = Path(path or REPORT_FIG_DIR / "capacity-ratio.pdf")
     fig.savefig(path)
     plt.close(fig)
     return path
@@ -127,12 +148,15 @@ def plot_importance(clusters: list[str], path: Path | None = None) -> Path:
     import json
 
     plt = _plt()
-    fig, axes = plt.subplots(1, len(clusters), figsize=(DOUBLE_COL, 2.0))
-    axes = np.atleast_1d(axes)
-    for ax, cluster in zip(axes, clusters):
+    # Only clusters with a SHAP artefact get a panel. A cluster that has been trained
+    # but not interpreted must not appear as a blank panel: an empty column reads as
+    # "nothing ranks here" instead of "this trace was not interpreted".
+    have = [c for c in clusters if (ARTIFACTS / "tables" / f"{c}_shap.json").exists()]
+    if not have:
+        raise FileNotFoundError("no <cluster>_shap.json artefacts; run `mrc interpret <cluster>`")
+    fig, axes = _panels(len(have))
+    for ax, cluster in zip(axes, have):
         shap_path = ARTIFACTS / "tables" / f"{cluster}_shap.json"
-        if not shap_path.exists():
-            continue
         top = json.loads(shap_path.read_text())["top"][:6][::-1]
         names = [row["feature"].replace("_", " ") for row in top]
         vals = [row.get("mean_abs_contribution", 0.0) for row in top]
@@ -140,7 +164,7 @@ def plot_importance(clusters: list[str], path: Path | None = None) -> Path:
         ax.set_title(cluster.replace("cluster", "C"), fontsize=8)
         ax.tick_params(axis="y", labelsize=7)
         ax.set_xlabel("mean |SHAP|")
-    path = Path(path or FIG_DIR / "fig_importance.pdf")
+    path = Path(path or REPORT_FIG_DIR / "importance.pdf")
     fig.savefig(path)
     plt.close(fig)
     return path
@@ -151,5 +175,7 @@ def make_all(clusters: list[str]) -> list[Path]:
     present = [c for c in clusters if (ARTIFACTS / "tables" / f"{c}_metrics.json").exists()]
     if not present:
         raise FileNotFoundError("no metrics artefacts; run `mrc train <cluster>` first")
-    return [plot_curves(present), plot_error(present), plot_provisioning(present),
-            plot_importance(present)]
+    return [plot_curves(present, REPORT_FIG_DIR / "mrc-curves.pdf"),
+            plot_error(present, REPORT_FIG_DIR / "cluster-error.pdf"),
+            plot_provisioning(present, REPORT_FIG_DIR / "capacity-ratio.pdf"),
+            plot_importance(present, REPORT_FIG_DIR / "importance.pdf")]

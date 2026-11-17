@@ -11,6 +11,7 @@ import json
 
 import numpy as np
 
+from mrc.analysis import reported_clusters
 from mrc.config import ARTIFACTS, N_CAPACITIES, REPO, SEED
 from mrc.data.labels import load_labels
 from mrc.eval.baselines import fit_predict_hitcount, fit_predict_single_row
@@ -31,7 +32,8 @@ from mrc.pipeline import (
 N_REQUESTS = 1_000_000
 ROUNDS = 200
 ROW_BUDGET = 5_000_000
-CLUSTERS = ("cluster45", "cluster26", "cluster10")
+# Default: every trace with a metrics artefact, so a new trace needs no edit here.
+CLUSTERS = reported_clusters()
 TABLE_DIR = ARTIFACTS / "tables"
 TEX_DIR = REPO / "report" / "tables"
 

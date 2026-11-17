@@ -34,11 +34,10 @@ new threshold, file name or constant is introduced by them.
 
 | Gate | Exact command | Expected output | Blocks |
 |---|---|---|---|
-| `G-B1-replay` | `env -u PYTHONPATH uv run pytest tests/gt/test_replay.py -q` | `1 passed` | nothing (off the critical path) |
-| `G-B2-stackdist` | `env -u PYTHONPATH uv run pytest tests/gt -q` | `4 passed` (`3 passed` if B1 was deleted after a documented failure) | B3, D5 |
+| `G-B2-stackdist` | `env -u PYTHONPATH uv run pytest tests/gt -q` | `6 passed` | B3, D5 |
 | `G-B3-artifact` | `env -u PYTHONPATH uv run pytest tests/gt/test_truth_artifact.py -q` | `1 passed` | B3 commit |
-| `G-B3-curve` | `env -u PYTHONPATH uv run python -m mrc.cli truth sample45` then `env -u PYTHONPATH uv run python -c "import numpy as np; z=np.load('data/processed/sample45/truth.npz'); print(z['capacities'].tolist()); print(np.round(z['mrc'],4).tolist())"` | `K` strictly increasing capacities and `K` non-increasing ratios in `[0, 1]` with `mrc[0] > 0.95`, where `K = truth.manifest.json.n_capacities` (22 on cluster045 by audit M-2; the master's "24" is the requested resolution) | E1, F1, H1 |
-| `G-GRID-TRANSFER` | `env -u PYTHONPATH uv run python -c "import json,glob; [print(p, json.load(open(p))['max_capacity']) for p in sorted(glob.glob('data/processed/*/truth.manifest.json'))]"` | one line per labelled cluster; every `max_capacity < min over clusters of b_M_minus_1`; the single shared grid is re-frozen in `logs/DECISIONS.md` with its realised count | D1, H1 (planner-added, source master §7.2.4) |
+| `G-B3-curve` | `env -u PYTHONPATH uv run python -m mrc.cli truth sample45` then `env -u PYTHONPATH uv run python -c "import numpy as np; z=np.load('artifacts/truth/sample45.npz'); print(z['capacities'].tolist()); print(np.round(z['mrc'],4).tolist())"` | `K` strictly increasing capacities and `K` non-increasing ratios in `[0, 1]` with `mrc[0] > 0.95`, where `K = <cluster>.manifest.json.n_capacities` next to the npz (24 on cluster45, 12 on cluster10) | E1, F1, H1 |
+| `G-GRID-TRANSFER` | `env -u PYTHONPATH uv run python -c "import json,glob; [print(p, json.load(open(p))['max_capacity']) for p in sorted(glob.glob('artifacts/truth/*.manifest.json'))]"` | one line per labelled cluster; every `max_capacity < min over clusters of b_M_minus_1`; the single shared grid is re-frozen in `logs/DECISIONS.md` with its realised count | D1, H1 (planner-added, source master §7.2.4) |
 
 ## Phase C: features (owner `mrc-data`)
 

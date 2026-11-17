@@ -20,6 +20,16 @@
 
 *cluster26: `artifacts/tables/cluster26_metrics.json`*
 
+## cluster52 (test block)
+
+| model | MAE | MAX | bias | MRE | n |
+|---|---|---|---|---|---|
+| gbdt | 0.0003 | 0.0008 | 0.0002 | 0.0007 | 24 |
+| km | 0.0248 | 0.0403 | -0.0248 | 0.0614 | 24 |
+| hitcount | 0.1134 | 0.2544 | -0.0089 | 0.2352 | 24 |
+
+*cluster52: `artifacts/tables/cluster52_metrics.json`*
+
 ## cluster10 (test block)
 
 | model | MAE | MAX | bias | MRE | n |

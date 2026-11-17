@@ -2,11 +2,11 @@
 
 \begin{frame}{Split by time, not at random}
   \begin{itemize}
-    \item Fit, validation, held-out segments in time order.
+    \item Fit, validation and held-out blocks are contiguous in request order.
     \item No interleaving, no random shuffle.
-    \item Reuse distances computed once over the whole trace, so distances
-      crossing a boundary are not truncated.
-    \item Ground truth simulated on the held-out segment only.
+    \item Reuse distances are computed once over the whole window, so a
+      distance crossing a split boundary is never truncated.
+    \item Ground truth is the empirical survival on each block separately.
   \end{itemize}
 \end{frame}
 
@@ -15,19 +15,21 @@
     \begin{column}{0.52\textwidth}
       \textbf{Capacity grid}
       \begin{itemize}
-        \item Same grid for simulation, evaluation, and every model.
-        \item \SI{1}{GiB} to \SI{64}{GiB}, doubling.
+        \item Upper edges of the hazard bins, at most 24 points, all below the
+          overflow edge.
+        \item Same grid for the truth and for every model.
       \end{itemize}
       \vspace{0.5em}
       \textbf{Hyperparameters}
       \begin{itemize}
         \item Optuna, tree Parzen estimator.
-        \item Objective: validation IBS.
+        \item Objective: validation error of the curve.
+        \item Headline uses defaults, so every row shares one protocol.
       \end{itemize}
     \end{column}
     \begin{column}{0.44\textwidth}
       \begin{block}{Cluster selection}
-        Traces complete over both windows, selected before any fit.
+        First five million requests of each shard, fixed before any fit.
       \end{block}
     \end{column}
   \end{columns}

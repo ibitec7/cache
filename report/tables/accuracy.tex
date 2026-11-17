@@ -2,15 +2,15 @@
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{Test-block error over the 24-point capacity grid. Each cell is MAE over MAX; lower is better. The same three traces, split, grid and scoring code for every row.}
+\caption{Test-block error over the frozen capacity grid, 4 traces. Each cell is MAE over MAX; lower is better. The same split, grid and scoring code for every row.}
 \label{tab:accuracy}
-\begin{tabular}{@{}l r r r@{}}
+\begin{tabular}{@{}l r r r r@{}}
 \toprule
-Estimator & cluster45 & cluster26 & cluster10 \\
+Estimator & cluster45 & cluster26 & cluster52 & cluster10 \\
 \midrule
-Hazard GBDT & 0.00027 / 0.00107 & 0.00548 / 0.02057 & 0.00772 / 0.01902 \\
-Kaplan-Meier & 0.02000 / 0.03429 & 0.01178 / 0.01537 & 0.04387 / 0.12042 \\
-Hit-count regression & 0.10968 / 0.19838 & 0.07927 / 0.27053 & 0.07930 / 0.33206 \\
+Hazard GBDT & 0.00027 / 0.00107 & 0.00548 / 0.02057 & 0.00027 / 0.00079 & 0.00772 / 0.01902 \\
+Kaplan-Meier & 0.02000 / 0.03429 & 0.01178 / 0.01537 & 0.02481 / 0.04035 & 0.04387 / 0.12042 \\
+Hit-count regression & 0.10968 / 0.19838 & 0.07927 / 0.27053 & 0.11342 / 0.25439 & 0.07930 / 0.33206 \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -1,18 +1,53 @@
 # Figures
 
-Every figure in this report is generated, never drawn or edited by hand.
+Every figure in the report is produced by one module and written into this
+directory. There is no second copy: what the producer writes is what LaTeX reads.
 
-- Producer: `src/mrc/plots/` writes PDF (vector) output into `artifacts/figures/`.
-- The report includes those files by relative path, for example
-  `../artifacts/figures/mrc-curves.pdf`, so a regenerated figure is picked up
-  without editing any `.tex` file.
-- If a file is missing at compile time, `sections/05-experiments.tex` falls back
-  to a labelled placeholder box. The placeholder is not a figure; it marks a
-  figure that has not been generated yet.
-- Do not commit rasterized or annotated copies here. Add new figures by adding
-  a plotting function under `src/mrc/plots/` and referencing its output path.
-- Regeneration commands are listed in Appendix `sec:appendix-repro`.
+| Item | Value |
+|---|---|
+| Producer | `src/mrc/plots/report_figures.py` (`make_all`) |
+| Command | `env -u PYTHONPATH uv run python -m mrc.cli plots` |
+| Output directory | `report/figures/` (`REPORT_FIG_DIR` in the producer) |
+| Format | PDF, vector, style set only by `src/mrc/plots/style.py` |
+| Inputs | `artifacts/tables/<cluster>_metrics.json`, `artifacts/tables/<cluster>_shap.json` |
 
-`figures/` is otherwise empty; it exists so `\graphicspath` resolves and so
-locally generated diagnostic figures can be dropped in without touching the
-report tree.
+## Files and where they are used
+
+| File | Content | Included by |
+|---|---|---|
+| `mrc-curves.pdf` | exact and estimated miss-ratio curves, one panel per trace | `sections/05-experiments.tex` (`fig:mrc-curves`) |
+| `cluster-error.pdf` | absolute curve error against capacity, log axes | `sections/05-experiments.tex` (`fig:cluster-error`) |
+| `capacity-ratio.pdf` | capacity ratio (model / truth) at 60, 80 and 95 % of the ceiling | `sections/05-experiments.tex` (`fig:capacity`) |
+| `importance.pdf` | mean absolute SHAP contribution, top six features per trace | `sections/05-experiments.tex` (`fig:importance`) |
+
+`report/main.tex` sets `\graphicspath{{figures/}}`, so the sections reference the
+files as `figures/<name>.pdf` with no path into `artifacts/`. The four PDFs are
+generated artefacts that are committed with the report, because the report must
+compile from a fresh checkout without re-running training.
+
+## Regeneration
+
+```sh
+cd /home/ibrahim/uni/cache
+env -u PYTHONPATH uv run python -m mrc.cli plots
+```
+
+The command rewrites all four PDFs in place and prints each path it wrote. It
+also refreshes the tables under `report/tables/` from the same metrics files, so
+a figure and the table beside it can never come from different runs.
+
+If a metrics file is missing the command fails with
+`FileNotFoundError: no metrics artefacts`, rather than emitting a partial set.
+The sections include the PDFs with plain `\includegraphics`, so a missing figure
+is a LaTeX error at compile time. No placeholder box exists.
+
+## Adding a figure
+
+Add a plotting function to `src/mrc/plots/report_figures.py` that takes
+`path: Path | None = None` and defaults to `REPORT_FIG_DIR / "<name>.pdf"`, call
+it from `make_all`, and include `figures/<name>.pdf` from the report. Do not
+write to a second directory and do not copy PDFs by hand: a copy drifts from the
+producer and the report then shows a figure no command regenerates.
+
+`.gitkeep` is kept so the directory exists in a fresh checkout before the first
+run of the command above.

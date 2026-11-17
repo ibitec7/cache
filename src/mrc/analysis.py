@@ -16,6 +16,22 @@ from mrc.config import ARTIFACTS
 
 TABLE_DIR = ARTIFACTS / "tables"
 
+# Report column order. Traces are added to the tables as their artifacts appear, so
+# a new trace needs no edit in any script; this order only fixes the columns.
+REPORT_ORDER = ("cluster45", "cluster26", "cluster52", "cluster10")
+
+
+def reported_clusters(table_dir: Path = TABLE_DIR) -> tuple[str, ...]:
+    """Clusters with a metrics artifact, in report order.
+
+    `sample45` is excluded by the name filter: it is the small validation sample, not
+    a reported trace.
+    """
+    have = {p.name.removesuffix("_metrics.json")
+            for p in table_dir.glob("cluster*_metrics.json")}
+    ordered = tuple(c for c in REPORT_ORDER if c in have)
+    return ordered + tuple(sorted(have - set(ordered)))
+
 
 def load_metrics(cluster: str) -> dict:
     path = TABLE_DIR / f"{cluster}_metrics.json"

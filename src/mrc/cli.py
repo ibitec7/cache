@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 import numpy as np
 
-from mrc.config import CAP_QUANTILE, LABEL_REQUESTS, N_BINS, RAW, REPO
+from mrc.config import CAP_QUANTILE, LABEL_REQUESTS, N_BINS, NUM_THREADS, RAW, REPO
 from mrc.data.reuse import compute_reuse
 from mrc.data.trace import read_trace, summary
 from mrc.eval.mrc import capacity_grid, mrc_curve, mrc_error
@@ -149,7 +149,7 @@ def best_params(cluster: str) -> dict:
     study = optuna.load_study(study_name=study_name(cluster), storage=OPTUNA_URI)
     params = dict(study.best_params)
     params.update({"objective": "binary", "metric": "binary_logloss", "verbosity": -1,
-                   "bagging_freq": 1, "num_threads": 12, "seed": 7,
+                   "bagging_freq": 1, "num_threads": NUM_THREADS, "seed": 7,
                    "deterministic": True, "force_row_wise": True})
     return params
 
@@ -208,22 +208,23 @@ def interpret(cluster: str, requests: int, rounds: int, repeats: int) -> None:
 
 
 @main.command()
-@click.option("--clusters", default="cluster45,cluster26,cluster10")
-def analysis(clusters: str) -> None:
+@click.option("--clusters", default=None, help="comma-separated; default: every reported trace")
+def analysis(clusters: str | None) -> None:
     """Capacity-provisioning analysis from the cached metrics artefacts."""
-    from mrc.analysis import provisioning_table
+    from mrc.analysis import provisioning_table, reported_clusters
+    clusters = clusters or ",".join(reported_clusters())
 
     click.echo(provisioning_table(clusters.split(",")))
 
 
 @main.command()
-@click.option("--clusters", default="cluster45,cluster26,cluster10")
-def plots(clusters: str) -> None:
+@click.option("--clusters", default=None, help="comma-separated; default: every reported trace")
+def plots(clusters: str | None) -> None:
     """Regenerate every figure and table from the cached metrics artefacts."""
-    from mrc.analysis import write_tables
+    from mrc.analysis import reported_clusters, write_tables
     from mrc.plots.report_figures import make_all
 
-    names = clusters.split(",")
+    names = (clusters or ",".join(reported_clusters())).split(",")
     for path in make_all(names):
         click.echo(f"wrote {path}")
     for path in write_tables(names):
@@ -257,7 +258,7 @@ def fit(path: str, bins: int, limit: int) -> None:
     bins_c = np.clip(assign_bins(caps - 1, edges), 0, len(S) - 1)
     km_curve = p_comp + (1 - p_comp) * S[bins_c]
     params = {"objective": "binary", "verbosity": -1, "num_leaves": 63,
-              "learning_rate": 0.05, "num_threads": 0, "seed": 7}
+              "learning_rate": 0.05, "num_threads": NUM_THREADS, "seed": 7}
     model = HazardModel(params=params, nbins=len(edges) - 1)
     model.fit(X, b, event, edges, names)
     pred = model.predict_mrc(X, caps, edges, p_compulsory=p_comp)
