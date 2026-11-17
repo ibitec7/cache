@@ -354,3 +354,13 @@ CARDS E2 claimed `6 passed` for the metrics suite (17).
 Verified after: report 15 pages, body 10, References p11, 0 errors, 0 overfull,
 0 undefined references; slides 19 pages, 0 errors; wiki builds `--strict` in 0.4 s;
 ruff clean on src/tests/scripts; mypy clean on 31 files; full suite passes.
+
+## 2026-11-17T07:32Z · evidence · the fit hang reproduced a second time
+
+Commit: this entry's commit.
+
+A probe launched before the thread fix (`fit` only, no `MRC_THREADS`, so 12 threads)
+logged `prepare rows=4537515` at 3.1 s and then sat in `fit` for **942.1 s** before I
+killed it. The same fit under `MRC_THREADS=4` inside the real pipeline takes 54 s end
+to end. Two independent instruments, same conclusion: the barrier, not the data, was
+the cost. The probe is scratch, not an artifact.
