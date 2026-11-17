@@ -312,3 +312,21 @@ Also this session:
   to `artifacts/truth/`.
 - Body is back to 10 pages after moving the residual figure and the noise table to
   the appendix; 15 pages total, 0 LaTeX errors, 0 overfull boxes, 88 tests pass.
+
+## 2026-11-17T16:35Z · result · the four-trace ablation, and it reproduces exactly
+
+Commit: this entry's commit.
+
+`scripts/method_ablation.py` now defaults to `reported_clusters()`, so cluster52
+entered the nine-estimator table. Re-running all four also served as an exact-first
+gate: the three original traces reproduced their committed rows with **0 differing
+fields**, on 4 threads against the original run's 12.
+
+The number worth keeping: removing the timing family multiplies error by **234 on
+the held-out cluster52**, against 51 on cluster45 and 5.4 on cluster10. On cluster26
+it changes nothing (1.05). The mechanism claim now has an out-of-sample leg.
+
+Table header was hardcoded to three columns while the cells looped over `results`,
+so a fourth cluster would have produced five columns under a three-column spec;
+the header and the column count are now derived. `--reuse` rebuilds the table from
+the cached JSON so a formatting fix costs no refit.

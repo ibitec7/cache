@@ -102,11 +102,20 @@ def run_cluster(cluster: str) -> dict:
             "rows": rows}
 
 
-def main() -> None:
-    results = [run_cluster(c) for c in CLUSTERS]
-    payload = {"meta": {"n_requests": N_REQUESTS, "rounds": ROUNDS,
-                        "row_budget": ROW_BUDGET, "block": "test"},
-               "clusters": results}
+def main(reuse: bool = False) -> None:
+    """`--reuse` rebuilds the table from the cached JSON instead of refitting.
+
+    The fit path is the source of the numbers; the reuse path exists only so a
+    formatting change does not cost another full ablation.
+    """
+    if reuse:
+        payload = json.loads((TABLE_DIR / "method_ablation.json").read_text())
+        results = payload["clusters"]
+    else:
+        results = [run_cluster(c) for c in CLUSTERS]
+        payload = {"meta": {"n_requests": N_REQUESTS, "rounds": ROUNDS,
+                            "row_budget": ROW_BUDGET, "block": "test"},
+                   "clusters": results}
     TABLE_DIR.mkdir(parents=True, exist_ok=True)
     (TABLE_DIR / "method_ablation.json").write_text(json.dumps(payload, indent=1) + "\n")
 
@@ -124,8 +133,9 @@ def main() -> None:
              "grid. $\\dagger$The single-row ablation uses the scored request's own distance, "
              "so it is an oracle, not a deployable estimator; it bounds what the risk set buys.}"),
              "\\label{tab:methods}",
-             "\\begin{tabular}{@{}l r r r@{}}", "\\toprule",
-             "Estimator & cluster45 & cluster26 & cluster10 \\\\", "\\midrule"]
+             "\\begin{tabular}{@{}l" + " r" * len(results) + "@{}}", "\\toprule",
+             "Estimator & " + " & ".join(r["cluster"] for r in results) + " \\\\",
+             "\\midrule"]
     for key in order:
         cells = []
         for res in results:
@@ -139,4 +149,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(reuse="--reuse" in sys.argv[1:])

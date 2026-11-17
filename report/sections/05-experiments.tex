@@ -98,15 +98,16 @@ protocol, so the differences are attributable to the row and not to a change of
 split or grid. Read it in three blocks.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=2pt]
-  \item \emph{Against practice}: the hazard is 1.9 to 50 times more accurate than
-  the marginal curve, with the largest gap on the trace with the longest reuse tail,
-  and 11 to 260 times more accurate than the hit-count regression.
-  \item \emph{Inside the hazard}: removing the timing family costs a factor of 51 on
-  cluster45 and 5.4 on cluster10. It costs nothing on cluster26, where reuse is
-  dense and recency is less informative; there, removing popularity or client
-  actually improves error by about a third, so the twelve features are not uniformly
-  optimal per trace. Size, popularity, client and the token bucket move the long-tail
-  traces by under 10\%, which is the run-to-run noise.
+  \item \emph{Against practice}: the hazard is 1.9 to 96 times more accurate than
+  the marginal curve, and the two widest gaps are the two traces whose reuse tail
+  reaches about half the key space, cluster45 at 51 and the held-out cluster52 at 96.
+  Against the hit-count regression the gap runs from 11 to 446.
+  \item \emph{Inside the hazard}: removing the timing family costs a factor of 234 on
+  the held-out cluster52, 51 on cluster45 and 5.4 on cluster10. It costs nothing on
+  cluster26, where reuse is dense and recency is less informative; there, removing
+  popularity or client actually improves error by about a third, so the twelve
+  features are not uniformly optimal per trace. Size, popularity, client and the
+  token bucket change the long-tail traces by 12\% or less.
   \item \emph{The oracle}: the single-row ablation reproduces the truth exactly
   because it reads the scored request's own distance. It is not a deployable
   estimator; it bounds how much the risk-set expansion is worth under a stationary
