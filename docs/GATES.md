@@ -82,19 +82,18 @@ new threshold, file name or constant is introduced by them.
 |---|---|---|---|
 | `G-G1-perm` | `env -u PYTHONPATH uv run pytest tests/interp/test_importance.py -q` | `1 passed` | G2 |
 | `G-G2-shap` | `env -u PYTHONPATH uv run pytest tests/interp -q` | `2 passed` | G3, H4 |
-| `G-G3-ablate` | `env -u PYTHONPATH uv run pytest tests/test_pipeline.py -q` | `4 passed` | H3, H4 |
+| `G-G3-ablate` | `env -u PYTHONPATH uv run python scripts/method_ablation.py` | `wrote ... method_ablation.json and ... method_ablation.tex`; the three original traces must reproduce their committed rows with 0 differing fields | H3, H4 |
 
 ## Phase H: figures, tables, report (owner `mrc-write`)
 
 | Gate | Exact command | Expected output | Blocks |
 |---|---|---|---|
 | `G-STYLE` | `env -u PYTHONPATH uv run pytest tests/test_smoke.py::test_style_contract -q` | `1 passed` | H1, H2, H4 (planner-added, frozen style contract) |
-| `G-H1-mrc` | `env -u PYTHONPATH uv run pytest tests/plots -q` | `2 passed` | H2, H4 |
-| `G-H2-reliability` | `env -u PYTHONPATH uv run pytest tests/plots -q` | `3 passed` | H4 |
+| `G-H1-mrc` | `env -u PYTHONPATH uv run pytest tests/plots -q` | `3 passed` | H2, H4 |
 | `G-H3-tables` | `env -u PYTHONPATH uv run pytest tests/test_report_tables.py -q` | `1 passed` | H4 |
 | `G-H4-placeholders` | `grep -rn "PLACEHOLDER\|figplaceholder\|pending" report/sections slides/sections wiki/docs/results.md` | no output (exit 1) | H4 commit |
-| `G-H4-report` | `cd report && latexmk -pdf -interaction=nonstopmode main.tex && pdfinfo main.pdf \| grep Pages` | a line `Pages: N`; body length 8 to 10 pages read from `main.toc` (page of References minus page of the first section), because `pdfinfo` counts the appendix. Baseline at audit: `Pages: 13` | H4 commit |
-| `G-H4-slides` | `cd slides && latexmk -pdf -interaction=nonstopmode main.tex && pdfinfo main.pdf \| grep Pages` | `Pages: 18` | H4 commit |
+| `G-H4-report` | `cd report && latexmk -pdf -interaction=nonstopmode main.tex && pdfinfo main.pdf \| grep Pages` | a line `Pages: N`; body length 8 to 10 pages read from `main.toc` (page of References minus page of the first section), because `pdfinfo` counts the appendix. Current: `Pages: 15`, body 10 pages (References at p11) | H4 commit |
+| `G-H4-slides` | `cd slides && latexmk -pdf -interaction=nonstopmode main.tex && pdfinfo main.pdf \| grep Pages` | `Pages: 19` | H4 commit |
 | `G-H4-wiki` | `cd wiki && env -u PYTHONPATH uv run --group viz mkdocs build --strict 2>&1 \| tail -2` | `Documentation built in ... seconds`, exit 0 | H4 commit |
 
 ## Whole project (any profile)

@@ -60,7 +60,7 @@ says `TO BE MEASURED` and names the task that produces it.
 | ID | Title | Owner | Phase | Depends on | Gate command | Expected output | Acceptance criterion |
 |---|---|---|---|---|---|---|---|
 | E1 | metric set with hand-checked values | `mrc-run` | E | D5 (intra) | `PY pytest tests/eval/test_metrics.py -q` | `4 passed` | `mae`, `max_abs`, `bias`, `mre`, `mre_n`, `abc`, `n` on a hand example; MRE excludes truth below `mre_floor`; ABC log-normalised; a perfect prediction gives zeros |
-| E2 | Graf IPCW weights and integrated Brier score | `mrc-run` | E | E1 (intra) | `PY pytest tests/eval/test_metrics.py -q` | `6 passed` | a censored request below capacity gets zero weight; IBS is 0 for perfect predictions; `S_Gamma` is evaluated at `t^-` |
+| E2 | Graf IPCW weights and integrated Brier score | `mrc-run` | E | E1 (intra) | `PY pytest tests/eval -q` | `17 passed` | a censored request below capacity gets zero weight; IBS is 0 for perfect predictions; `S_Gamma` is evaluated at `t^-` |
 | E3 | KM, single-row and hit-count baselines | `mrc-run` | E | E2 (intra) | `PY pytest tests/eval/test_baselines.py -q` | `4 passed` | all three return curves on the grid; KM non-increasing in capacity and bounded in `[p_compulsory, 1]`; no baseline trains on its evaluation block (audit M-22) |
 
 ## Phase F: pipeline and telemetry (owner `mrc-run`)
@@ -85,9 +85,8 @@ says `TO BE MEASURED` and names the task that produces it.
 | ID | Title | Owner | Phase | Depends on | Gate command | Expected output | Acceptance criterion |
 |---|---|---|---|---|---|---|---|
 | H1 | MRC comparison figure | `mrc-write` | H | F4 (intra), B3 (artefact) | `PY pytest tests/plots -q` | `2 passed` | a PDF over 1000 bytes produced through `fig_double` and `apply_style`; no title; more than four curves raises `ValueError` |
-| H2 | reliability diagram | `mrc-write` | H | H1 (intra) | `PY pytest tests/plots -q` | `3 passed` | bin fractions sum to 1; the PDF exists; the diagonal is drawn; at most one annotation |
 | H3 | metric tables, markdown and booktabs | `mrc-write` | H | G3 (edge 9), E3 (intra) | `PY pytest tests/test_report_tables.py -q` | `1 passed` | `metrics_table` has one row per model with `model, MAE, MAX, bias, MRE, n`; `booktabs` emits `\toprule`/`\bottomrule` and a `% generated` first line; generated `.tex` is never hand-edited |
-| H4 | fill report, slides and wiki from artefacts | `mrc-write` | H | H1 (edge 10), H2, H3 (intra) | `grep -rn "PLACEHOLDER\|figplaceholder\|pending" report/sections slides/sections wiki/docs/results.md`; then the report, slides and wiki builds | no output from grep; a `Pages:` line with body 8 to 10 from `main.toc`; slides `Pages: 18`; `Documentation built in ... seconds` | every number traces to `artifacts/tables/*_metrics.json`; every MRC caption states the window and `b_{M-1}`; all three builds exit 0 |
+| H4 | fill report, slides and wiki from artefacts | `mrc-write` | H | H1 (edge 10), H3 (intra) | `grep -rn "PLACEHOLDER\|figplaceholder\|pending" report/sections slides/sections wiki/docs/results.md`; then the report, slides and wiki builds | no output from grep; a `Pages:` line with body 8 to 10 from `main.toc`; slides `Pages: 18`; `Documentation built in ... seconds` | every number traces to `artifacts/tables/*_metrics.json`; every MRC caption states the window and `b_{M-1}`; all three builds exit 0 |
 
 ---
 

@@ -330,3 +330,27 @@ Table header was hardcoded to three columns while the cells looped over `results
 so a fourth cluster would have produced five columns under a three-column spec;
 the header and the column count are now derived. `--reuse` rebuilds the table from
 the cached JSON so a formatting fix costs no refit.
+
+## 2026-11-17T07:45Z · cleanup · retire the pre-registered calibration path
+
+Commit: this entry's commit.
+
+The appendix says calibration (Brier/IBS) was pre-registered, never reported, and
+that the figure code was removed. The sentence was committed before the deletion
+happened, so for one commit the report described a state the tree did not have.
+`src/mrc/plots/reliability.py` and `tests/plots/test_reliability.py` are now gone;
+the only references anywhere were the module's own definitions and docs/CARDS.md
+H2 plus docs/GATES.md G-H2, which are removed with it. The IBS *metric* stays in
+`mrc.eval.metrics` and its 17 tests still pass; only the reliability diagram is
+retired.
+
+Three audit rows were also stale in ways unrelated to that deletion:
+`G-G3-ablate` ran `pytest tests/test_pipeline.py`, which tests the grid and target,
+not the ablation; it now runs `scripts/method_ablation.py` with the reproduction
+requirement. `G-H1-mrc` expected `2 passed` from `tests/plots` (3 after the
+deletion), `G-H4-report` and `G-H4-slides` carried 13 and 18 pages (15 and 19).
+CARDS E2 claimed `6 passed` for the metrics suite (17).
+
+Verified after: report 15 pages, body 10, References p11, 0 errors, 0 overfull,
+0 undefined references; slides 19 pages, 0 errors; wiki builds `--strict` in 0.4 s;
+ruff clean on src/tests/scripts; mypy clean on 31 files; full suite passes.
