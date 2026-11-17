@@ -33,7 +33,7 @@ says `TO BE MEASURED` and names the task that produces it.
 
 | ID | Title | Owner | Phase | Depends on | Gate command | Expected output | Acceptance criterion |
 |---|---|---|---|---|---|---|---|
-| B1 | libCacheSim single-request replay cross-check | `mrc-data` | B | - | `PY pytest tests/gt/test_replay.py -q` | `1 passed` | `replay_mrc` equals `naive_lru_mrc` with `atol=0.0`; requests built as `lc.Request(obj_id=k, obj_size=1)` (audit M-14). May be deleted after a documented 10-minute failure without blocking anything |
+| B1 | ~~libCacheSim single-request replay cross-check~~ **retired** | `mrc-data` | B | - | none | - | Withdrawn: libcachesim is out of the dependency set (R2: 0.3.5 returns miss ratio 1.0 at every capacity), so the library cross-check has no subject. The truth is now checked by `tests/gt/test_truth_artifact.py` against the naive replay |
 | B2 | exact MRC from stack distance, and the identification-limited grid | `mrc-data` | B | A1 to A3 | `PY pytest tests/gt -q` | `4 passed` (`3 passed` if B1 was deleted) | `mrc_from_labels` equals `naive_lru_mrc` under `array_equal`; `identified_grid` is strictly increasing, `min >= 1`, `max < overflow_edge`, and unique-collapsed |
 | B3 | truth artefact, `mrc truth`, `make truth` | `mrc-data` | B | A4 (edge 1), B2 (intra) | `PY python -m mrc.cli truth sample45` then print `capacities` and `mrc` from the npz | `K` strictly increasing capacities, `K` non-increasing ratios in `[0, 1]`, `mrc[0] > 0.95`, `K = manifest.n_capacities` (22 on cluster045, audit M-2) | `truth.npz` plus manifest; grid derived from the fit-time edges (`overflow_edge = edges[-2]`), not from `2**ceil(log2(rtilde.max()))+1` (audit M-3); `b_M_minus_1` recorded |
 
