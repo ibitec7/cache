@@ -29,15 +29,16 @@ fetch_one() {
   local out="$DEST/$path"
   mkdir -p "$(dirname "$out")"
   if [ -f "$out" ] && [ "$(stat -c%s "$out")" = "$want" ]; then return 0; fi
-  curl -fsSL -C - -o "$out" "$BASE/$path" || { log "FAILED $path"; return 1; }
+  curl -fsSL -C - -o "$out" "$BASE/$path" || { printf '[hf] FAILED %s\n' "$path"; return 1; }
   local got; got=$(stat -c%s "$out")
-  [ "$got" = "$want" ] || { log "SIZE MISMATCH $path $got != $want"; return 1; }
+  [ "$got" = "$want" ] || { printf '[hf] SIZE MISMATCH %s %s != %s\n' "$path" "$got" "$want"; return 1; }
 }
 export -f fetch_one
 export BASE DEST
-export PATH
 
-awk '{print $1"\t"$2}' /tmp/hf_files.txt \
-  | xargs -P "$WORKERS" -I{} bash -c 'IFS=$"\t" read -r p s <<< "$1"; fetch_one "$p" "$s"' _ {}
+# One path and one size per invocation: neither contains a space, so xargs can
+# split on whitespace and no quoting has to survive a subshell.
+awk '{print $1, $2}' /tmp/hf_files.txt \
+  | xargs -P "$WORKERS" -n 2 bash -c 'fetch_one "$1" "$2"' _ 
 log "done: $(ls "$DEST" | wc -l) top-level entries"
 [ -f "$DEST/manifest.json" ] && log "manifest present" || log "NO MANIFEST"
