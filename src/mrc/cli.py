@@ -142,15 +142,19 @@ def truth(cluster: str, bins: int) -> None:
 @click.option("--bins", type=int, default=N_BINS)
 @click.option("--rows", type=int, default=20_000_000)
 @click.option("--tuned/--no-tuned", default=False, help="use the best Optuna trial")
+@click.option("--tuned-study", type=click.Choice(["single", "oot"]), default="single",
+              help="which study `--tuned` reads: the single-array or the out-of-time one")
 @click.option("--mlflow/--no-mlflow", default=True)
 @click.option("--keep-cache/--no-keep-cache", default=True,
               help="write the per-window label, feature and truth arrays")
 def train(cluster: str, source: str | None, store: str | None, start: int,
           window: int | None, limit: int, rounds: int, bins: int,
-          rows: int, tuned: bool, mlflow: bool, keep_cache: bool) -> None:
+          rows: int, tuned: bool, tuned_study: str, mlflow: bool,
+          keep_cache: bool) -> None:
     """Run labels, truth, features, fit and metrics for one cluster or store window."""
     from mrc.data.store import StoreShard
     from mrc.pipeline import run_one
+    from mrc.tuning.search import study_name
 
     if store and source:
         raise click.UsageError("pass either --source or --store, not both")
@@ -162,7 +166,9 @@ def train(cluster: str, source: str | None, store: str | None, start: int,
         source_obj = source or default_source(cluster)
     params = None
     if tuned:
-        params = best_params(cluster)
+        kind = "" if tuned_study == "single" else tuned_study
+        params = best_params(cluster, kind)
+        click.echo(f"params from study {study_name(cluster, kind)}")
     payload = run_one(cluster, source_obj, limit=run_limit,
                       params=params, num_boost_round=rounds, nbins=bins,
                       row_budget=rows, with_mlflow=mlflow, keep_cache=keep_cache)
@@ -175,8 +181,13 @@ def train(cluster: str, source: str | None, store: str | None, start: int,
     click.echo(f"wrote artifacts/tables/{tag}_metrics.json")
 
 
-def best_params(cluster: str) -> dict:
-    """Best trial of the cluster's study, as fitting params."""
+def best_params(cluster: str, kind: str = "") -> dict:
+    """Best trial of the cluster's study, as fitting params.
+
+    `kind` selects the study: empty for the single-array study, `"oot"` for the
+    out-of-time one. The loaded study's name is returned under `_study` so a caller
+    echoes provenance instead of leaving it implicit.
+    """
     import optuna
 
     from mrc.config import OPTUNA_URI
@@ -184,11 +195,13 @@ def best_params(cluster: str) -> dict:
 
     if cluster == HELD_OUT:
         raise click.ClickException("cluster52 is held out; tune on a training trace")
+    name = study_name(cluster, kind)
     try:
-        study = optuna.load_study(study_name=study_name(cluster), storage=OPTUNA_URI)
+        study = optuna.load_study(study_name=name, storage=OPTUNA_URI)
     except KeyError as exc:
         raise click.ClickException(
-            f"no Optuna study for {cluster}; run `mrc tune {cluster}` first") from exc
+            f"no Optuna study {name} for {cluster}; run `mrc tune {cluster}` "
+            f"{'or scripts/oot.py --trials' if not kind else ''}first") from exc
     params = dict(study.best_params)
     params.update({"objective": "binary", "metric": "binary_logloss", "verbosity": -1,
                    "bagging_freq": 1, "num_threads": NUM_THREADS, "seed": 7,

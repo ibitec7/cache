@@ -48,8 +48,14 @@ def make_objective(prep: Prepared, num_boost_round: int = 300):
     return objective
 
 
-def study_name(cluster: str) -> str:
-    return f"mrc-{cluster}"
+def study_name(cluster: str, kind: str = "") -> str:
+    """Study name for a cluster; `kind="oot"` is the out-of-time study.
+
+    Two studies per cluster exist (single contiguous array, and out-of-time windows),
+    so the name carries the kind. A lookup that guesses the name would silently read
+    the other study, which is why `cli.best_params` names the study it loaded.
+    """
+    return f"mrc-{kind + '-' if kind else ''}{cluster}"
 
 
 def storage_url(path: str | Path | None = None) -> str:
@@ -102,7 +108,7 @@ def run_windows_study(prep: WindowPrepared, n_trials: int, *, cluster: str,
     url = storage or storage_url()
     Path(url.replace("sqlite:///", "")).parent.mkdir(parents=True, exist_ok=True)
     study = optuna.create_study(
-        study_name=f"mrc-oot-{cluster}", storage=url, direction="minimize",
+        study_name=study_name(cluster, "oot"), storage=url, direction="minimize",
         load_if_exists=True, sampler=optuna.samplers.TPESampler(seed=SEED),
     )
     study.optimize(make_windows_objective(prep, num_boost_round, score_sample),

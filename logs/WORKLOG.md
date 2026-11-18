@@ -1,3 +1,12 @@
+### Consistency follow-up on the same commit
+
+Two studies per cluster now exist (`mrc-<cluster>` on one contiguous array,
+`mrc-oot-<cluster>` on windows). `tuning.study_name(cluster, kind="")` builds both
+names in one place, `run_windows_study` uses it, and `cli.best_params` gained the
+same `kind` argument. `mrc train --tuned` used to read the single-array study by
+name with no other option, so an OOT study would have been ignored silently; it now
+takes `--tuned-study {single,oot}` and echoes the study it read.
+
 ## 2026-11-19T03:10Z · feat · OOT study, window stride, and a measured sampling floor
 
 Commit: this entry's commit.
