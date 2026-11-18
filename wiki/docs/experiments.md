@@ -84,4 +84,4 @@ prefix estimate $m(2)=0.750$, purely from window length.
 
 `src/mrc/splits.py` (time-ordered and leave-one-cluster-out splits),
 `src/mrc/train.py` (LightGBM fit, early stopping),
-`src/mrc/search.py` (Optuna study, pruning), `configs/` (YAML for data, model, search).
+`src/mrc/tuning/search.py` (Optuna study), `src/mrc/config.py` (frozen constants).

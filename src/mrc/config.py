@@ -13,7 +13,6 @@ MLFLOW_URI = f"sqlite:///{ARTIFACTS / 'mlflow' / 'mlflow.db'}"
 OPTUNA_URI = f"sqlite:///{ARTIFACTS / 'optuna' / 'study.db'}"
 
 LABEL_REQUESTS = 5_000_000      # prefix per cluster for labels / features / truth
-SCALE_REQUESTS = 20_000_000     # cluster52 robustness run only
 CAP_QUANTILE = 2_097_151        # rtilde ceiling, 2^21 - 1. Measured at a 5M prefix:
                                 # reuse-distance p90/p99/p99.9 = 209k/1.01M/1.73M on
                                 # cluster45 and 7.9k/17.7k/52k on cluster26, so the
@@ -22,7 +21,6 @@ CAP_QUANTILE = 2_097_151        # rtilde ceiling, 2^21 - 1. Measured at a 5M pre
                                 # N_BINS + 1 per request, so a larger ceiling does not
                                 # increase the row count.
 N_BINS = 32
-N_BINS_SEARCH = (8, 16, 24, 32, 48, 64)
 N_CAPACITIES = 24
 
 SPLIT_TRAIN = 0.70              # contiguous request blocks
@@ -32,6 +30,7 @@ MAX_GROUPED_ROWS = 60_000_000
 PER_STEP_MAX_REQUESTS = 200_000
 
 SEED = 7
+HELD_OUT = "cluster52"           # fourth-trace falsification test; never tuned
 # LightGBM threads. Measured on this 12-core box under ordinary desktop load, three
 # boosting rounds on 4.5M rows: 12 threads 12.1 s, 8 threads 7.5 s, 4 threads 4.4 s;
 # a full cluster10 run is 54 s at 4 threads against 15 min at 12. Oversubscription

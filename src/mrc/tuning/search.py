@@ -59,8 +59,8 @@ def storage_url(path: str | Path | None = None) -> str:
 
 def run_study(prep: Prepared, n_trials: int, *, cluster: str,
               num_boost_round: int = 300, storage: str | None = None,
-              timeout: float | None = None) -> optuna.Study:
-    """Create or resume the study and optimise validation MAE."""
+              timeout: float | None = None, with_mlflow: bool = True) -> optuna.Study:
+    """Create or resume the study, optimise validation MAE, and log the best trial."""
     url = storage or storage_url()
     Path(url.replace("sqlite:///", "")).parent.mkdir(parents=True, exist_ok=True)
     study = optuna.create_study(
@@ -69,4 +69,17 @@ def run_study(prep: Prepared, n_trials: int, *, cluster: str,
     )
     study.optimize(make_objective(prep, num_boost_round), n_trials=n_trials,
                    timeout=timeout, show_progress_bar=False)
+    if with_mlflow:
+        import mlflow
+
+        from mrc.config import MLFLOW_URI
+
+        Path(MLFLOW_URI.replace("sqlite:///", "")).parent.mkdir(parents=True, exist_ok=True)
+        mlflow.set_tracking_uri(MLFLOW_URI)
+        mlflow.set_experiment("mrc-optuna")
+        with mlflow.start_run(run_name=study.study_name):
+            mlflow.set_tags({"study": study.study_name, "cluster": cluster})
+            mlflow.log_params(study.best_params)
+            mlflow.log_metrics({"best_valid_mae": float(study.best_value),
+                                "n_trials": float(len(study.trials))})
     return study

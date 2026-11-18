@@ -245,12 +245,9 @@ cache/
 ├── README.md
 ├── AGENTS.md
 ├── .pre-commit-config.yaml
-├── configs/
-│   ├── t1.yaml                  # four small clusters
-│   └── t2.yaml                  # cluster52, final curves
 ├── data/
 │   ├── raw/                     # *.sort.zst, gitignored
-│   ├── interim/                 # decoded parquet
+│   ├── interim/                 # reuse-distance npz
 │   ├── processed/               # features, labels, mrc_truth
 │   └── manifest.json
 ├── src/mrc/

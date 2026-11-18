@@ -40,4 +40,4 @@ logloss, so the search is judged on what the project actually reports.
 ## Where it lands in this code
 
 `src/mrc/search.py` (study definition, TPE sampler, median pruner, objective on
-validation MAPE), `configs/search/` (space definition).
+validation MAPE), `src/mrc/tuning/search.py` (space definition).

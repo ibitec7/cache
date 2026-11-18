@@ -12,6 +12,7 @@ wheels/
 data/raw/
 data/interim/
 data/processed/
+data/publish/
 *.zst
 *.parquet
 
@@ -51,3 +52,4 @@ report/main*.pdf
 report/mainv2.bbl
 report/mainv2.blg
 report/mainv2.run.xml
+data/parquet/

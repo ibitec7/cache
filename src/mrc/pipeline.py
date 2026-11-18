@@ -15,6 +15,7 @@ test blocks.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -117,14 +118,41 @@ def ensure_labels(cluster: str, source: Source, limit: int | None = LABEL_REQUES
     return labels
 
 
+def _label_sha256(cluster: str) -> str:
+    """The sha256 recorded beside the label cache, empty when it is unreadable."""
+    sidecar = labels_path(cluster).with_name("labels.manifest.json")
+    try:
+        return str(json.loads(sidecar.read_text()).get("sha256", ""))
+    except (OSError, json.JSONDecodeError):
+        return ""
+
+
+def _git_sha() -> str:
+    """Short HEAD of the repo, empty when git cannot answer."""
+    import subprocess
+
+    try:
+        done = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"],
+                              capture_output=True, text=True, check=False)
+    except OSError:
+        return ""
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
 def ensure_features(cluster: str, labels: dict,
                     save: bool = True) -> tuple[np.ndarray, list[str], list[int]]:
     """Load the design matrix cache, or build it. The labels are the input contract."""
     out = features_path(cluster)
     man = out.with_name(out.stem + ".manifest.json")
-    if out.exists():
-        with np.load(out, allow_pickle=False) as z:
-            return z["X"], list(z["names"]), z["cat_idx"].tolist()
+    if out.exists() and man.exists():
+        try:
+            meta = json.loads(man.read_text())
+        except json.JSONDecodeError:
+            meta = {}
+        if (meta.get("source") == str(labels_path(cluster))
+                and meta.get("feature_version") == FEATURE_VERSION):
+            with np.load(out, allow_pickle=False) as z:
+                return z["X"], list(z["names"]), z["cat_idx"].tolist()
     X, names, cat_idx = build_features(labels)
     if save:
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -143,8 +171,14 @@ def ensure_truth(cluster: str, labels: dict, edges: np.ndarray,
     out = truth_path(cluster)
     man = out.with_name(out.stem + ".manifest.json")
     if out.exists() and man.exists():
-        with np.load(out, allow_pickle=False) as z:
-            return z["capacities"], z["mrc"]
+        try:
+            meta = json.loads(man.read_text())
+        except json.JSONDecodeError:
+            meta = {}
+        if (meta.get("labels_sha256") == _label_sha256(cluster)
+                and meta.get("overflow_edge") == int(edges[-2])):
+            with np.load(out, allow_pickle=False) as z:
+                return z["capacities"], z["mrc"]
     caps = capacity_grid_from_edges(edges, N_CAPACITIES)
     if save:
         written_truth(out, labels, n_keys=int(labels["n_keys"][0]),
@@ -341,8 +375,9 @@ def provisioning(caps, truth, pred, p_compulsory: float,
     return rows
 
 
-def _log_mlflow(cluster: str, params: dict, metrics: dict, artifacts: list[Path],
-                prep: Prepared) -> None:
+def log_mlflow(cluster: str, params: dict, metrics: dict, artifacts: list[Path],
+                meta: dict, *, source: str, params_source: str,
+                timings: dict[str, float]) -> None:
     """One MLflow run per cluster. Silent failure is not allowed: it raises."""
     import mlflow
 
@@ -352,15 +387,19 @@ def _log_mlflow(cluster: str, params: dict, metrics: dict, artifacts: list[Path]
     mlflow.set_tracking_uri(MLFLOW_URI)
     mlflow.set_experiment("mrc")
     with mlflow.start_run(run_name=cluster):
+        mlflow.set_tags({"cluster": cluster, "params_source": params_source,
+                         "git_sha": _git_sha()})
         mlflow.log_params({k: v for k, v in params.items() if k != "objective"})
-        mlflow.log_params({f"prep_{k}": v for k, v in prep.meta.items()})
-        mlflow.log_param("cluster", cluster)
+        mlflow.log_params({f"prep_{k}": v for k, v in meta.items()
+                           if isinstance(v, (int, float, str, bool))})
+        mlflow.log_params({"cluster": cluster, "source": source})
         flat = {}
         for block in ("valid", "test"):
             for name, m in metrics[block].items():
                 for key, value in m.items():
                     if isinstance(value, (int, float)) and np.isfinite(value):
                         flat[f"{block}_{name}_{key}"] = float(value)
+        flat.update({f"stage_{name}_seconds": float(value) for name, value in timings.items()})
         mlflow.log_metrics(flat)
         for path in artifacts:
             if Path(path).exists():
@@ -372,17 +411,28 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
             nbins: int = N_BINS, row_budget: int = ROW_BUDGET,
             with_mlflow: bool = True, keep_cache: bool = True) -> dict:
     """Run every stage for one cluster and write the metrics artefact."""
+    timings: dict[str, float] = {}
+    start = time.perf_counter()
     labels = ensure_labels(cluster, source, limit=limit, save=keep_cache)
+    timings["labels"] = time.perf_counter() - start
+    start = time.perf_counter()
     X, names, cat_idx = ensure_features(cluster, labels, save=keep_cache)
+    timings["features"] = time.perf_counter() - start
     edges = cluster_edges(labels, nbins)
+    start = time.perf_counter()
     truth = ensure_truth(cluster, labels, edges, save=keep_cache)
+    timings["truth"] = time.perf_counter() - start
     caps, _truth_curve = truth
     # Labels carry the request columns and the censoring intermediates as well as the four
     # arrays the fit reads. Dropping the rest before the risk set is built frees about
     # 375 MB at 5M requests (R, eligible, freq and n_keys are 85 MB of a 460 MB dict).
     labels = {name: labels[name] for name in ("R", "eligible", "freq", "n_keys")}
+    start = time.perf_counter()
     prep = prepare(cluster, labels, X, names, truth, nbins=nbins, row_budget=row_budget)
+    timings["prepare"] = time.perf_counter() - start
+    start = time.perf_counter()
     model = fit(prep, params, num_boost_round=num_boost_round)
+    timings["fit"] = time.perf_counter() - start
 
     from mrc.eval.baselines import fit_predict_hitcount, fit_predict_single_row
 
@@ -391,6 +441,7 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
     fit_X, fit_rt, fit_delta = prep.X[tr_sel], prep.rtilde[tr_sel], prep.delta[tr_sel]
     fit_freq = freq[tr_sel]
 
+    start = time.perf_counter()
     metrics: dict[str, dict] = {"valid": {}, "test": {}}
     curves: dict[str, np.ndarray] = {"capacities": caps}
     # Only the reported blocks. A train-block row would fit the baselines on the
@@ -422,6 +473,7 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
         curves[f"single_row_{block}"] = single
         curves[f"hitcount_{block}"] = hit
 
+    timings["metrics"] = time.perf_counter() - start
     metrics["provisioning"] = {
         "gbdt": provisioning(caps, curves["truth_test"], curves["gbdt_test"],
                              prep.p_compulsory["test"]),
@@ -434,6 +486,7 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
     payload = {"meta": meta, "capacities": caps.tolist(), "metrics": metrics,
                "curves": {k: v.tolist() for k, v in curves.items()}}
 
+    start = time.perf_counter()
     TABLE_DIR.mkdir(parents=True, exist_ok=True)
     out = TABLE_DIR / f"{cluster}_metrics.json"
     out.write_text(json.dumps(payload, indent=1) + "\n")
@@ -448,7 +501,17 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
     model.booster.save_model(str(model_path))
     payload["meta"]["model_path"] = str(model_path)
     out.write_text(json.dumps(payload, indent=1) + "\n")
+    timings["save"] = time.perf_counter() - start
 
     if with_mlflow:
-        _log_mlflow(cluster, dict(params or DEFAULT_PARAMS), metrics, [out, curve_path], prep)
+        artifacts = [out, curve_path, model_path]
+        for path in (labels_path(cluster).with_name("labels.manifest.json"),
+                     features_path(cluster).with_name("features.manifest.json"),
+                     truth_path(cluster).with_name(f"{cluster}.manifest.json")):
+            if path.exists():
+                artifacts.append(path)
+        log_mlflow(cluster, dict(params or DEFAULT_PARAMS), metrics, artifacts, prep.meta,
+                    source=source_key(source),
+                    params_source="tuned" if params is not None else "default",
+                    timings=timings)
     return payload

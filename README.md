@@ -36,7 +36,6 @@ env -u PYTHONPATH uv run python -m mrc.cli inspect \
   data/raw/cache-trace/samples/2020Mar/cluster045
 make reuse F=data/raw/cache-trace/samples/2020Mar/cluster045 OUT=data/interim/c45.npz
 make mrc R=data/interim/c45.npz
-make fit R=data/interim/c45.npz
 make test
 ```
 

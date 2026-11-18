@@ -7,10 +7,10 @@ from pathlib import Path
 import click
 import numpy as np
 
-from mrc.config import CAP_QUANTILE, LABEL_REQUESTS, N_BINS, NUM_THREADS, RAW, REPO
+from mrc.config import CAP_QUANTILE, HELD_OUT, LABEL_REQUESTS, N_BINS, NUM_THREADS, RAW, REPO
 from mrc.data.reuse import compute_reuse
 from mrc.data.trace import read_trace, summary
-from mrc.eval.mrc import capacity_grid, mrc_curve, mrc_error
+from mrc.eval.mrc import capacity_grid, mrc_curve
 
 SAMPLE_DIR = REPO / "data" / "raw" / "cache-trace" / "samples" / "2020Mar"
 
@@ -181,7 +181,13 @@ def best_params(cluster: str) -> dict:
     from mrc.config import OPTUNA_URI
     from mrc.tuning.search import study_name
 
-    study = optuna.load_study(study_name=study_name(cluster), storage=OPTUNA_URI)
+    if cluster == HELD_OUT:
+        raise click.ClickException("cluster52 is held out; tune on a training trace")
+    try:
+        study = optuna.load_study(study_name=study_name(cluster), storage=OPTUNA_URI)
+    except KeyError as exc:
+        raise click.ClickException(
+            f"no Optuna study for {cluster}; run `mrc tune {cluster}` first") from exc
     params = dict(study.best_params)
     params.update({"objective": "binary", "metric": "binary_logloss", "verbosity": -1,
                    "bagging_freq": 1, "num_threads": NUM_THREADS, "seed": 7,
@@ -197,8 +203,9 @@ def best_params(cluster: str) -> dict:
 @click.option("--timeout", type=float, default=None)
 @click.option("--source", type=str, default=None)
 @click.option("--limit", type=int, default=LABEL_REQUESTS)
+@click.option("--mlflow/--no-mlflow", default=True)
 def tune(cluster: str, trials: int, rounds: int, rows: int, timeout: float | None,
-         source: str | None, limit: int) -> None:
+         source: str | None, limit: int, mlflow: bool) -> None:
     """Optuna search on cached artefacts; objective is validation MAE."""
     from mrc.data.labels import load_labels
     from mrc.pipeline import (
@@ -218,7 +225,7 @@ def tune(cluster: str, trials: int, rounds: int, rows: int, timeout: float | Non
     truth = ensure_truth(cluster, lab, edges)
     prep = prepare(cluster, lab, X, names, truth, row_budget=rows)
     study = run_study(prep, trials, cluster=cluster, num_boost_round=rounds,
-                      timeout=timeout)
+                      timeout=timeout, with_mlflow=mlflow)
     click.echo(f"study {study.study_name}: {len(study.trials)} trials, "
                f"best mae={study.best_value:.5f}")
     click.echo(json.dumps(study.best_params, indent=1))
@@ -243,6 +250,24 @@ def interpret(cluster: str, requests: int, rounds: int, repeats: int) -> None:
 
 
 @main.command()
+@click.argument("cluster")
+@click.option("--source", type=str, default="", help="provenance string for the run")
+def log(cluster: str, source: str) -> None:
+    """Re-log a committed metrics artefact to MLflow, without refitting."""
+    from mrc.pipeline import TABLE_DIR, log_mlflow
+
+    payload = json.loads((TABLE_DIR / f"{cluster}_metrics.json").read_text())
+    meta = payload["meta"]
+    artifacts = [TABLE_DIR / f"{cluster}_metrics.json", TABLE_DIR / f"{cluster}_curves.npz"]
+    model = meta.get("model_path")
+    if model:
+        artifacts.append(Path(model))
+    log_mlflow(cluster, meta["params"], payload["metrics"], artifacts, meta,
+                source=source or str(meta.get("source", "")),
+                params_source="default", timings={})
+
+
+@main.command()
 @click.option("--clusters", default=None, help="comma-separated; default: every reported trace")
 def analysis(clusters: str | None) -> None:
     """Capacity-provisioning analysis from the cached metrics artefacts."""
@@ -264,41 +289,6 @@ def plots(clusters: str | None) -> None:
         click.echo(f"wrote {path}")
     for path in write_tables(names):
         click.echo(f"wrote {path}")
-
-
-@main.command()
-@click.argument("path", type=click.Path(exists=True))
-@click.option("--bins", type=int, default=32)
-@click.option("--limit", type=int, default=200_000)
-def fit(path: str, bins: int, limit: int) -> None:
-    """Legacy single-file fit: hazard model against the empirical curve."""
-    from mrc.models.hazard import HazardModel, assign_bins, bin_edges, km_hazard
-
-    z = np.load(path)
-    R = z["R"][:limit]
-    max_d = int(np.percentile(R[R >= 0], 99.9))
-    edges = bin_edges(max_d, bins)
-    b = assign_bins(R, edges)
-    event = ~z["censor"][:limit] & (b >= 0)
-    X = np.column_stack([
-        np.log1p(z["obj_size"][:limit]), z["op"][:limit].astype(np.float32),
-        (z["ttl"][:limit] > 0).astype(np.float32), np.log1p(np.clip(z["ttl"][:limit], 0, None)),
-        np.log1p(z["client"][:limit] % 512).astype(np.float32),
-    ]).astype(np.float32)
-    names = ["log_obj_size", "op", "is_write", "log_ttl", "client_bucket"]
-    caps = capacity_grid(min(int(z["n_keys"]), int(edges[-2]) - 1), 16)
-    truth = mrc_curve(R, caps)
-    h_km, _, p_comp = km_hazard(R, bins)
-    S = np.cumprod(1 - h_km)
-    bins_c = np.clip(assign_bins(caps - 1, edges), 0, len(S) - 1)
-    km_curve = p_comp + (1 - p_comp) * S[bins_c]
-    params = {"objective": "binary", "verbosity": -1, "num_leaves": 63,
-              "learning_rate": 0.05, "num_threads": NUM_THREADS, "seed": 7}
-    model = HazardModel(params=params, nbins=len(edges) - 1)
-    model.fit(X, b, event, edges, names)
-    pred = model.predict_mrc(X, caps, edges, p_compulsory=p_comp)
-    click.echo(f"KM   error {mrc_error(km_curve, truth)}")
-    click.echo(f"GBDT error {mrc_error(pred, truth)}")
 
 
 if __name__ == "__main__":

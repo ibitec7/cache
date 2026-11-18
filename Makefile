@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PY := env -u PYTHONPATH uv run
 export MLFLOW_TRACKING_URI := sqlite:///$(CURDIR)/artifacts/mlflow/mlflow.db
 
-.PHONY: help sync data-samples data-t1 data-t2 inspect store shard reuse mrc fit labels features truth train tune interpret analysis plots report slides wiki ui smoke test lint check
+.PHONY: help sync data-samples data-t1 data-t2 inspect store shard reuse mrc labels features truth train tune interpret analysis plots tables report slides wiki ui smoke test lint check
 
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/'
@@ -34,9 +34,6 @@ reuse:  ## compute reuse distance for a trace: make reuse F=... OUT=data/interim
 mrc:  ## empirical MRC curve: make mrc R=data/interim/x.npz
 	$(PY) python -m mrc.cli mrc "$(R)"
 
-fit:  ## fit the hazard model under MLflow: make fit R=data/interim/x.parquet
-	$(PY) python -m mrc.cli fit "$(R)"
-
 labels:  ## cache labels: make labels C=cluster45
 	$(PY) python -m mrc.cli labels "$(or $(F),$(shell python -c 'from mrc.cli import default_source; print(default_source("$(C)"))'))" --cluster "$(C)"
 
@@ -61,7 +58,14 @@ analysis:  ## capacity-provisioning table
 plots:  ## regenerate every figure from artifacts
 	$(PY) python -m mrc.cli plots
 
-report:  ## compile the LaTeX report
+tables:  ## regenerate every report table from the cached artefacts
+	$(PY) python scripts/accuracy_table.py
+	$(PY) python scripts/full_metrics_table.py
+	$(PY) python scripts/provisioning_table.py
+	$(PY) python scripts/method_ablation.py --reuse
+	$(PY) python scripts/noise_floor.py
+
+report: tables  ## compile the LaTeX report
 	cd report && latexmk -pdf -interaction=nonstopmode main.tex
 
 slides:  ## compile the beamer deck

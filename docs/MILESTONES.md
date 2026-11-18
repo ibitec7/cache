@@ -59,7 +59,7 @@ targets is fine, renaming is a breaking change and needs a card.
 
 Deliverables: PROJECT_PLAN.md, MILESTONES.md, RISKS.md, schema contract,
 Makefile with all targets present (targets may be stubs that fail loudly, never
-silently succeed), `configs/t1.yaml` and `configs/t2.yaml` with paths and
+silently succeed), `src/mrc/config.py` with paths and
 capacity grids.
 
 Intent: fix the interfaces before any expensive work starts, so the three other

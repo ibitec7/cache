@@ -268,51 +268,7 @@ requests possible. Exact reuse distance needs a key table for the whole window, 
 a window larger than memory still fails. Cross-shard reuse is therefore outside the
 window by construction, exactly like the 5M prefix protocol.
 
-## 10. Known blocker: libcachesim 0.3.5 pybind layer
-
-Observed 2026-11-10, python 3.13, `libcachesim==0.3.5` wheel (manylinux):
-
-Two separate observations, one of which retracts an earlier report.
-
-**Working: single-request replay.** `insert` then `get` behaves correctly.
-
-```python
-import libcachesim as lc
-r = lc.TraceReader(f, lc.TraceType.PLAIN_TXT_TRACE)
-c = lc.LRU(cache_size=100)
-req = r.read_one_req(); c.insert(req)
-print(c.get_n_obj())   # 1
-print(c.get(req))      # True
-```
-
-**Broken: the aggregate path.** `process_trace` returns the same pair for every
-capacity, so it carries no capacity signal at all:
-
-```
-cap      10: (0.210032, 0.210032)
-cap     100: (0.210032, 0.210032)
-cap    1000: (0.210032, 0.210032)
-cap   10000: (0.210032, 0.210032)
-cap  100000: (0.210032, 0.210032)
-```
-
-On the same 1,000,000-request cluster045 prefix our simulation gives miss ratio
-0.9967 at capacity 10 and 0.8707 at capacity 100000, so `0.210032` is not a miss
-ratio under any reading.
-
-**Retraction.** An earlier version of this section claimed that inserts were double
-counted (`get_n_obj() == 2` after one insert, `get` returning `False`). That does not
-reproduce on this host and was a misuse of the API in the probe, not a library bug.
-The blocker is narrower than first reported: manual replay works, the aggregate
-replay does not.
-
-Consequence: the pybind cache cannot serve as ground truth. Ground truth is our own
-numba LRU replay, cross-checked against the naive `OrderedDict` reference. The
-`libcachesim` dependency stays installed for its C trace reader and for the day the
-bug is fixed; `make test` must be extended with a version check before it is trusted
-again.
-
-## 11. Sources
+## 10. Sources
 
 - Dataset repository and format: <https://github.com/twitter/cache-trace> (fetched 2026-11-10).
 - Mirror index and file sizes: <https://ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/open_source/> (fetched 2026-11-10).

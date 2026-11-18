@@ -55,19 +55,19 @@ export MLFLOW_TRACKING_URI=sqlite:///$PWD/artifacts/mlflow/mlflow.db
 
 make smoke                                   # fast end-to-end check
 make inspect F=data/raw/cache-trace/samples/2020Mar/cluster045
-make reuse   F=data/raw/traces/cluster45.sort.zst OUT=data/interim/cluster45.parquet
-make mrc     R=data/interim/cluster45.parquet
-make fit     R=data/interim/cluster45.parquet
+make reuse   F=data/raw/traces/cluster45.sort.zst OUT=data/interim/cluster45.npz
+make mrc     R=data/interim/cluster45.npz
+make train   C=cluster45
 make plots
 ```
 
 | Stage | Reads | Writes |
 |---|---|---|
 | `inspect` | one trace file | stdout summary only |
-| `reuse` | trace | `data/interim/*.parquet` with $d_i$ per request |
-| `mrc` | interim parquet | curve table, printed and cached |
-| `fit` | interim parquet | MLflow run, model artifact, Optuna trial |
-| `plots` | MLflow store | `artifacts/figures/`, `artifacts/tables/` |
+| `reuse` | trace | `data/interim/*.npz` with $d_i$ per request |
+| `mrc` | interim npz | curve table, printed |
+| `train` | trace | labels, features, truth, metrics, MLflow run, model |
+| `plots` | metrics artifacts | `report/figures/`, `report/tables/`, `artifacts/tables/` |
 
 ## 4. Dashboards
 
@@ -109,10 +109,10 @@ the deliverable, not a scratchpad.
 |---|---|---|
 | `data/raw/cache-trace/` | `make data-samples` | cloned corpus metadata, samples, `stat/` |
 | `data/raw/traces/*.sort.zst` | `make data-t1`, `make data-t2` | verified compressed shards |
-| `data/interim/*.parquet` | `make reuse` | per-request reuse distance |
-| `data/processed/*.parquet` | `make fit` | feature matrix and episode table |
-| `artifacts/mlflow/mlflow.db` | `make fit` | runs, params, metrics |
-| `artifacts/optuna/study.db` | `make fit` | trial history |
+| `data/interim/*.npz` | `make reuse` | per-request reuse distance |
+| `data/processed/<cluster>/{labels,features}.npz` | `make train` | label cache and design matrix |
+| `artifacts/mlflow/mlflow.db` | `make train` | runs, params, metrics, artifacts |
+| `artifacts/optuna/study.db` | `make tune` | trial history |
 | `artifacts/tables/mrc_accuracy.csv` | `make plots` | the table on [Results](results.md) |
 | `artifacts/figures/*.pdf` | `make plots` | curves and residuals |
 | `wiki/site/index.html` | `make wiki` | this site |
@@ -125,7 +125,7 @@ the deliverable, not a scratchpad.
 | `zstd: unsupported format` | truncated download | delete the file, rerun the tier target |
 | MLflow writes to `./mlruns` | `MLFLOW_TRACKING_URI` unset | export it as in section 3 |
 | mkdocs `strict` fails on a link | renamed page or heading anchor | fix the link, do not drop `--strict` |
-| Optuna trial fails instantly | bucket count $K$ larger than shard length | lower `K` in `configs/search/` |
+| Optuna trial fails instantly | bucket count $K$ larger than shard length | lower `K` in `src/mrc/tuning/search.py` |
 
 ## Limits
 
