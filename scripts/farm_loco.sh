@@ -41,7 +41,7 @@ echo "[$(date -u +%H:%M:%SZ)] LOCO fits done"
 for held in $CLUSTERS; do
   env -u PYTHONPATH uv run python scripts/oot_parallel.py score \
     --model "artifacts/loco/$held/model.json" --store "data/publish/$held" \
-    --block test --workers "$SCORERS" > "logs/loco_score_$held.log" 2>&1 &
+    --block test --workers "$SCORERS" --force > "logs/loco_score_$held.log" 2>&1 &
 done
 wait
 echo "[$(date -u +%H:%M:%SZ)] LOCO scoring done"

@@ -29,7 +29,7 @@ for n in $BUDGETS; do
         --row-budget 20000000 --study-storage "sqlite:///$HOME/cache/artifacts/study_retrain.db" \
         --out "$out" > "logs/retrain_fit_$c-$n.log" 2>&1 \
       && env -u PYTHONPATH uv run python scripts/oot_parallel.py score \
-        --model "$out/model.json" --store "data/publish/$c" --block test --workers "$SCORERS" \
+        --model "$out/model.json" --store "data/publish/$c" --block test --workers "$SCORERS" --force \
         > "logs/retrain_score_$c-$n.log" 2>&1 \
       && env -u PYTHONPATH uv run python scripts/oot_parallel.py reduce \
         --model "$out/model.json" > "logs/retrain_reduce_$c-$n.log" 2>&1

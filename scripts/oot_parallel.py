@@ -188,10 +188,14 @@ def cmd_score(args: argparse.Namespace) -> None:
         windows = windows[: args.limit]
     outdir = Path(args.out or (Path(args.model).parent / args.block))
     outdir.mkdir(parents=True, exist_ok=True)
+    # A per-window file belongs to the model that wrote it. After a refit the old
+    # scores are stale, and silently reusing them reports one model's numbers under
+    # another model's parameters, so anything older than model.json is rescored.
+    model_mtime = Path(args.model).stat().st_mtime
     todo = []
     for start, stop in windows:
         target = outdir / f"{start}.json"
-        if target.exists() and not args.force:
+        if target.exists() and not args.force and target.stat().st_mtime >= model_mtime:
             continue
         todo.append((start, stop, target))
     print(f"{args.block}: {len(windows)} windows, {len(todo)} to score, "

@@ -32,7 +32,7 @@ for c in $CLUSTERS; do
   for blk in valid test; do
     env -u PYTHONPATH uv run python scripts/oot_parallel.py score \
       --model "artifacts/oot/$c/model.json" --store "data/publish/$c" \
-      --block "$blk" --workers "$SCORERS" > "logs/score_${c}_$blk.log" 2>&1 &
+      --block "$blk" --workers "$SCORERS" --force > "logs/score_${c}_$blk.log" 2>&1 &
     pids+=($!)
   done
 done
