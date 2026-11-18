@@ -14,11 +14,11 @@ CLUSTERS="${CLUSTERS:-cluster10 cluster26 cluster45 cluster52}"
 BUDGETS="${BUDGETS:-1 5 12}"     # windows of 5M requests: 5M, 25M, 60M
 WINDOW="${WINDOW:-5000000}"
 SCORERS="${SCORERS:-20}"
-# One test window per budget: the point of the curve is the data budget, and a
-# fixed first test window keeps every point on the same rows. Scoring all 672
-# cluster52 windows at three budgets would cost 40 minutes of I/O for a mean
-# whose CI over one row would be reported anyway.
-LIMIT="${LIMIT:-1}"
+# Same test windows at every budget, capped because the three small clusters have
+# at most 12 of them and one window is too noisy to separate budgets (cluster45's
+# per-window test MAE spans 0.0007 to 0.0035). Cluster52 is excluded from this
+# family: 672 windows x 3 budgets is 35 minutes of I/O for the same curve.
+LIMIT="${LIMIT:-12}"
 
 for n in $BUDGETS; do
   pids=()
