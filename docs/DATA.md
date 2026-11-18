@@ -251,6 +251,15 @@ sequence of independent 5M-request runs with flat memory.
 | Window run, 10M-row budget | 123.8 s, 3.24 GB peak, test MAE 0.00020 |
 | Projected full shard | 112 GB on disk, 2,685 windows, about 3.8 h to write |
 
+The table above describes a store written by `write_store`, which chooses the part
+and row-group sizes. The published single-file clusters and the DuckDB-converted
+cluster52 parts were not written by it: their row groups are about 5,001,000 rows
+with a short final group (cluster26 has one of 1,458 rows), so a window offset
+must come from the manifest's per-part `row_group_rows`, not from a nominal 5M.
+Read cost is also cluster- and key-cardinality-dependent: 0.91 s is cluster52,
+while cluster45 and cluster26 take 4.1 to 4.5 s per 5M window, 95 % of it in
+`_key_codes` (2026-11-18T16:22Z worklog entry).
+
 The store is additive to the frozen npz schema in section 5: labels, features and
 truth stay npz, and only the raw trace gains a second reader. `mrc store F --out D`
 writes a store; `mrc train NAME --store D --start N --window M` runs one window

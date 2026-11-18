@@ -56,13 +56,22 @@ def main() -> None:
     parts = []
     start = 0
     rows = 0
+    group_sizes: list[int] = []
     for name in names:
         part = args.parts_dir / name
-        n = pq.ParquetFile(part).metadata.num_rows
+        meta = pq.ParquetFile(part).metadata
+        n = meta.num_rows
         size = part.stat().st_size
-        parts.append({"file": name, "start": start, "rows": n, "bytes": size})
+        # Exact row-group offsets, not a nominal part size: the converted parts
+        # carry groups of 5,001,978 rows at most but the last group of a part is
+        # short (cluster26 has one of 1,458 rows), so a hardcoded 5M would place
+        # every window after the first at the wrong offset.
+        sizes = [meta.row_group(i).num_rows for i in range(meta.num_row_groups)]
+        parts.append({"file": name, "start": start, "rows": n, "bytes": size,
+                      "row_groups": len(sizes), "row_group_rows": sizes})
         start += n
         rows += n
+        group_sizes.extend(sizes)
         dst = args.out / name
         if not dst.exists():
             try:
@@ -80,7 +89,9 @@ def main() -> None:
         "source_bytes": args.source.stat().st_size,
         "rows": rows,
         "rows_per_part": parts[0]["rows"] if len(parts) == 1 else None,
-        "row_group_rows": 5_000_000,
+        # This conversion did not choose a row-group size; it reports what the
+        # parts actually contain. `write_store` sets this to its own target.
+        "row_group_rows": (group_sizes[0] if len(set(group_sizes)) == 1 else None),
         "compression": "zstd",
         "parts": parts,
         "columns": ["timestamp", "key", "key_size", "value_size",
@@ -113,7 +124,7 @@ the CSV on every column.
 | Requests | {rows:,} |
 | Parts | {len(parts)} |
 | Parquet bytes | {total:,} |
-| Row group | 5,000,000 requests |
+| Row groups | {len(group_sizes)} (largest {max(group_sizes):,} rows) |
 | Compression | zstd |
 | Source | `{args.source.name}` |
 | Source sha256 | `{sha}` |

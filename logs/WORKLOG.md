@@ -77,9 +77,19 @@ Code soft spots found while measuring, not yet fixed:
    The OOT design in HANDOFF §4.1 needs 60/15/25 over the whole trace, which is
    8.06B training requests for cluster52: it has to be assembled from windows,
    and that aggregation path does not exist yet.
-3. `data/parquet/cluster45_parts` and `cluster26_parts` were built by hand;
-   `build_manifest.py` writes `rows_per_part` as the whole part count when a
-   cluster is a single file, which is wrong metadata (harmless to `Store`).
+3. `build_manifest.py` hardcoded `row_group_rows: 5_000_000` for every published
+   manifest, while the converted parts carry groups of 5,000,878 (cluster45),
+   5,001,143 (cluster26) and up to 5,001,968 rows, and cluster26 contains one
+   group of 1,458 rows. Any window offset derived from that field would be wrong
+   after the first group. Fixed in the same commit: the manifest now records
+   `row_groups` and the exact `row_group_rows` list per part, and `store_version`
+   stays 1 because the field is additive and `Store` ignores it. The three
+   published manifests were regenerated and re-pushed to the hub, verified by
+   reading `resolve/main/manifest.json` back (cluster45: 46 groups, sum equals
+   227,773,739 rows).
+4. `data/parquet/cluster45_parts` and `cluster26_parts` were built by hand as one
+   hard link each, so the single-file clusters have a valid parts directory
+   without `write_store` ever running on them.
 
 ## 2026-11-18T09:50Z · perf · the fast window is 124 s and 3.24 GB, and DuckDB is the fast ingest
 

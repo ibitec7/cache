@@ -30,11 +30,18 @@ add.
 
 | Item | State |
 |---|---|
-| `ibitec/cache-trace-cluster10-parquet` | uploaded, 139,150,615 rows, 959 MB |
-| `data/parquet/cluster26.parquet` | ready, 156,594,627 rows, 1.27 GB, not uploaded |
-| `data/parquet/cluster45.parquet` | ready, 227,773,739 rows, 1.75 GB, not uploaded |
-| `data/parquet/cluster52/` | building at the time of writing: 76 shards, 75 GB, target about 107 GB |
-| `data/publish/cluster52/` | created at completion; contains `manifest.json`, `README.md`, and hard links to every shard |
+| `ibitec/cache-trace-cluster10-parquet` | uploaded, 139,150,615 rows, 959 MB, with `manifest.json` |
+| `ibitec/cache-trace-cluster26-parquet` | uploaded, 156,594,627 rows, 1.27 GB, with `manifest.json` |
+| `ibitec/cache-trace-cluster45-parquet` | uploaded, 227,773,739 rows, 1.75 GB, with `manifest.json` |
+| `data/parquet/cluster52/` | converting: 89 shards, 89 GiB at 2026-11-18T16:30Z, target about 107 GB |
+| `ibitec/cache-trace-cluster52-parquet` | partial and stalled at 48 shards, 46.9 GiB, no `manifest.json`; do not read from it |
+| `data/publish/cluster52/` | does not exist yet; the manifest is built after the conversion exits |
+
+`mrc train --store` needs `manifest.json` beside the parts. The three
+single-file clusters now carry one; before 2026-11-18T16:10Z only cluster10 did,
+so a fresh `hf download` of cluster26 or cluster45 could not be read. The
+manifest records exact per-part row-group sizes, because the converted parts do
+not all have 5M-row groups (cluster26 has one of 1,458 rows).
 
 At the time of writing the cluster52 conversion is still running:
 
@@ -110,8 +117,11 @@ Recommended instance:
 | `n2d-highcpu-128` | 128 vCPU, 128 GB | 3.16 | primary, 52 workers at 2 threads |
 | `n2d-standard-96` | 96 vCPU, 384 GB | 3.21 | safer RAM headroom, 48 workers |
 
-At a 5M-row budget a window is 117 s at 2 threads and 2.09 GB. Fifty-two workers
-use about 109 GB. All 2,685 windows of cluster52 take 1.68 h.
+At a 5M-row budget a window is 117 s at 2 threads and 2.09 GB on cluster52, but
+223 s and 4.33 GB on cluster45 at the default 20M grouped-row budget (measured
+2026-11-18, `logs/WORKLOG.md`). Budget the farm per cluster from a measured RSS:
+52 workers at 4.33 GB is 225 GB and does not fit a 128 GB instance. Start with
+`n2d-standard-96` (384 GB) until each cluster's footprint is measured.
 
 Setup:
 
