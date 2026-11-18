@@ -871,3 +871,39 @@ of this, not because of the data.
 `data/` (96 GB) stayed on the box; it is reproducible from `ibitec/*-parquet` and
 `data/publish/` is gitignored by rule. The retrain curve has no cluster52 point and
 the LOCO folds use 6-trial studies, both because cluster52 scoring is the I/O ceiling.
+
+## 2026-11-18T23:26Z - results distilled into the wiki and a knowledge graph
+
+The four experiment families are written up where a reader will look for them, and the
+graph is generated rather than described.
+
+Wiki (`wiki/docs/`), mkdocs `--strict` build clean:
+
+1. `generalization.md` was a plan; it is now the record. The three pre-registered
+   tests (out-of-time, leave-one-out, retrain) have result tables, the interpretation
+   that follows from them, and a "what this proves and does not prove" section. The
+   pre-registration text is gone because keeping a plan next to its answer makes a
+   reader guess which one is current.
+2. `results.md` gains a windowed section (both protocols, eight rows), the retrain
+   table, the baseline table with each baseline's status, and the Optuna retraction.
+   The single-block numbers stay, labelled by configuration, so the two protocols do
+   not get confused.
+3. `experiments.md` gains the trial-budget rule (a study is reported only past trial
+   20, with the Spearman 1.000 evidence), the windowed protocol, the mtime
+   invalidation rule, and the metric definitions with ABC's grid dependence.
+4. `index.md` gains the missing Generalization row and a headline table.
+
+Knowledge graph (`.ua/knowledge-graph.json`, 314 nodes, 355 edges, 11 layers, 6 tour
+steps) is built by `scripts/build_knowledge_graph.py`, which parses the source with
+`ast`, resolves every import edge, and reads every claim value out of `artifacts/` at
+build time. A stale claim therefore cannot survive a rebuild, which is the property a
+hand-written graph does not have. 14 concepts carry the method, 19 claim nodes carry
+the measured numbers, and the build fails on a dangling concept attachment, a duplicate
+id, or a file node outside every layer.
+
+Measured, for the baseline question: the two model-based baselines are cheap. On
+cluster10 at 1M requests, setup 1.2 s, hit-count regression 0.6 s, `single_row` 0.1 s,
+1.9 s total. They fit one booster on the training design matrix and then evaluate per
+window, so a four-trace run costs about one streaming pass. `single_row` returns MAE
+0.000000 because it reads `eval_rtilde` for the block it scores: an oracle, marked
+`oracle$^\dagger$` in the ablation table and excluded from headline tables.

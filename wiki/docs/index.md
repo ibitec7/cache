@@ -24,7 +24,8 @@ Ground truth for both is a full simulation with libCacheSim.
 | [Hazard model](hazard-model.md) | How survival analysis estimates the same curve |
 | [Ground truth MRC](ground-truth.md) | How simulation defines the target |
 | [Experiments](experiments.md) | Splits, baselines, metrics, tracking |
-| [Results](results.md) | Where numbers land, and what is still pending |
+| [Results](results.md) | Where numbers land, per block and per window, and which numbers are retracted |
+| [Generalization](generalization.md) | Out-of-time, leave-one-cluster-out and retrain results, and what they do not prove |
 | [Notation](notation.md) | Every symbol used on this site |
 | [Papers](papers/index.md) | Verified reading list, one page per source |
 | [Glossary](glossary.md) | One-line definitions |
@@ -53,6 +54,23 @@ can remove those. All four numbers appear again, derived independently, on
 For the statistical argument: [Problem](problem.md) then [Hazard model](hazard-model.md).
 For the systems argument: [Reuse distance](reuse-distance.md) then [Ground truth MRC](ground-truth.md).
 For running anything: [Reproduction](reproduction.md).
+
+## Headline results
+
+Out-of-time, every window of the last 25% of each trace, against the exact stack-distance
+curve on the same windows. Full tables and caveats on [Results](results.md).
+
+| Trace | Windows | Model MAE | Kaplan-Meier MAE | Ratio |
+|---|---|---|---|---|
+| cluster10 | 7 | 0.003637 | 0.027656 | 0.132 |
+| cluster26 | 8 | 0.001518 | 0.005109 | 0.297 |
+| cluster45 | 12 | 0.001313 | 0.024877 | 0.053 |
+| cluster52 | 672 | 0.003834 | 0.030559 | 0.125 |
+
+The model beats the covariate-free floor on 699 of 699 scored test windows. Trained on
+the other three traces and applied to a fourth it still beats the floor on every window
+but loses about 4x in absolute accuracy, which is the boundary of the current claim:
+the method transfers, one set of weights does not.
 
 !!! note "Scope of this wiki"
     The `src/` tree is written by a separate worker. Code paths named in the

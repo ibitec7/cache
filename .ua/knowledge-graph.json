@@ -1,0 +1,6561 @@
+{
+ "version": "1.0.0",
+ "project": {
+  "name": "cache",
+  "description": "Miss-ratio curves from reuse distance on Twitter cache traces: a discrete-time hazard model against exact stack distance and covariate-free baselines, evaluated out-of-time and leave-one-cluster-out on four production traces.",
+  "languages": [
+   "python",
+   "markdown"
+  ],
+  "frameworks": [
+   "lightgbm",
+   "optuna",
+   "numpy",
+   "mkdocs"
+  ],
+  "analyzedAt": "2026-11-18T23:24:00+00:00",
+  "gitCommitHash": "857e85ea3d9e9cf3d3fa82afd9b5f58332a29238"
+ },
+ "nodes": [
+  {
+   "id": "file:scripts/accuracy_table.py",
+   "type": "file",
+   "name": "accuracy_table.py",
+   "filePath": "scripts/accuracy_table.py",
+   "summary": "One compact accuracy table: rows are estimators, columns are traces.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/accuracy_table.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/accuracy_table.py",
+   "summary": "function main, lines 11 to 30",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/bench_fit.py",
+   "type": "file",
+   "name": "bench_fit.py",
+   "filePath": "scripts/bench_fit.py",
+   "summary": "Fit and predict benchmark on one real store window.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/bench_fit.py:cmd_build",
+   "type": "function",
+   "name": "cmd_build",
+   "filePath": "scripts/bench_fit.py",
+   "summary": "function cmd_build, lines 36 to 83",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/bench_fit.py:_fit",
+   "type": "function",
+   "name": "_fit",
+   "filePath": "scripts/bench_fit.py",
+   "summary": "Same construction as `HazardModel.fit_grouped`, timed end to end.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/bench_fit.py:_predict",
+   "type": "function",
+   "name": "_predict",
+   "filePath": "scripts/bench_fit.py",
+   "summary": "Time the shipped prediction path, not a copy of it.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/bench_fit.py:cmd_run",
+   "type": "function",
+   "name": "cmd_run",
+   "filePath": "scripts/bench_fit.py",
+   "summary": "function cmd_run, lines 135 to 162",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/bench_fit.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/bench_fit.py",
+   "summary": "function main, lines 165 to 187",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/build_knowledge_graph.py",
+   "type": "file",
+   "name": "build_knowledge_graph.py",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "Build `.ua/knowledge-graph.json` from the repository and the measured artifacts.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:rel",
+   "type": "function",
+   "name": "rel",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function rel, lines 39 to 40",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:head",
+   "type": "function",
+   "name": "head",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "First sentence of a docstring, collapsed to one line.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:complexity",
+   "type": "function",
+   "name": "complexity",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function complexity, lines 52 to 55",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:module_of",
+   "type": "function",
+   "name": "module_of",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "Map a dotted import to the repo-relative module path that defines it.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:scan_code",
+   "type": "function",
+   "name": "scan_code",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function scan_code, lines 72 to 147",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:scan_docs",
+   "type": "function",
+   "name": "scan_docs",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function scan_docs, lines 150 to 170",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:build_concepts",
+   "type": "function",
+   "name": "build_concepts",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function build_concepts, lines 246 to 265",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:window_claims",
+   "type": "function",
+   "name": "window_claims",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function window_claims, lines 268 to 278",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:build_claims",
+   "type": "function",
+   "name": "build_claims",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "One claim node per reported number, valued from the artifact at build time.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:build_layers",
+   "type": "function",
+   "name": "build_layers",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function build_layers, lines 383 to 391",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:build_tour",
+   "type": "function",
+   "name": "build_tour",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function build_tour, lines 394 to 416",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:import_edges_dedupe",
+   "type": "function",
+   "name": "import_edges_dedupe",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function import_edges_dedupe, lines 419 to 427",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_knowledge_graph.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/build_knowledge_graph.py",
+   "summary": "function main, lines 430 to 501",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:scripts/build_manifest.py",
+   "type": "file",
+   "name": "build_manifest.py",
+   "filePath": "scripts/build_manifest.py",
+   "summary": "Build the store manifest and a dataset README from a directory of parquet parts.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/build_manifest.py:natural_key",
+   "type": "function",
+   "name": "natural_key",
+   "filePath": "scripts/build_manifest.py",
+   "summary": "Part number from a name such as `data_10.parquet`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_manifest.py:source_sha256",
+   "type": "function",
+   "name": "source_sha256",
+   "filePath": "scripts/build_manifest.py",
+   "summary": "function source_sha256, lines 36 to 40",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/build_manifest.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/build_manifest.py",
+   "summary": "function main, lines 43 to 142",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/collect_results.py",
+   "type": "file",
+   "name": "collect_results.py",
+   "filePath": "scripts/collect_results.py",
+   "summary": "One table per experiment family, read straight from the per-window JSONs.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/collect_results.py:load",
+   "type": "function",
+   "name": "load",
+   "filePath": "scripts/collect_results.py",
+   "summary": "function load, lines 23 to 47",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/collect_results.py:fmt",
+   "type": "function",
+   "name": "fmt",
+   "filePath": "scripts/collect_results.py",
+   "summary": "function fmt, lines 50 to 62",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/collect_results.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/collect_results.py",
+   "summary": "function main, lines 65 to 84",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/full_metrics_table.py",
+   "type": "file",
+   "name": "full_metrics_table.py",
+   "filePath": "scripts/full_metrics_table.py",
+   "summary": "Full per-cluster metric table for the appendix.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/full_metrics_table.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/full_metrics_table.py",
+   "summary": "function main, lines 11 to 31",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/method_ablation.py",
+   "type": "file",
+   "name": "method_ablation.py",
+   "filePath": "scripts/method_ablation.py",
+   "summary": "One fixed-protocol comparison of the hazard model against ablations and alternatives.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/method_ablation.py:_subsample",
+   "type": "function",
+   "name": "_subsample",
+   "filePath": "scripts/method_ablation.py",
+   "summary": "function _subsample, lines 41 to 50",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/method_ablation.py:_eval_arrays",
+   "type": "function",
+   "name": "_eval_arrays",
+   "filePath": "scripts/method_ablation.py",
+   "summary": "function _eval_arrays, lines 53 to 59",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/method_ablation.py:run_cluster",
+   "type": "function",
+   "name": "run_cluster",
+   "filePath": "scripts/method_ablation.py",
+   "summary": "function run_cluster, lines 62 to 102",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/method_ablation.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/method_ablation.py",
+   "summary": "`--reuse` rebuilds the table from the cached JSON instead of refitting.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/noise_floor.py",
+   "type": "file",
+   "name": "noise_floor.py",
+   "filePath": "scripts/noise_floor.py",
+   "summary": "Is the measured curve error above the sampling noise of the truth itself? The truth curve on a block is an empirical survival function over n eligible requests, so at capacity C it carries binomial st",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/noise_floor.py:floor_for",
+   "type": "function",
+   "name": "floor_for",
+   "filePath": "scripts/noise_floor.py",
+   "summary": "function floor_for, lines 31 to 52",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/noise_floor.py:write_table",
+   "type": "function",
+   "name": "write_table",
+   "filePath": "scripts/noise_floor.py",
+   "summary": "function write_table, lines 55 to 79",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/noise_floor.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/noise_floor.py",
+   "summary": "function main, lines 82 to 92",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/oot.py",
+   "type": "file",
+   "name": "oot.py",
+   "filePath": "scripts/oot.py",
+   "summary": "Out-of-time generalisation run: fit on the first 60 % of a trace, test on the last 25 %.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/oot.py:windows_for",
+   "type": "function",
+   "name": "windows_for",
+   "filePath": "scripts/oot.py",
+   "summary": "Time-ordered windows `(block, start, stop)`, none straddling a block boundary.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot.py:load_window",
+   "type": "function",
+   "name": "load_window",
+   "filePath": "scripts/oot.py",
+   "summary": "Labels and design matrix for one window; nothing is cached, windows are disposable.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot.py:thin_windows",
+   "type": "function",
+   "name": "thin_windows",
+   "filePath": "scripts/oot.py",
+   "summary": "Keep every `stride`-th window of each block, never crossing a block boundary.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot.py:block_bootstrap",
+   "type": "function",
+   "name": "block_bootstrap",
+   "filePath": "scripts/oot.py",
+   "summary": "Percentile CI for the mean of an autocorrelated series of window scores.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot.py:summarise",
+   "type": "function",
+   "name": "summarise",
+   "filePath": "scripts/oot.py",
+   "summary": "function summarise, lines 114 to 127",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot.py:score_window",
+   "type": "function",
+   "name": "score_window",
+   "filePath": "scripts/oot.py",
+   "summary": "One non-train window: exact truth, sampled prediction, both baselines.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/oot.py:fit_from_windows",
+   "type": "function",
+   "name": "fit_from_windows",
+   "filePath": "scripts/oot.py",
+   "summary": "Fit one model on the train block, optionally tuning on the validation block.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/oot.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/oot.py",
+   "summary": "function main, lines 222 to 314",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:scripts/oot_parallel.py",
+   "type": "file",
+   "name": "oot_parallel.py",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "Fit once, then score every held-out window in parallel; the farm driver for OOT and LOCO.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:split_specs",
+   "type": "function",
+   "name": "split_specs",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "`cluster:/path` pairs, in the order given.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:cmd_fit",
+   "type": "function",
+   "name": "cmd_fit",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "function cmd_fit, lines 63 to 86",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:fit_pooled",
+   "type": "function",
+   "name": "fit_pooled",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "One model over several stores: their train windows pool into the fit rows.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:cmd_window",
+   "type": "function",
+   "name": "cmd_window",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "Score one window with a frozen booster (what each worker runs).",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:windows_for_block",
+   "type": "function",
+   "name": "windows_for_block",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "Every window of `block` in the store being scored.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:cmd_score",
+   "type": "function",
+   "name": "cmd_score",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "function cmd_score, lines 183 to 230",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:cmd_reduce",
+   "type": "function",
+   "name": "cmd_reduce",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "function cmd_reduce, lines 233 to 251",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/oot_parallel.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/oot_parallel.py",
+   "summary": "function main, lines 254 to 299",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/provisioning_table.py",
+   "type": "file",
+   "name": "provisioning_table.py",
+   "filePath": "scripts/provisioning_table.py",
+   "summary": "Compact provisioning table: capacity ratio model/truth.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/provisioning_table.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/provisioning_table.py",
+   "summary": "function main, lines 13 to 34",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/sweep.py",
+   "type": "file",
+   "name": "sweep.py",
+   "filePath": "scripts/sweep.py",
+   "summary": "Run one training window per process over a store, resuming from what already exists.",
+   "tags": [
+    "code",
+    "scripts"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:scripts/sweep.py:plan_windows",
+   "type": "function",
+   "name": "plan_windows",
+   "filePath": "scripts/sweep.py",
+   "summary": "function plan_windows, lines 32 to 39",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/sweep.py:tag_for",
+   "type": "function",
+   "name": "tag_for",
+   "filePath": "scripts/sweep.py",
+   "summary": "function tag_for, lines 42 to 43",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/sweep.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/sweep.py",
+   "summary": "function main, lines 46 to 112",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/__init__.py",
+   "summary": "Cache hit-ratio curves from reuse distance.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/analysis.py",
+   "type": "file",
+   "name": "analysis.py",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "Applied analysis: what the curve is for.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/analysis.py:reported_clusters",
+   "type": "function",
+   "name": "reported_clusters",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "Clusters with a metrics artifact, in report order.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/analysis.py:load_metrics",
+   "type": "function",
+   "name": "load_metrics",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "function load_metrics, lines 45 to 49",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/analysis.py:provisioning_rows",
+   "type": "function",
+   "name": "provisioning_rows",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "One row per (model, target): capacity, ratio to the true capacity, MAE.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/analysis.py:provisioning_table",
+   "type": "function",
+   "name": "provisioning_table",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "Markdown table of capacity ratios; ratio > 1 is over-provisioning.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/analysis.py:metric_rows",
+   "type": "function",
+   "name": "metric_rows",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "Per-model metric dicts on one block, ordered as the headline table.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/analysis.py:write_tables",
+   "type": "function",
+   "name": "write_tables",
+   "filePath": "src/mrc/analysis.py",
+   "summary": "Write one markdown table and one booktabs table per cluster, plus a combined md.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/cli.py",
+   "type": "file",
+   "name": "cli.py",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Command line entry point: inspect | labels | features | truth | train | tune | plots.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/cli.py:default_source",
+   "type": "function",
+   "name": "default_source",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Resolve a cluster name to a shard, preferring the tier-1 file.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Cache hit-ratio curves from reuse distance.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:inspect",
+   "type": "function",
+   "name": "inspect",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Summarise a trace shard.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:store",
+   "type": "function",
+   "name": "store",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Convert a CSV shard into zstd parquet parts and a manifest.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:reuse",
+   "type": "function",
+   "name": "reuse",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Compute reuse distance and write a compressed npz.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:mrc",
+   "type": "function",
+   "name": "mrc",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Empirical MRC curve from a reuse-distance file.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:labels",
+   "type": "function",
+   "name": "labels",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Compute and cache reuse-distance labels for one shard.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:features",
+   "type": "function",
+   "name": "features",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Build and cache the 12-column design matrix for a labelled cluster.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:truth",
+   "type": "function",
+   "name": "truth",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Write the ground-truth MRC curve for a cached label set.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:train",
+   "type": "function",
+   "name": "train",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Run labels, truth, features, fit and metrics for one cluster or store window.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:src/mrc/cli.py:best_params",
+   "type": "function",
+   "name": "best_params",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Best trial of the cluster's study, as fitting params.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/cli.py:tune",
+   "type": "function",
+   "name": "tune",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Optuna search on cached artefacts; objective is validation MAE.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:interpret",
+   "type": "function",
+   "name": "interpret",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Permutation importance, SHAP and feature-family ablation for one cluster.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:log",
+   "type": "function",
+   "name": "log",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Re-log a committed metrics artefact to MLflow, without refitting.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:analysis",
+   "type": "function",
+   "name": "analysis",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Capacity-provisioning analysis from the cached metrics artefacts.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/cli.py:plots",
+   "type": "function",
+   "name": "plots",
+   "filePath": "src/mrc/cli.py",
+   "summary": "Regenerate every figure and table from the cached metrics artefacts.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/config.py",
+   "type": "file",
+   "name": "config.py",
+   "filePath": "src/mrc/config.py",
+   "summary": "Frozen run constants.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/data/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/data/__init__.py",
+   "summary": "__init__.py, 0 lines",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/data/hist.py",
+   "type": "file",
+   "name": "hist.py",
+   "filePath": "src/mrc/data/hist.py",
+   "summary": "Exact integer histograms over reuse distance.",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "class:src/mrc/data/hist.py:DistanceHistogram",
+   "type": "class",
+   "name": "DistanceHistogram",
+   "filePath": "src/mrc/data/hist.py",
+   "summary": "Additive histogram of reuse distances, one per window or per block.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/data/labels.py",
+   "type": "file",
+   "name": "labels.py",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Label cache: reuse columns, the request columns they join to, and a sha256 manifest.",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:_key_codes",
+   "type": "function",
+   "name": "_key_codes",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Coarse token bucket and byte length per request, from the key vocabulary.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:labels_from_trace",
+   "type": "function",
+   "name": "labels_from_trace",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Return label columns plus the request columns they join to, from an in-memory trace.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:build_labels",
+   "type": "function",
+   "name": "build_labels",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Read a shard prefix and return label columns plus the request columns they join to.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:_sha256",
+   "type": "function",
+   "name": "_sha256",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "function _sha256, lines 82 to 84",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:_git_sha",
+   "type": "function",
+   "name": "_git_sha",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Short HEAD of the repository this module lives in, or \"unknown\" outside a work tree.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:save_labels",
+   "type": "function",
+   "name": "save_labels",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Write the npz and its manifest; return the manifest path.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/labels.py:load_labels",
+   "type": "function",
+   "name": "load_labels",
+   "filePath": "src/mrc/data/labels.py",
+   "summary": "Load a label npz without pickling; keys are the array names.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/data/reference.py",
+   "type": "file",
+   "name": "reference.py",
+   "filePath": "src/mrc/data/reference.py",
+   "summary": "Deliberately slow reference implementations.",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/data/reference.py:naive_reuse",
+   "type": "function",
+   "name": "naive_reuse",
+   "filePath": "src/mrc/data/reference.py",
+   "summary": "O(n * window) reuse distance, distinct keys and distinct bytes.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/data/reference.py:naive_lru_mrc",
+   "type": "function",
+   "name": "naive_lru_mrc",
+   "filePath": "src/mrc/data/reference.py",
+   "summary": "Replay LRU and return the miss ratio.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/data/reuse.py",
+   "type": "file",
+   "name": "reuse.py",
+   "filePath": "src/mrc/data/reuse.py",
+   "summary": "Reuse distance in O(n log n) with a Fenwick tree over last-occurrence positions.",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/data/reuse.py:_fenwick_add",
+   "type": "function",
+   "name": "_fenwick_add",
+   "filePath": "src/mrc/data/reuse.py",
+   "summary": "function _fenwick_add, lines 38 to 41",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/reuse.py:_fenwick_sum",
+   "type": "function",
+   "name": "_fenwick_sum",
+   "filePath": "src/mrc/data/reuse.py",
+   "summary": "function _fenwick_sum, lines 45 to 50",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/reuse.py:reuse_kernel",
+   "type": "function",
+   "name": "reuse_kernel",
+   "filePath": "src/mrc/data/reuse.py",
+   "summary": "Return (R, B, gap, freq) for a key-code sequence.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/reuse.py:suffix_distinct",
+   "type": "function",
+   "name": "suffix_distinct",
+   "filePath": "src/mrc/data/reuse.py",
+   "summary": "distinct[i] = number of distinct key codes in keys[i:]; distinct[n] = 0.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/reuse.py:compute_reuse",
+   "type": "function",
+   "name": "compute_reuse",
+   "filePath": "src/mrc/data/reuse.py",
+   "summary": "Reuse distance, censoring bound and the truncation the model consumes.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/data/store.py",
+   "type": "file",
+   "name": "store.py",
+   "filePath": "src/mrc/data/store.py",
+   "summary": "Sharded zstd-parquet store for one raw trace shard.",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/data/store.py:_utc_now",
+   "type": "function",
+   "name": "_utc_now",
+   "filePath": "src/mrc/data/store.py",
+   "summary": "function _utc_now, lines 37 to 38",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/store.py:write_store",
+   "type": "function",
+   "name": "write_store",
+   "filePath": "src/mrc/data/store.py",
+   "summary": "Convert a CSV shard into zstd parquet parts and write the manifest.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "class:src/mrc/data/store.py:Part",
+   "type": "class",
+   "name": "Part",
+   "filePath": "src/mrc/data/store.py",
+   "summary": "One parquet file and the half-open request range it covers.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:src/mrc/data/store.py:Store",
+   "type": "class",
+   "name": "Store",
+   "filePath": "src/mrc/data/store.py",
+   "summary": "Read request windows from a store written by `write_store`.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "class:src/mrc/data/store.py:StoreShard",
+   "type": "class",
+   "name": "StoreShard",
+   "filePath": "src/mrc/data/store.py",
+   "summary": "A request window in a store, addressed without touching the other parts.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/data/trace.py",
+   "type": "file",
+   "name": "trace.py",
+   "filePath": "src/mrc/data/trace.py",
+   "summary": "Reading Twitter cache-trace CSV shards into typed columns.",
+   "tags": [
+    "code",
+    "data"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "class:src/mrc/data/trace.py:Trace",
+   "type": "class",
+   "name": "Trace",
+   "filePath": "src/mrc/data/trace.py",
+   "summary": "Columnar trace.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/trace.py:open_stream",
+   "type": "function",
+   "name": "open_stream",
+   "filePath": "src/mrc/data/trace.py",
+   "summary": "Open a plain or zstd-compressed CSV as a pyarrow input stream.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/trace.py:trace_from_table",
+   "type": "function",
+   "name": "trace_from_table",
+   "filePath": "src/mrc/data/trace.py",
+   "summary": "Convert a table with the fixed trace columns into a `Trace`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/data/trace.py:read_trace",
+   "type": "function",
+   "name": "read_trace",
+   "filePath": "src/mrc/data/trace.py",
+   "summary": "Read a trace shard (plain CSV or .zst) into a `Trace`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/data/trace.py:summary",
+   "type": "function",
+   "name": "summary",
+   "filePath": "src/mrc/data/trace.py",
+   "summary": "function summary, lines 127 to 137",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/eval/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/eval/__init__.py",
+   "summary": "__init__.py, 0 lines",
+   "tags": [
+    "code",
+    "eval"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/eval/baselines.py",
+   "type": "file",
+   "name": "baselines.py",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Baselines the hazard model has to beat, each returning one MRC vector.",
+   "tags": [
+    "code",
+    "eval"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:_check_capacities",
+   "type": "function",
+   "name": "_check_capacities",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Capacities as a strictly increasing vector of positive integers.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:_check_X",
+   "type": "function",
+   "name": "_check_X",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "A finite 2-D float32 design matrix.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:_check_edges",
+   "type": "function",
+   "name": "_check_edges",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Bin boundaries as an increasing integer vector with at least one real bin.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:_compulsory",
+   "type": "function",
+   "name": "_compulsory",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Compulsory fraction, measured on the scored block when not supplied.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:_eval_block",
+   "type": "function",
+   "name": "_eval_block",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Use the evaluation block only if all of it was given.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:_fit_booster",
+   "type": "function",
+   "name": "_fit_booster",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Train a LightGBM booster; ``params`` overrides the module defaults.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:fit_predict_km",
+   "type": "function",
+   "name": "fit_predict_km",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Kaplan-Meier hazard over the binned reuse distance, then the MRC curve.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:fit_predict_single_row",
+   "type": "function",
+   "name": "fit_predict_single_row",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "One row per eligible request, label only ``delta``: biased but cheap.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/baselines.py:fit_predict_hitcount",
+   "type": "function",
+   "name": "fit_predict_hitcount",
+   "filePath": "src/mrc/eval/baselines.py",
+   "summary": "Regress ``log1p(freq)`` on ``X`` and map the prediction to a distance proxy.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/eval/metrics.py",
+   "type": "file",
+   "name": "metrics.py",
+   "filePath": "src/mrc/eval/metrics.py",
+   "summary": "Error metrics for miss-ratio curves.",
+   "tags": [
+    "code",
+    "eval"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/eval/metrics.py:_curves",
+   "type": "function",
+   "name": "_curves",
+   "filePath": "src/mrc/eval/metrics.py",
+   "summary": "The two curves as 1-D float arrays, refused when they are not the same length.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/metrics.py:_trapezoid",
+   "type": "function",
+   "name": "_trapezoid",
+   "filePath": "src/mrc/eval/metrics.py",
+   "summary": "Trapezoid rule.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/metrics.py:abc",
+   "type": "function",
+   "name": "abc",
+   "filePath": "src/mrc/eval/metrics.py",
+   "summary": "Area between the curves, integrated in log C and normalised by the log range.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/metrics.py:curve_metrics_ci",
+   "type": "function",
+   "name": "curve_metrics_ci",
+   "filePath": "src/mrc/eval/metrics.py",
+   "summary": "Percentile CI for the MAE of a curve estimated on a *sample* of requests.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/eval/metrics.py:curve_metrics",
+   "type": "function",
+   "name": "curve_metrics",
+   "filePath": "src/mrc/eval/metrics.py",
+   "summary": "MAE, MAX, bias, MRE and log-normalised ABC on one capacity grid.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/eval/mrc.py",
+   "type": "file",
+   "name": "mrc.py",
+   "filePath": "src/mrc/eval/mrc.py",
+   "summary": "Miss-ratio curves from a reuse-distance sample.",
+   "tags": [
+    "code",
+    "eval"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/eval/mrc.py:mrc_curve",
+   "type": "function",
+   "name": "mrc_curve",
+   "filePath": "src/mrc/eval/mrc.py",
+   "summary": "Empirical MRC at each capacity.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/mrc.py:capacity_grid",
+   "type": "function",
+   "name": "capacity_grid",
+   "filePath": "src/mrc/eval/mrc.py",
+   "summary": "Log-spaced capacities, integers, strictly increasing.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/eval/mrc.py:mrc_error",
+   "type": "function",
+   "name": "mrc_error",
+   "filePath": "src/mrc/eval/mrc.py",
+   "summary": "Pointwise and aggregate error between two curves on the same grid.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/features.py",
+   "type": "file",
+   "name": "features.py",
+   "filePath": "src/mrc/features.py",
+   "summary": "The 12-column design matrix the hazard model consumes.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/features.py:_namespace_codes",
+   "type": "function",
+   "name": "_namespace_codes",
+   "filePath": "src/mrc/features.py",
+   "summary": "Code the first ':'-delimited component of each key string; empty component -> 0.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/features.py:_key_geometry",
+   "type": "function",
+   "name": "_key_geometry",
+   "filePath": "src/mrc/features.py",
+   "summary": "Namespace code and key byte length, from the key strings or from the cached columns.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/features.py:build_features",
+   "type": "function",
+   "name": "build_features",
+   "filePath": "src/mrc/features.py",
+   "summary": "Return (X, names, categorical_indices); raises on non-finite values or missing key geometry.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/gt/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/gt/__init__.py",
+   "summary": "__init__.py, 0 lines",
+   "tags": [
+    "code",
+    "gt"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/gt/stackdist.py",
+   "type": "file",
+   "name": "stackdist.py",
+   "filePath": "src/mrc/gt/stackdist.py",
+   "summary": "Exact Mattson stack-distance MRC from reuse distances.",
+   "tags": [
+    "code",
+    "gt"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/gt/stackdist.py:mrc_from_labels",
+   "type": "function",
+   "name": "mrc_from_labels",
+   "filePath": "src/mrc/gt/stackdist.py",
+   "summary": "Miss ratio at each capacity from a label dict produced by `compute_reuse`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/gt/stackdist.py:identified_grid",
+   "type": "function",
+   "name": "identified_grid",
+   "filePath": "src/mrc/gt/stackdist.py",
+   "summary": "Log-spaced object capacities strictly below the overflow bin edge.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/gt/stackdist.py:capacity_grid_from_edges",
+   "type": "function",
+   "name": "capacity_grid_from_edges",
+   "filePath": "src/mrc/gt/stackdist.py",
+   "summary": "Capacities aligned to bin upper edges, strictly below the overflow bin.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/gt/write.py",
+   "type": "file",
+   "name": "write.py",
+   "filePath": "src/mrc/gt/write.py",
+   "summary": "The ground-truth MRC artefact and its provenance manifest.",
+   "tags": [
+    "code",
+    "gt"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/gt/write.py:_git_sha",
+   "type": "function",
+   "name": "_git_sha",
+   "filePath": "src/mrc/gt/write.py",
+   "summary": "Short HEAD of the repo at write time, empty when git cannot answer.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/gt/write.py:_labels_sha256",
+   "type": "function",
+   "name": "_labels_sha256",
+   "filePath": "src/mrc/gt/write.py",
+   "summary": "The sha256 recorded beside a label cache, empty when it is unreadable.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/gt/write.py:written_truth",
+   "type": "function",
+   "name": "written_truth",
+   "filePath": "src/mrc/gt/write.py",
+   "summary": "Write the ground-truth MRC artefact plus its manifest; return the manifest path.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/interp/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/interp/__init__.py",
+   "summary": "Interpretability: which features the fitted hazard model actually uses.",
+   "tags": [
+    "code",
+    "interp"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/interp/driver.py",
+   "type": "file",
+   "name": "driver.py",
+   "filePath": "src/mrc/interp/driver.py",
+   "summary": "Interpretability driver: permutation, SHAP and feature-family ablation for one cluster.",
+   "tags": [
+    "code",
+    "interp"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/interp/driver.py:_subsample",
+   "type": "function",
+   "name": "_subsample",
+   "filePath": "src/mrc/interp/driver.py",
+   "summary": "A uniform random subset of requests, kept in trace order.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/interp/driver.py:run_interpret",
+   "type": "function",
+   "name": "run_interpret",
+   "filePath": "src/mrc/interp/driver.py",
+   "summary": "Fit on a subsample, then write the importance, SHAP and ablation artefacts.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/interp/importance.py",
+   "type": "file",
+   "name": "importance.py",
+   "filePath": "src/mrc/interp/importance.py",
+   "summary": "Feature attribution for the fitted hazard model.",
+   "tags": [
+    "code",
+    "interp"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/interp/importance.py:permutation_importance",
+   "type": "function",
+   "name": "permutation_importance",
+   "filePath": "src/mrc/interp/importance.py",
+   "summary": "Rows `{feature, drop, std}` sorted by mean drop, descending.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/interp/importance.py:shap_summary",
+   "type": "function",
+   "name": "shap_summary",
+   "filePath": "src/mrc/interp/importance.py",
+   "summary": "Mean |SHAP contribution| per feature, optionally written as json.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:src/mrc/interp/importance.py:FitPredict",
+   "type": "class",
+   "name": "FitPredict",
+   "filePath": "src/mrc/interp/importance.py",
+   "summary": "Refit on a design matrix and return the predicted MRC on `capacities`.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/interp/importance.py:ablation_matrix",
+   "type": "function",
+   "name": "ablation_matrix",
+   "filePath": "src/mrc/interp/importance.py",
+   "summary": "Refit once per feature family with that family zeroed; rows sorted by MAE.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/mrc/models/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/models/__init__.py",
+   "summary": "__init__.py, 0 lines",
+   "tags": [
+    "code",
+    "models"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/models/hazard.py",
+   "type": "file",
+   "name": "hazard.py",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Discrete-time hazard model over reuse distance.",
+   "tags": [
+    "code",
+    "models"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/models/hazard.py:bin_edges",
+   "type": "function",
+   "name": "bin_edges",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Log-spaced bin edges, starting at 1 (distance 0 is its own bin).",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/models/hazard.py:assign_bins",
+   "type": "function",
+   "name": "assign_bins",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Bin index per request; compulsory accesses get -1.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/models/hazard.py:block_masks",
+   "type": "function",
+   "name": "block_masks",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Contiguous request-index masks for train / valid / test.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/models/hazard.py:_split_rows",
+   "type": "function",
+   "name": "_split_rows",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Row masks for train / valid / test, split on ORIGINAL request index.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/models/hazard.py:expand_risk_set",
+   "type": "function",
+   "name": "expand_risk_set",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Expand one row per request into one row per hazard step.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:src/mrc/models/hazard.py:HazardModel",
+   "type": "class",
+   "name": "HazardModel",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "class HazardModel, lines 110 to 240",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/models/hazard.py:km_hazard",
+   "type": "function",
+   "name": "km_hazard",
+   "filePath": "src/mrc/models/hazard.py",
+   "summary": "Nonparametric (Kaplan-Meier style) baseline: h_k = d_k / n_k on raw distance.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/models/risk_set.py",
+   "type": "file",
+   "name": "risk_set.py",
+   "filePath": "src/mrc/models/risk_set.py",
+   "summary": "Risk-set expansion for the discrete-time hazard over reuse distance.",
+   "tags": [
+    "code",
+    "models"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/models/risk_set.py:_bin_widths",
+   "type": "function",
+   "name": "_bin_widths",
+   "filePath": "src/mrc/models/risk_set.py",
+   "summary": "Width of each bin in distance units, clipped at 1.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/models/risk_set.py:_within_request_index",
+   "type": "function",
+   "name": "_within_request_index",
+   "filePath": "src/mrc/models/risk_set.py",
+   "summary": "``0..count_i - 1`` for each request i, concatenated.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/models/risk_set.py:grouped_rows",
+   "type": "function",
+   "name": "grouped_rows",
+   "filePath": "src/mrc/models/risk_set.py",
+   "summary": "Expand eligible requests into one row per (request, bin at risk).",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/models/risk_set.py:per_step_rows",
+   "type": "function",
+   "name": "per_step_rows",
+   "filePath": "src/mrc/models/risk_set.py",
+   "summary": "Expand eligible requests into one row per (request, step at risk).",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/pipeline.py",
+   "type": "file",
+   "name": "pipeline.py",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "End-to-end orchestration for one cluster: labels -> truth -> features -> fit -> metrics.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:labels_path",
+   "type": "function",
+   "name": "labels_path",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "function labels_path, lines 73 to 74",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:features_path",
+   "type": "function",
+   "name": "features_path",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "function features_path, lines 77 to 78",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:truth_path",
+   "type": "function",
+   "name": "truth_path",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "function truth_path, lines 81 to 82",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:labels_are_cached",
+   "type": "function",
+   "name": "labels_are_cached",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "True when the sidecar manifest names the same source, window and cap.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:source_key",
+   "type": "function",
+   "name": "source_key",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Stable cache key for a CSV path or a store shard.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:ensure_labels",
+   "type": "function",
+   "name": "ensure_labels",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Load the label cache, or build and save it.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:_label_sha256",
+   "type": "function",
+   "name": "_label_sha256",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "The sha256 recorded beside the label cache, empty when it is unreadable.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:_git_sha",
+   "type": "function",
+   "name": "_git_sha",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Short HEAD of the repo, empty when git cannot answer.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:ensure_features",
+   "type": "function",
+   "name": "ensure_features",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Load the design matrix cache, or build it.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:ensure_truth",
+   "type": "function",
+   "name": "ensure_truth",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Ground-truth curve and its capacity grid, cached under artifacts/truth.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:cluster_edges",
+   "type": "function",
+   "name": "cluster_edges",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Bin edges from the observed backward distance over eligible requests.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:src/mrc/pipeline.py:Prepared",
+   "type": "class",
+   "name": "Prepared",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Everything one fit needs, built once and reused by every Optuna trial.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:prepare",
+   "type": "function",
+   "name": "prepare",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Build the bin grid, the split, and the training rows for one cluster.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:src/mrc/pipeline.py:ScoredWindow",
+   "type": "class",
+   "name": "ScoredWindow",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "One non-train window kept so a study can score it without re-reading it.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:src/mrc/pipeline.py:WindowPrepared",
+   "type": "class",
+   "name": "WindowPrepared",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Fit-ready reduction of many windows; no request-index split survives.",
+   "tags": [
+    "code",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:prepare_windows",
+   "type": "function",
+   "name": "prepare_windows",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Fit-ready reduction of a time-ordered sequence of windows.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:km_from_hist",
+   "type": "function",
+   "name": "km_from_hist",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Kaplan-Meier miss curve from a bin histogram, identical to `km_curve`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:fit",
+   "type": "function",
+   "name": "fit",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Fit one hazard model on the prepared rows.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:predict_block",
+   "type": "function",
+   "name": "predict_block",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Predicted MRC on one block, averaging over every eligible request in it.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:truth_block",
+   "type": "function",
+   "name": "truth_block",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Ground-truth MRC on one block, from every request's backward distance.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:km_curve",
+   "type": "function",
+   "name": "km_curve",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Kaplan-Meier hazard fitted on the training block, scored on `block`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:score",
+   "type": "function",
+   "name": "score",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "function score, lines 534 to 535",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:capacity_for_target",
+   "type": "function",
+   "name": "capacity_for_target",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Smallest capacity whose predicted hit ratio reaches `target_hit`.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:provisioning",
+   "type": "function",
+   "name": "provisioning",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Capacity needed for a fraction of the achievable hit-ratio ceiling.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:log_mlflow",
+   "type": "function",
+   "name": "log_mlflow",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "One MLflow run per window (per cluster when the source is a whole trace).",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/pipeline.py:run_one",
+   "type": "function",
+   "name": "run_one",
+   "filePath": "src/mrc/pipeline.py",
+   "summary": "Run every stage for one cluster and write the metrics artefact.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/mrc/plots/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/plots/__init__.py",
+   "summary": "__init__.py, 0 lines",
+   "tags": [
+    "code",
+    "plots"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/plots/report_figures.py",
+   "type": "file",
+   "name": "report_figures.py",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Report figures from the cached metrics artefacts.",
+   "tags": [
+    "code",
+    "plots"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:_plt",
+   "type": "function",
+   "name": "_plt",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "function _plt, lines 24 to 28",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:_panels",
+   "type": "function",
+   "name": "_panels",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Axes for `n` traces: one row up to three, a 2x2 block beyond that.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:plot_curves",
+   "type": "function",
+   "name": "plot_curves",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Ground truth, hazard model and Kaplan-Meier on the test block.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:plot_error",
+   "type": "function",
+   "name": "plot_error",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Absolute curve error against capacity on a log scale.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:plot_provisioning",
+   "type": "function",
+   "name": "plot_provisioning",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Capacity ratio (model / truth) at 60, 80 and 95 % of the hit ceiling.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:plot_importance",
+   "type": "function",
+   "name": "plot_importance",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Mean absolute SHAP contribution, top six features per cluster.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/plots/report_figures.py:make_all",
+   "type": "function",
+   "name": "make_all",
+   "filePath": "src/mrc/plots/report_figures.py",
+   "summary": "Every figure the cached metrics support; clusters without a run are skipped.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/plots/style.py",
+   "type": "file",
+   "name": "style.py",
+   "filePath": "src/mrc/plots/style.py",
+   "summary": "The single source of truth for figure style.",
+   "tags": [
+    "code",
+    "plots"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/plots/style.py:apply_style",
+   "type": "function",
+   "name": "apply_style",
+   "filePath": "src/mrc/plots/style.py",
+   "summary": "function apply_style, lines 24 to 51",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/plots/style.py:fig_single",
+   "type": "function",
+   "name": "fig_single",
+   "filePath": "src/mrc/plots/style.py",
+   "summary": "function fig_single, lines 54 to 55",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/plots/style.py:fig_double",
+   "type": "function",
+   "name": "fig_double",
+   "filePath": "src/mrc/plots/style.py",
+   "summary": "function fig_double, lines 58 to 59",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/plots/style.py:label_mrc",
+   "type": "function",
+   "name": "label_mrc",
+   "filePath": "src/mrc/plots/style.py",
+   "summary": "function label_mrc, lines 62 to 65",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/report_tables.py",
+   "type": "file",
+   "name": "report_tables.py",
+   "filePath": "src/mrc/report_tables.py",
+   "summary": "Generated error tables: markdown for the wiki, booktabs for the report.",
+   "tags": [
+    "code",
+    "mrc"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/report_tables.py:_fmt",
+   "type": "function",
+   "name": "_fmt",
+   "filePath": "src/mrc/report_tables.py",
+   "summary": "function _fmt, lines 26 to 27",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/report_tables.py:_fmt_count",
+   "type": "function",
+   "name": "_fmt_count",
+   "filePath": "src/mrc/report_tables.py",
+   "summary": "function _fmt_count, lines 30 to 31",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/report_tables.py:_rows",
+   "type": "function",
+   "name": "_rows",
+   "filePath": "src/mrc/report_tables.py",
+   "summary": "One cell list per model, in the order the metric dict carries.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/report_tables.py:metrics_table",
+   "type": "function",
+   "name": "metrics_table",
+   "filePath": "src/mrc/report_tables.py",
+   "summary": "Markdown table, one row per model, followed by its provenance line.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/report_tables.py:booktabs",
+   "type": "function",
+   "name": "booktabs",
+   "filePath": "src/mrc/report_tables.py",
+   "summary": "LaTeX booktabs table; write `path` when given and always return the string.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/mrc/tuning/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "src/mrc/tuning/__init__.py",
+   "summary": "Hyperparameter search.",
+   "tags": [
+    "code",
+    "tuning"
+   ],
+   "complexity": "simple",
+   "languageNotes": "python"
+  },
+  {
+   "id": "file:src/mrc/tuning/search.py",
+   "type": "file",
+   "name": "search.py",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Optuna search over the hazard model, on cached artefacts.",
+   "tags": [
+    "code",
+    "tuning"
+   ],
+   "complexity": "complex",
+   "languageNotes": "python"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:suggest_params",
+   "type": "function",
+   "name": "suggest_params",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Search space: capacity and regularisation, no objective-specific knobs.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:make_objective",
+   "type": "function",
+   "name": "make_objective",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Return an Optuna objective that returns validation MAE.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:study_name",
+   "type": "function",
+   "name": "study_name",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Study name for a cluster; `kind=\"oot\"` is the out-of-time study.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:storage_url",
+   "type": "function",
+   "name": "storage_url",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "function storage_url, lines 61 to 64",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:make_windows_objective",
+   "type": "function",
+   "name": "make_windows_objective",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Objective for an out-of-time run: mean validation MAE over the kept windows.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:run_windows_study",
+   "type": "function",
+   "name": "run_windows_study",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Create or resume the OOT study `mrc-oot-<cluster>` and log the best trial.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:src/mrc/tuning/search.py:run_study",
+   "type": "function",
+   "name": "run_study",
+   "filePath": "src/mrc/tuning/search.py",
+   "summary": "Create or resume the study, optimise validation MAE, and log the best trial.",
+   "tags": [
+    "code",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/farm_loco.sh",
+   "type": "file",
+   "name": "farm_loco.sh",
+   "filePath": "scripts/farm_loco.sh",
+   "summary": "!/usr/bin/env bash",
+   "tags": [
+    "code",
+    "shell",
+    "orchestration"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "shell"
+  },
+  {
+   "id": "file:scripts/farm_oot.sh",
+   "type": "file",
+   "name": "farm_oot.sh",
+   "filePath": "scripts/farm_oot.sh",
+   "summary": "!/usr/bin/env bash",
+   "tags": [
+    "code",
+    "shell",
+    "orchestration"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "shell"
+  },
+  {
+   "id": "file:scripts/farm_retrain.sh",
+   "type": "file",
+   "name": "farm_retrain.sh",
+   "filePath": "scripts/farm_retrain.sh",
+   "summary": "!/usr/bin/env bash",
+   "tags": [
+    "code",
+    "shell",
+    "orchestration"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "shell"
+  },
+  {
+   "id": "file:scripts/fetch_hf_cluster.sh",
+   "type": "file",
+   "name": "fetch_hf_cluster.sh",
+   "filePath": "scripts/fetch_hf_cluster.sh",
+   "summary": "!/usr/bin/env bash",
+   "tags": [
+    "code",
+    "shell",
+    "orchestration"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "shell"
+  },
+  {
+   "id": "file:scripts/fetch_parallel.sh",
+   "type": "file",
+   "name": "fetch_parallel.sh",
+   "filePath": "scripts/fetch_parallel.sh",
+   "summary": "!/usr/bin/env bash",
+   "tags": [
+    "code",
+    "shell",
+    "orchestration"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "shell"
+  },
+  {
+   "id": "file:scripts/fetch_traces.sh",
+   "type": "file",
+   "name": "fetch_traces.sh",
+   "filePath": "scripts/fetch_traces.sh",
+   "summary": "!/usr/bin/env bash",
+   "tags": [
+    "code",
+    "shell",
+    "orchestration"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "shell"
+  },
+  {
+   "id": "document:docs/AGENTS_RULES.md",
+   "type": "document",
+   "name": "Repo rules (staged copy)",
+   "filePath": "docs/AGENTS_RULES.md",
+   "summary": "wiki page 'Repo rules (staged copy)', 75 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/CARDS.md",
+   "type": "document",
+   "name": "Card specifications",
+   "filePath": "docs/CARDS.md",
+   "summary": "wiki page 'Card specifications', 104 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/DATA.md",
+   "type": "document",
+   "name": "Data manual",
+   "filePath": "docs/DATA.md",
+   "summary": "wiki page 'Data manual', 287 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/GATES.md",
+   "type": "document",
+   "name": "Gate registry",
+   "filePath": "docs/GATES.md",
+   "summary": "wiki page 'Gate registry', 121 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/LIGHTGBM_CUDA.md",
+   "type": "document",
+   "name": "LightGBM with CUDA on this machine",
+   "filePath": "docs/LIGHTGBM_CUDA.md",
+   "summary": "wiki page 'LightGBM with CUDA on this machine', 93 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/LITERATURE.md",
+   "type": "document",
+   "name": "Literature",
+   "filePath": "docs/LITERATURE.md",
+   "summary": "wiki page 'Literature', 69 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/MILESTONES.md",
+   "type": "document",
+   "name": "Milestones",
+   "filePath": "docs/MILESTONES.md",
+   "summary": "wiki page 'Milestones', 134 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/OPEN_QUESTIONS.md",
+   "type": "document",
+   "name": "Open questions",
+   "filePath": "docs/OPEN_QUESTIONS.md",
+   "summary": "wiki page 'Open questions', 101 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/PLOT_CONTRACT.md",
+   "type": "document",
+   "name": "Plot and typesetting contract",
+   "filePath": "docs/PLOT_CONTRACT.md",
+   "summary": "wiki page 'Plot and typesetting contract', 36 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/PROJECT_PLAN.md",
+   "type": "document",
+   "name": "Project Plan: Miss-Ratio Curves from Reuse-Distance Hazard Models",
+   "filePath": "docs/PROJECT_PLAN.md",
+   "summary": "wiki page 'Project Plan: Miss-Ratio Curves from Reuse-Distance Hazard Models', 292 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/RISKS.md",
+   "type": "document",
+   "name": "Risks",
+   "filePath": "docs/RISKS.md",
+   "summary": "wiki page 'Risks', 71 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:docs/STATISTICAL_SKELETON.md",
+   "type": "document",
+   "name": "Statistical Skeleton: Hit-Ratio Curves from Reuse Distance",
+   "filePath": "docs/STATISTICAL_SKELETON.md",
+   "summary": "wiki page 'Statistical Skeleton: Hit-Ratio Curves from Reuse Distance', 687 lines",
+   "tags": [
+    "documentation",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/data.md",
+   "type": "document",
+   "name": "Data",
+   "filePath": "wiki/docs/data.md",
+   "summary": "wiki page 'Data', 98 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/experiments.md",
+   "type": "document",
+   "name": "Experiments",
+   "filePath": "wiki/docs/experiments.md",
+   "summary": "wiki page 'Experiments', 117 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/generalization.md",
+   "type": "document",
+   "name": "Generalization and handoff",
+   "filePath": "wiki/docs/generalization.md",
+   "summary": "wiki page 'Generalization and handoff', 203 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/glossary.md",
+   "type": "document",
+   "name": "Glossary",
+   "filePath": "wiki/docs/glossary.md",
+   "summary": "wiki page 'Glossary', 62 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/ground-truth.md",
+   "type": "document",
+   "name": "Ground truth MRC",
+   "filePath": "wiki/docs/ground-truth.md",
+   "summary": "wiki page 'Ground truth MRC', 106 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/hazard-model.md",
+   "type": "document",
+   "name": "Hazard model",
+   "filePath": "wiki/docs/hazard-model.md",
+   "summary": "wiki page 'Hazard model', 136 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/index.md",
+   "type": "document",
+   "name": "MRC Curve Wiki",
+   "filePath": "wiki/docs/index.md",
+   "summary": "wiki page 'MRC Curve Wiki', 78 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/notation.md",
+   "type": "document",
+   "name": "Notation",
+   "filePath": "wiki/docs/notation.md",
+   "summary": "wiki page 'Notation', 88 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/akiba-2019-optuna.md",
+   "type": "document",
+   "name": "Akiba et al. 2019 \u2014 Optuna",
+   "filePath": "wiki/docs/papers/akiba-2019-optuna.md",
+   "summary": "wiki page 'Akiba et al. 2019 \u2014 Optuna', 43 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/beckmann-2015-talus.md",
+   "type": "document",
+   "name": "Beckmann & Sanchez 2015 \u2014 Talus",
+   "filePath": "wiki/docs/papers/beckmann-2015-talus.md",
+   "summary": "wiki page 'Beckmann & Sanchez 2015 \u2014 Talus', 43 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/cox-1972.md",
+   "type": "document",
+   "name": "Cox 1972 \u2014 Regression Models and Life-Tables",
+   "filePath": "wiki/docs/papers/cox-1972.md",
+   "summary": "wiki page 'Cox 1972 \u2014 Regression Models and Life-Tables', 44 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/discrete-time-survival.md",
+   "type": "document",
+   "name": "Discrete-time survival analysis",
+   "filePath": "wiki/docs/papers/discrete-time-survival.md",
+   "summary": "wiki page 'Discrete-time survival analysis', 88 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/hill-smith-1989.md",
+   "type": "document",
+   "name": "Hill & Smith 1989 \u2014 Evaluating Associativity in CPU Caches",
+   "filePath": "wiki/docs/papers/hill-smith-1989.md",
+   "summary": "wiki page 'Hill & Smith 1989 \u2014 Evaluating Associativity in CPU Caches', 43 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/index.md",
+   "type": "document",
+   "name": "Papers",
+   "filePath": "wiki/docs/papers/index.md",
+   "summary": "wiki page 'Papers', 49 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/kaplan-meier-1958.md",
+   "type": "document",
+   "name": "Kaplan & Meier 1958 \u2014 Nonparametric Estimation from Incomplete Observations",
+   "filePath": "wiki/docs/papers/kaplan-meier-1958.md",
+   "summary": "wiki page 'Kaplan & Meier 1958 \u2014 Nonparametric Estimation from Incomplete Observations', 42 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/ke-2017-lightgbm.md",
+   "type": "document",
+   "name": "Ke et al. 2017 \u2014 LightGBM",
+   "filePath": "wiki/docs/papers/ke-2017-lightgbm.md",
+   "summary": "wiki page 'Ke et al. 2017 \u2014 LightGBM', 41 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/libcachesim.md",
+   "type": "document",
+   "name": "libCacheSim \u2014 Cache Simulation Toolkit",
+   "filePath": "wiki/docs/papers/libcachesim.md",
+   "summary": "wiki page 'libCacheSim \u2014 Cache Simulation Toolkit', 39 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/mattson-1970.md",
+   "type": "document",
+   "name": "Mattson et al. 1970 \u2014 Evaluation Techniques for Storage Hierarchies",
+   "filePath": "wiki/docs/papers/mattson-1970.md",
+   "summary": "wiki page 'Mattson et al. 1970 \u2014 Evaluation Techniques for Storage Hierarchies', 43 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/right-censoring.md",
+   "type": "document",
+   "name": "Right-censoring",
+   "filePath": "wiki/docs/papers/right-censoring.md",
+   "summary": "wiki page 'Right-censoring', 93 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/waldspurger-2015-shards.md",
+   "type": "document",
+   "name": "Waldspurger et al. 2015 \u2014 Efficient MRC Construction with SHARDS",
+   "filePath": "wiki/docs/papers/waldspurger-2015-shards.md",
+   "summary": "wiki page 'Waldspurger et al. 2015 \u2014 Efficient MRC Construction with SHARDS', 43 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/wires-2014-counterstacks.md",
+   "type": "document",
+   "name": "Wires et al. 2014 \u2014 Characterizing Storage Workloads with Counter Stacks",
+   "filePath": "wiki/docs/papers/wires-2014-counterstacks.md",
+   "summary": "wiki page 'Wires et al. 2014 \u2014 Characterizing Storage Workloads with Counter Stacks', 42 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/yang-2020-twitter.md",
+   "type": "document",
+   "name": "Yang, Yue, Rashmi 2020 \u2014 A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter",
+   "filePath": "wiki/docs/papers/yang-2020-twitter.md",
+   "summary": "wiki page 'Yang, Yue, Rashmi 2020 \u2014 A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter', 43 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/papers/yang-2023-s3fifo.md",
+   "type": "document",
+   "name": "Yang et al. 2023 \u2014 FIFO Queues Are All You Need for Cache Eviction",
+   "filePath": "wiki/docs/papers/yang-2023-s3fifo.md",
+   "summary": "wiki page 'Yang et al. 2023 \u2014 FIFO Queues Are All You Need for Cache Eviction', 44 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/problem.md",
+   "type": "document",
+   "name": "Problem",
+   "filePath": "wiki/docs/problem.md",
+   "summary": "wiki page 'Problem', 85 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/reproduction.md",
+   "type": "document",
+   "name": "Reproduction",
+   "filePath": "wiki/docs/reproduction.md",
+   "summary": "wiki page 'Reproduction', 135 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/results.md",
+   "type": "document",
+   "name": "Results",
+   "filePath": "wiki/docs/results.md",
+   "summary": "wiki page 'Results', 220 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:wiki/docs/reuse-distance.md",
+   "type": "document",
+   "name": "Reuse distance",
+   "filePath": "wiki/docs/reuse-distance.md",
+   "summary": "wiki page 'Reuse distance', 95 lines",
+   "tags": [
+    "documentation",
+    "wiki"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:reuse-distance",
+   "type": "concept",
+   "name": "reuse distance",
+   "summary": "Backward reuse distance R: the number of distinct objects touched since the last access to the same key. A cache of capacity C holds the last C distinct objects, so a request hits exactly when R < C.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:mrc-curve",
+   "type": "concept",
+   "name": "mrc curve",
+   "summary": "Miss-ratio curve m(C) = P(R >= C), the fraction of requests that miss in a fully associative LRU cache of capacity C.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:discrete-hazard",
+   "type": "concept",
+   "name": "discrete hazard",
+   "summary": "Discrete-time survival model: the binned reuse distance is a survival time, each request contributes one row per bin it was at risk in, and the miss ratio follows from the survival function. Right censoring enters through the risk set, not a discarded row.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:risk-set-expansion",
+   "type": "concept",
+   "name": "risk set expansion",
+   "summary": "One training row per (request, bin at risk), label 1 only in the bin where the reuse event happened. The expansion is what makes censored requests usable and is the dominant cost of the fit.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:censoring",
+   "type": "concept",
+   "name": "censoring",
+   "summary": "A request whose next access has not happened by the end of the observation window is right-censored: it survived past that bin and contributes no event.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:kaplan-meier-floor",
+   "type": "concept",
+   "name": "kaplan meier floor",
+   "summary": "Kaplan-Meier on the binned reuse distance without covariates. The floor the covariates must beat, not a strawman: censoring is handled correctly.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:hitcount-baseline",
+   "type": "concept",
+   "name": "hitcount baseline",
+   "summary": "The practitioner's shortcut: regress log(1+frequency), then convert the predicted frequency to a reuse-distance proxy through training deciles. Frequency is not a distance, so the conversion is a marginal and loses to the covariate-free floor.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:single-row-oracle",
+   "type": "concept",
+   "name": "single row oracle",
+   "summary": "A baseline that reads eval_rtilde for the block it scores, so its own bin decides the hit and the curve reconstructs the truth. It reports MAE 0.000000 by construction and is an oracle, not a competitor.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:out-of-time",
+   "type": "concept",
+   "name": "out of time",
+   "summary": "Train on the first 60% of a trace, score every 5M-request window of the last 25%. Distribution and grid fixed, only time moves, so drift is isolated.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:leave-one-cluster-out",
+   "type": "concept",
+   "name": "leave one cluster out",
+   "summary": "Train on three traces, score the fourth. The new-cluster test. Confounds model transfer with distribution shift, which is why it is reported beside out-of-time and never alone.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:retrain-curve",
+   "type": "concept",
+   "name": "retrain curve",
+   "summary": "Test error against training volume with hyper-parameters frozen, so the data axis is not confounded with the search. Answers how much local data a new trace needs.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:block-bootstrap-interval",
+   "type": "concept",
+   "name": "block bootstrap interval",
+   "summary": "Confidence interval for a per-window mean, resampling contiguous blocks of requests rather than single requests, because requests inside a window are autocorrelated and an i.i.d. bootstrap reports an interval that is too narrow.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:stale-window-invalidation",
+   "type": "concept",
+   "name": "stale window invalidation",
+   "summary": "A per-window score file older than model.json describes a model that no longer exists. Reusing it reports one model's numbers under another model's parameters, so the scorer rescoring is keyed on mtime.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "concept:optuna-startup-phase",
+   "type": "concept",
+   "name": "optuna startup phase",
+   "summary": "Seeded TPE spends its first 10 trials on random draws, so a study stopped at 12 trials reports capacity ordering rather than a search: three traces returned identical parameters and a Spearman correlation of 1.000. Report a study only past trial 20.",
+   "tags": [
+    "concept",
+    "method"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:oot-cluster10",
+   "type": "claim",
+   "name": "out-of-time cluster10",
+   "filePath": "artifacts/oot/cluster10/result.json",
+   "summary": "out-of-time on cluster10: mean test MAE 0.003637 over 7 windows, median 0.003273, Kaplan-Meier 0.027656 (ratio 0.132), model wins 7/7 windows; mean signed bias -3.36e-03 against MAE 0.003637, |bias|/MAE 0.93; block-bootstrap 95% interval [0.001692, 0.004580].",
+   "tags": [
+    "claim",
+    "result",
+    "oot"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:oot-cluster26",
+   "type": "claim",
+   "name": "out-of-time cluster26",
+   "filePath": "artifacts/oot/cluster26/result.json",
+   "summary": "out-of-time on cluster26: mean test MAE 0.001518 over 8 windows, median 0.001794, Kaplan-Meier 0.005109 (ratio 0.297), model wins 8/8 windows; mean signed bias -1.34e-03 against MAE 0.001518, |bias|/MAE 0.88; block-bootstrap 95% interval [0.001218, 0.001979].",
+   "tags": [
+    "claim",
+    "result",
+    "oot"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:oot-cluster45",
+   "type": "claim",
+   "name": "out-of-time cluster45",
+   "filePath": "artifacts/oot/cluster45/result.json",
+   "summary": "out-of-time on cluster45: mean test MAE 0.001313 over 12 windows, median 0.000977, Kaplan-Meier 0.024877 (ratio 0.053), model wins 12/12 windows; mean signed bias -9.76e-04 against MAE 0.001313, |bias|/MAE 0.74; block-bootstrap 95% interval [0.000908, 0.001742].",
+   "tags": [
+    "claim",
+    "result",
+    "oot"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:oot-cluster52",
+   "type": "claim",
+   "name": "out-of-time cluster52",
+   "filePath": "artifacts/oot/cluster52/result.json",
+   "summary": "out-of-time on cluster52: mean test MAE 0.003834 over 672 windows, median 0.003184, Kaplan-Meier 0.030559 (ratio 0.125), model wins 672/672 windows; mean signed bias -3.73e-03 against MAE 0.003834, |bias|/MAE 0.97; block-bootstrap 95% interval [0.003416, 0.004318].",
+   "tags": [
+    "claim",
+    "result",
+    "oot"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:loco-loco-cluster10",
+   "type": "claim",
+   "name": "leave-one-cluster-out loco-cluster10",
+   "filePath": "artifacts/loco/cluster10/result.json",
+   "summary": "leave-one-cluster-out on loco-cluster10: mean test MAE 0.002756 over 7 windows, median 0.002682, Kaplan-Meier 0.160934 (ratio 0.017), model wins 7/7 windows; block-bootstrap 95% interval [0.002550, 0.002977].",
+   "tags": [
+    "claim",
+    "result",
+    "loco"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:loco-loco-cluster26",
+   "type": "claim",
+   "name": "leave-one-cluster-out loco-cluster26",
+   "filePath": "artifacts/loco/cluster26/result.json",
+   "summary": "leave-one-cluster-out on loco-cluster26: mean test MAE 0.006770 over 8 windows, median 0.006903, Kaplan-Meier 0.156697 (ratio 0.043), model wins 8/8 windows; block-bootstrap 95% interval [0.006370, 0.007072].",
+   "tags": [
+    "claim",
+    "result",
+    "loco"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:loco-loco-cluster45",
+   "type": "claim",
+   "name": "leave-one-cluster-out loco-cluster45",
+   "filePath": "artifacts/loco/cluster45/result.json",
+   "summary": "leave-one-cluster-out on loco-cluster45: mean test MAE 0.005445 over 12 windows, median 0.005631, Kaplan-Meier 0.097702 (ratio 0.056), model wins 12/12 windows; block-bootstrap 95% interval [0.005132, 0.005819].",
+   "tags": [
+    "claim",
+    "result",
+    "loco"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:loco-loco-cluster52",
+   "type": "claim",
+   "name": "leave-one-cluster-out loco-cluster52",
+   "filePath": "artifacts/loco/cluster52/result.json",
+   "summary": "leave-one-cluster-out on loco-cluster52: mean test MAE 0.016266 over 667 windows, median 0.015778, Kaplan-Meier 0.144415 (ratio 0.113), model wins 667/667 windows; block-bootstrap 95% interval [0.015884, 0.016706].",
+   "tags": [
+    "claim",
+    "result",
+    "loco"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster10-1",
+   "type": "claim",
+   "name": "retrain cluster10-1",
+   "filePath": "artifacts/retrain/cluster10-1/result.json",
+   "summary": "retrain point cluster10-1: mean test MAE 0.017567 over 7 windows, Kaplan-Meier 0.099307, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster10-12",
+   "type": "claim",
+   "name": "retrain cluster10-12",
+   "filePath": "artifacts/retrain/cluster10-12/result.json",
+   "summary": "retrain point cluster10-12: mean test MAE 0.004259 over 7 windows, Kaplan-Meier 0.031092, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster10-5",
+   "type": "claim",
+   "name": "retrain cluster10-5",
+   "filePath": "artifacts/retrain/cluster10-5/result.json",
+   "summary": "retrain point cluster10-5: mean test MAE 0.006046 over 7 windows, Kaplan-Meier 0.046574, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster26-1",
+   "type": "claim",
+   "name": "retrain cluster26-1",
+   "filePath": "artifacts/retrain/cluster26-1/result.json",
+   "summary": "retrain point cluster26-1: mean test MAE 0.003057 over 8 windows, Kaplan-Meier 0.014252, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster26-12",
+   "type": "claim",
+   "name": "retrain cluster26-12",
+   "filePath": "artifacts/retrain/cluster26-12/result.json",
+   "summary": "retrain point cluster26-12: mean test MAE 0.001706 over 8 windows, Kaplan-Meier 0.006871, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster26-5",
+   "type": "claim",
+   "name": "retrain cluster26-5",
+   "filePath": "artifacts/retrain/cluster26-5/result.json",
+   "summary": "retrain point cluster26-5: mean test MAE 0.001861 over 8 windows, Kaplan-Meier 0.008074, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster45-1",
+   "type": "claim",
+   "name": "retrain cluster45-1",
+   "filePath": "artifacts/retrain/cluster45-1/result.json",
+   "summary": "retrain point cluster45-1: mean test MAE 0.001398 over 12 windows, Kaplan-Meier 0.028376, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster45-12",
+   "type": "claim",
+   "name": "retrain cluster45-12",
+   "filePath": "artifacts/retrain/cluster45-12/result.json",
+   "summary": "retrain point cluster45-12: mean test MAE 0.001333 over 12 windows, Kaplan-Meier 0.026012, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:retrain-cluster45-5",
+   "type": "claim",
+   "name": "retrain cluster45-5",
+   "filePath": "artifacts/retrain/cluster45-5/result.json",
+   "summary": "retrain point cluster45-5: mean test MAE 0.001313 over 12 windows, Kaplan-Meier 0.025531, fixed hyper-parameters.",
+   "tags": [
+    "claim",
+    "result",
+    "retrain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:oot-protocol",
+   "type": "claim",
+   "name": "oot protocol",
+   "filePath": "scripts/farm_oot.sh",
+   "summary": "Windows are 5,000,000 contiguous requests; the split is [0.60, 0.75] in request-index space, so train is the first 60%, validation the next 15%, test the last 25%; the booster is frozen before any test window opens and every window is scored into its own JSON file.",
+   "tags": [
+    "claim",
+    "protocol"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "claim:loco-protocol",
+   "type": "claim",
+   "name": "loco protocol",
+   "filePath": "scripts/farm_loco.sh",
+   "summary": "Windows are 5,000,000 contiguous requests; the split is [0.60, 0.75] in request-index space, so train is the first 60%, validation the next 15%, test the last 25%; the booster is frozen before any test window opens and every window is scored into its own JSON file.",
+   "tags": [
+    "claim",
+    "protocol"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:scripts/accuracy_table.py",
+   "target": "function:scripts/accuracy_table.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/accuracy_table.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/accuracy_table.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "function:scripts/bench_fit.py:cmd_build",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "function:scripts/bench_fit.py:_fit",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "function:scripts/bench_fit.py:_predict",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "function:scripts/bench_fit.py:cmd_run",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "function:scripts/bench_fit.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/data/store.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/eval/metrics.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/features.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/gt/stackdist.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/bench_fit.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:rel",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:head",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:complexity",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:module_of",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:scan_code",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:scan_docs",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:build_concepts",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:window_claims",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:build_claims",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:build_layers",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:build_tour",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:import_edges_dedupe",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_knowledge_graph.py",
+   "target": "function:scripts/build_knowledge_graph.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_manifest.py",
+   "target": "function:scripts/build_manifest.py:natural_key",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_manifest.py",
+   "target": "function:scripts/build_manifest.py:source_sha256",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/build_manifest.py",
+   "target": "function:scripts/build_manifest.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/collect_results.py",
+   "target": "function:scripts/collect_results.py:load",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/collect_results.py",
+   "target": "function:scripts/collect_results.py:fmt",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/collect_results.py",
+   "target": "function:scripts/collect_results.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/collect_results.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/full_metrics_table.py",
+   "target": "function:scripts/full_metrics_table.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/full_metrics_table.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/full_metrics_table.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "function:scripts/method_ablation.py:_subsample",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "function:scripts/method_ablation.py:_eval_arrays",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "function:scripts/method_ablation.py:run_cluster",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "function:scripts/method_ablation.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/eval/baselines.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/eval/metrics.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/gt/stackdist.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/interp/importance.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/method_ablation.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "function:scripts/noise_floor.py:floor_for",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "function:scripts/noise_floor.py:write_table",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "function:scripts/noise_floor.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/noise_floor.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:windows_for",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:load_window",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:thin_windows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:block_bootstrap",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:summarise",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:score_window",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:fit_from_windows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "function:scripts/oot.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/data/store.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/eval/metrics.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/eval/mrc.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/features.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot.py",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:split_specs",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:cmd_fit",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:fit_pooled",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:cmd_window",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:windows_for_block",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:cmd_score",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:cmd_reduce",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "function:scripts/oot_parallel.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "file:src/mrc/data/store.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/oot_parallel.py",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/provisioning_table.py",
+   "target": "function:scripts/provisioning_table.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/provisioning_table.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/provisioning_table.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/sweep.py",
+   "target": "function:scripts/sweep.py:plan_windows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/sweep.py",
+   "target": "function:scripts/sweep.py:tag_for",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/sweep.py",
+   "target": "function:scripts/sweep.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/sweep.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/sweep.py",
+   "target": "file:src/mrc/data/store.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "function:src/mrc/analysis.py:reported_clusters",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "function:src/mrc/analysis.py:load_metrics",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "function:src/mrc/analysis.py:provisioning_rows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "function:src/mrc/analysis.py:provisioning_table",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "function:src/mrc/analysis.py:metric_rows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "function:src/mrc/analysis.py:write_tables",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/analysis.py",
+   "target": "file:src/mrc/report_tables.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:default_source",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:main",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:inspect",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:store",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:reuse",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:mrc",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:labels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:features",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:truth",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:train",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:best_params",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:tune",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:interpret",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:log",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:analysis",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "function:src/mrc/cli.py:plots",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/data/reuse.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/data/store.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/data/trace.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/eval/mrc.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/interp/driver.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/plots/report_figures.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/cli.py",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/data/hist.py",
+   "target": "class:src/mrc/data/hist.py:DistanceHistogram",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:_key_codes",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:labels_from_trace",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:build_labels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:_sha256",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:_git_sha",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:save_labels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "function:src/mrc/data/labels.py:load_labels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "file:src/mrc/data/reuse.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/data/labels.py",
+   "target": "file:src/mrc/data/trace.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/data/reference.py",
+   "target": "function:src/mrc/data/reference.py:naive_reuse",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reference.py",
+   "target": "function:src/mrc/data/reference.py:naive_lru_mrc",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reuse.py",
+   "target": "function:src/mrc/data/reuse.py:_fenwick_add",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reuse.py",
+   "target": "function:src/mrc/data/reuse.py:_fenwick_sum",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reuse.py",
+   "target": "function:src/mrc/data/reuse.py:reuse_kernel",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reuse.py",
+   "target": "function:src/mrc/data/reuse.py:suffix_distinct",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reuse.py",
+   "target": "function:src/mrc/data/reuse.py:compute_reuse",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/reuse.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/data/store.py",
+   "target": "function:src/mrc/data/store.py:_utc_now",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/store.py",
+   "target": "function:src/mrc/data/store.py:write_store",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/store.py",
+   "target": "class:src/mrc/data/store.py:Part",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/store.py",
+   "target": "class:src/mrc/data/store.py:Store",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/store.py",
+   "target": "class:src/mrc/data/store.py:StoreShard",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/store.py",
+   "target": "file:src/mrc/data/trace.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/data/trace.py",
+   "target": "class:src/mrc/data/trace.py:Trace",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/trace.py",
+   "target": "function:src/mrc/data/trace.py:open_stream",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/trace.py",
+   "target": "function:src/mrc/data/trace.py:trace_from_table",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/trace.py",
+   "target": "function:src/mrc/data/trace.py:read_trace",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/data/trace.py",
+   "target": "function:src/mrc/data/trace.py:summary",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:_check_capacities",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:_check_X",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:_check_edges",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:_compulsory",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:_eval_block",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:_fit_booster",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:fit_predict_km",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:fit_predict_single_row",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "function:src/mrc/eval/baselines.py:fit_predict_hitcount",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/eval/baselines.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/eval/metrics.py",
+   "target": "function:src/mrc/eval/metrics.py:_curves",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/metrics.py",
+   "target": "function:src/mrc/eval/metrics.py:_trapezoid",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/metrics.py",
+   "target": "function:src/mrc/eval/metrics.py:abc",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/metrics.py",
+   "target": "function:src/mrc/eval/metrics.py:curve_metrics_ci",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/metrics.py",
+   "target": "function:src/mrc/eval/metrics.py:curve_metrics",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/mrc.py",
+   "target": "function:src/mrc/eval/mrc.py:mrc_curve",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/mrc.py",
+   "target": "function:src/mrc/eval/mrc.py:capacity_grid",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/eval/mrc.py",
+   "target": "function:src/mrc/eval/mrc.py:mrc_error",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/features.py",
+   "target": "function:src/mrc/features.py:_namespace_codes",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/features.py",
+   "target": "function:src/mrc/features.py:_key_geometry",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/features.py",
+   "target": "function:src/mrc/features.py:build_features",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/stackdist.py",
+   "target": "function:src/mrc/gt/stackdist.py:mrc_from_labels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/stackdist.py",
+   "target": "function:src/mrc/gt/stackdist.py:identified_grid",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/stackdist.py",
+   "target": "function:src/mrc/gt/stackdist.py:capacity_grid_from_edges",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/stackdist.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/gt/stackdist.py",
+   "target": "file:src/mrc/eval/mrc.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/gt/write.py",
+   "target": "function:src/mrc/gt/write.py:_git_sha",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/write.py",
+   "target": "function:src/mrc/gt/write.py:_labels_sha256",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/write.py",
+   "target": "function:src/mrc/gt/write.py:written_truth",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/gt/write.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/gt/write.py",
+   "target": "file:src/mrc/gt/stackdist.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "function:src/mrc/interp/driver.py:_subsample",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "function:src/mrc/interp/driver.py:run_interpret",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "file:src/mrc/gt/stackdist.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "file:src/mrc/interp/importance.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "file:src/mrc/models/risk_set.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/driver.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/importance.py",
+   "target": "function:src/mrc/interp/importance.py:permutation_importance",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/interp/importance.py",
+   "target": "function:src/mrc/interp/importance.py:shap_summary",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/interp/importance.py",
+   "target": "class:src/mrc/interp/importance.py:FitPredict",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/interp/importance.py",
+   "target": "function:src/mrc/interp/importance.py:ablation_matrix",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/interp/importance.py",
+   "target": "file:src/mrc/eval/mrc.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/interp/importance.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "function:src/mrc/models/hazard.py:bin_edges",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "function:src/mrc/models/hazard.py:assign_bins",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "function:src/mrc/models/hazard.py:block_masks",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "function:src/mrc/models/hazard.py:_split_rows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "function:src/mrc/models/hazard.py:expand_risk_set",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "class:src/mrc/models/hazard.py:HazardModel",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "function:src/mrc/models/hazard.py:km_hazard",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/hazard.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/models/risk_set.py",
+   "target": "function:src/mrc/models/risk_set.py:_bin_widths",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/risk_set.py",
+   "target": "function:src/mrc/models/risk_set.py:_within_request_index",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/risk_set.py",
+   "target": "function:src/mrc/models/risk_set.py:grouped_rows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/risk_set.py",
+   "target": "function:src/mrc/models/risk_set.py:per_step_rows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/models/risk_set.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/models/risk_set.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:labels_path",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:features_path",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:truth_path",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:labels_are_cached",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:source_key",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:ensure_labels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:_label_sha256",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:_git_sha",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:ensure_features",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:ensure_truth",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:cluster_edges",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "class:src/mrc/pipeline.py:Prepared",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:prepare",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "class:src/mrc/pipeline.py:ScoredWindow",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "class:src/mrc/pipeline.py:WindowPrepared",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:prepare_windows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:km_from_hist",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:fit",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:predict_block",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:truth_block",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:km_curve",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:score",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:capacity_for_target",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:provisioning",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:log_mlflow",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "function:src/mrc/pipeline.py:run_one",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/data/hist.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/data/labels.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/data/store.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/eval/baselines.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/eval/metrics.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/eval/mrc.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/features.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/gt/stackdist.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/gt/write.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/pipeline.py",
+   "target": "file:src/mrc/models/risk_set.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:_plt",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:_panels",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:plot_curves",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:plot_error",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:plot_provisioning",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:plot_importance",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "function:src/mrc/plots/report_figures.py:make_all",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "file:src/mrc/analysis.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/plots/report_figures.py",
+   "target": "file:src/mrc/plots/style.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/plots/style.py",
+   "target": "function:src/mrc/plots/style.py:apply_style",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/style.py",
+   "target": "function:src/mrc/plots/style.py:fig_single",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/style.py",
+   "target": "function:src/mrc/plots/style.py:fig_double",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/plots/style.py",
+   "target": "function:src/mrc/plots/style.py:label_mrc",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/report_tables.py",
+   "target": "function:src/mrc/report_tables.py:_fmt",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/report_tables.py",
+   "target": "function:src/mrc/report_tables.py:_fmt_count",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/report_tables.py",
+   "target": "function:src/mrc/report_tables.py:_rows",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/report_tables.py",
+   "target": "function:src/mrc/report_tables.py:metrics_table",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/report_tables.py",
+   "target": "function:src/mrc/report_tables.py:booktabs",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:suggest_params",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:make_objective",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:study_name",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:storage_url",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:make_windows_objective",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:run_windows_study",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "function:src/mrc/tuning/search.py:run_study",
+   "type": "contains",
+   "direction": "out",
+   "weight": 1.0
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "file:src/mrc/config.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "file:src/mrc/tuning/search.py",
+   "target": "file:src/mrc/pipeline.py",
+   "type": "imports",
+   "direction": "out",
+   "weight": 0.7
+  },
+  {
+   "source": "document:docs/AGENTS_RULES.md",
+   "target": "file:scripts/fetch_traces.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/AGENTS_RULES.md",
+   "target": "file:src/mrc/plots/style.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/CARDS.md",
+   "target": "file:src/mrc/config.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/DATA.md",
+   "target": "file:scripts/fetch_parallel.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/DATA.md",
+   "target": "file:scripts/fetch_traces.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/DATA.md",
+   "target": "file:src/mrc/cli.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/DATA.md",
+   "target": "file:src/mrc/data/trace.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/MILESTONES.md",
+   "target": "file:src/mrc/config.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/MILESTONES.md",
+   "target": "file:src/mrc/plots/style.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/PLOT_CONTRACT.md",
+   "target": "file:src/mrc/plots/style.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/PROJECT_PLAN.md",
+   "target": "file:src/mrc/plots/style.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:docs/RISKS.md",
+   "target": "file:src/mrc/config.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/data.md",
+   "target": "file:scripts/fetch_traces.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:scripts/collect_results.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:scripts/farm_loco.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:scripts/farm_oot.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:scripts/farm_retrain.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:scripts/oot.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:scripts/oot_parallel.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:src/mrc/config.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/experiments.md",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/hazard-model.md",
+   "target": "file:src/mrc/features.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/papers/akiba-2019-optuna.md",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/papers/cox-1972.md",
+   "target": "file:src/mrc/features.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/papers/discrete-time-survival.md",
+   "target": "file:src/mrc/features.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/papers/right-censoring.md",
+   "target": "file:src/mrc/features.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/papers/yang-2020-twitter.md",
+   "target": "file:scripts/fetch_traces.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/problem.md",
+   "target": "file:src/mrc/cli.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/reproduction.md",
+   "target": "file:scripts/fetch_traces.sh",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/reproduction.md",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/results.md",
+   "target": "file:scripts/method_ablation.py",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:reuse-distance",
+   "target": "file:src/mrc/data/reuse.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:reuse-distance",
+   "target": "file:src/mrc/data/reference.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:reuse-distance",
+   "target": "document:wiki/docs/reuse-distance.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:mrc-curve",
+   "target": "file:src/mrc/eval/mrc.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:mrc-curve",
+   "target": "file:src/mrc/gt/stackdist.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:mrc-curve",
+   "target": "document:wiki/docs/ground-truth.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:discrete-hazard",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:discrete-hazard",
+   "target": "document:wiki/docs/hazard-model.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:risk-set-expansion",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:risk-set-expansion",
+   "target": "document:wiki/docs/hazard-model.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:censoring",
+   "target": "file:src/mrc/models/hazard.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:censoring",
+   "target": "document:wiki/docs/papers/right-censoring.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:kaplan-meier-floor",
+   "target": "file:src/mrc/eval/baselines.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:kaplan-meier-floor",
+   "target": "document:wiki/docs/papers/kaplan-meier-1958.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:hitcount-baseline",
+   "target": "file:src/mrc/eval/baselines.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:single-row-oracle",
+   "target": "file:src/mrc/eval/baselines.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:single-row-oracle",
+   "target": "document:wiki/docs/generalization.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:out-of-time",
+   "target": "document:wiki/docs/generalization.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:out-of-time",
+   "target": "file:scripts/oot.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:leave-one-cluster-out",
+   "target": "document:wiki/docs/generalization.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:leave-one-cluster-out",
+   "target": "file:scripts/farm_loco.sh",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:retrain-curve",
+   "target": "document:wiki/docs/generalization.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:retrain-curve",
+   "target": "file:scripts/farm_retrain.sh",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:block-bootstrap-interval",
+   "target": "file:src/mrc/eval/metrics.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:stale-window-invalidation",
+   "target": "file:scripts/oot_parallel.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:stale-window-invalidation",
+   "target": "document:wiki/docs/experiments.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:optuna-startup-phase",
+   "target": "file:src/mrc/tuning/search.py",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "concept:optuna-startup-phase",
+   "target": "document:wiki/docs/experiments.md",
+   "type": "related",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:oot-cluster10",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:oot-cluster26",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:oot-cluster45",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:oot-cluster52",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:loco-loco-cluster10",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:loco-loco-cluster26",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:loco-loco-cluster45",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  },
+  {
+   "source": "document:wiki/docs/generalization.md",
+   "target": "claim:loco-loco-cluster52",
+   "type": "documents",
+   "direction": "out",
+   "weight": 0.5
+  }
+ ],
+ "layers": [
+  {
+   "id": "layer:data",
+   "name": "data",
+   "description": "Trace ingest, reuse distance, labels, store",
+   "nodeIds": [
+    "file:src/mrc/data/__init__.py",
+    "file:src/mrc/data/hist.py",
+    "file:src/mrc/data/labels.py",
+    "file:src/mrc/data/reference.py",
+    "file:src/mrc/data/reuse.py",
+    "file:src/mrc/data/store.py",
+    "file:src/mrc/data/trace.py"
+   ]
+  },
+  {
+   "id": "layer:features",
+   "name": "features",
+   "description": "Causal feature matrix from request metadata only",
+   "nodeIds": [
+    "file:src/mrc/features.py"
+   ]
+  },
+  {
+   "id": "layer:ground-truth",
+   "name": "ground-truth",
+   "description": "Exact Mattson stack distance and its writer",
+   "nodeIds": [
+    "file:src/mrc/gt/__init__.py",
+    "file:src/mrc/gt/stackdist.py",
+    "file:src/mrc/gt/write.py"
+   ]
+  },
+  {
+   "id": "layer:models",
+   "name": "models",
+   "description": "Hazard model and risk-set expansion",
+   "nodeIds": [
+    "file:src/mrc/models/__init__.py",
+    "file:src/mrc/models/hazard.py",
+    "file:src/mrc/models/risk_set.py"
+   ]
+  },
+  {
+   "id": "layer:eval",
+   "name": "eval",
+   "description": "Curves, metrics, baselines",
+   "nodeIds": [
+    "file:src/mrc/eval/__init__.py",
+    "file:src/mrc/eval/baselines.py",
+    "file:src/mrc/eval/metrics.py",
+    "file:src/mrc/eval/mrc.py"
+   ]
+  },
+  {
+   "id": "layer:tuning",
+   "name": "tuning",
+   "description": "Optuna search and frozen configuration",
+   "nodeIds": [
+    "file:src/mrc/config.py",
+    "file:src/mrc/tuning/__init__.py",
+    "file:src/mrc/tuning/search.py"
+   ]
+  },
+  {
+   "id": "layer:pipeline",
+   "name": "pipeline",
+   "description": "End-to-end training entry point and the command line",
+   "nodeIds": [
+    "file:src/mrc/__init__.py",
+    "file:src/mrc/cli.py",
+    "file:src/mrc/pipeline.py"
+   ]
+  },
+  {
+   "id": "layer:orchestration",
+   "name": "orchestration",
+   "description": "Windowed fit, score, reduce and the experiment farm",
+   "nodeIds": [
+    "file:scripts/accuracy_table.py",
+    "file:scripts/bench_fit.py",
+    "file:scripts/build_knowledge_graph.py",
+    "file:scripts/build_manifest.py",
+    "file:scripts/collect_results.py",
+    "file:scripts/full_metrics_table.py",
+    "file:scripts/method_ablation.py",
+    "file:scripts/noise_floor.py",
+    "file:scripts/oot.py",
+    "file:scripts/oot_parallel.py",
+    "file:scripts/provisioning_table.py",
+    "file:scripts/sweep.py",
+    "file:scripts/farm_loco.sh",
+    "file:scripts/farm_oot.sh",
+    "file:scripts/farm_retrain.sh",
+    "file:scripts/fetch_hf_cluster.sh",
+    "file:scripts/fetch_parallel.sh",
+    "file:scripts/fetch_traces.sh"
+   ]
+  },
+  {
+   "id": "layer:reporting",
+   "name": "reporting",
+   "description": "Analysis, tables, plots",
+   "nodeIds": [
+    "file:src/mrc/analysis.py",
+    "file:src/mrc/plots/__init__.py",
+    "file:src/mrc/plots/report_figures.py",
+    "file:src/mrc/plots/style.py",
+    "file:src/mrc/report_tables.py"
+   ]
+  },
+  {
+   "id": "layer:interpretability",
+   "name": "interpretability",
+   "description": "Permutation and SHAP importance",
+   "nodeIds": [
+    "file:src/mrc/interp/__init__.py",
+    "file:src/mrc/interp/driver.py",
+    "file:src/mrc/interp/importance.py"
+   ]
+  },
+  {
+   "id": "layer:knowledge",
+   "name": "knowledge",
+   "description": "This wiki and the project docs",
+   "nodeIds": [
+    "document:docs/AGENTS_RULES.md",
+    "document:docs/CARDS.md",
+    "document:docs/DATA.md",
+    "document:docs/GATES.md",
+    "document:docs/LIGHTGBM_CUDA.md",
+    "document:docs/LITERATURE.md",
+    "document:docs/MILESTONES.md",
+    "document:docs/OPEN_QUESTIONS.md",
+    "document:docs/PLOT_CONTRACT.md",
+    "document:docs/PROJECT_PLAN.md",
+    "document:docs/RISKS.md",
+    "document:docs/STATISTICAL_SKELETON.md",
+    "document:wiki/docs/data.md",
+    "document:wiki/docs/experiments.md",
+    "document:wiki/docs/generalization.md",
+    "document:wiki/docs/glossary.md",
+    "document:wiki/docs/ground-truth.md",
+    "document:wiki/docs/hazard-model.md",
+    "document:wiki/docs/index.md",
+    "document:wiki/docs/notation.md",
+    "document:wiki/docs/papers/akiba-2019-optuna.md",
+    "document:wiki/docs/papers/beckmann-2015-talus.md",
+    "document:wiki/docs/papers/cox-1972.md",
+    "document:wiki/docs/papers/discrete-time-survival.md",
+    "document:wiki/docs/papers/hill-smith-1989.md",
+    "document:wiki/docs/papers/index.md",
+    "document:wiki/docs/papers/kaplan-meier-1958.md",
+    "document:wiki/docs/papers/ke-2017-lightgbm.md",
+    "document:wiki/docs/papers/libcachesim.md",
+    "document:wiki/docs/papers/mattson-1970.md",
+    "document:wiki/docs/papers/right-censoring.md",
+    "document:wiki/docs/papers/waldspurger-2015-shards.md",
+    "document:wiki/docs/papers/wires-2014-counterstacks.md",
+    "document:wiki/docs/papers/yang-2020-twitter.md",
+    "document:wiki/docs/papers/yang-2023-s3fifo.md",
+    "document:wiki/docs/problem.md",
+    "document:wiki/docs/reproduction.md",
+    "document:wiki/docs/results.md",
+    "document:wiki/docs/reuse-distance.md"
+   ]
+  }
+ ],
+ "tour": [
+  {
+   "order": 1,
+   "title": "Problem and target",
+   "description": "Read problem and target in the project wiki, then the code it names.",
+   "nodeIds": [
+    "document:wiki/docs/problem.md",
+    "document:wiki/docs/index.md"
+   ]
+  },
+  {
+   "order": 2,
+   "title": "Reuse distance and the exact curve",
+   "description": "Read reuse distance and the exact curve in the project wiki, then the code it names.",
+   "nodeIds": [
+    "document:wiki/docs/reuse-distance.md",
+    "file:src/mrc/eval/mrc.py"
+   ]
+  },
+  {
+   "order": 3,
+   "title": "The hazard model",
+   "description": "Read the hazard model in the project wiki, then the code it names.",
+   "nodeIds": [
+    "document:wiki/docs/hazard-model.md",
+    "file:src/mrc/models/hazard.py",
+    "file:src/mrc/models/risk_set.py"
+   ]
+  },
+  {
+   "order": 4,
+   "title": "Baselines it has to beat",
+   "description": "Read baselines it has to beat in the project wiki, then the code it names.",
+   "nodeIds": [
+    "document:wiki/docs/papers/kaplan-meier-1958.md",
+    "file:src/mrc/eval/baselines.py"
+   ]
+  },
+  {
+   "order": 5,
+   "title": "Protocol: out of time, leave one out, retrain",
+   "description": "Read protocol: out of time, leave one out, retrain in the project wiki, then the code it names.",
+   "nodeIds": [
+    "document:wiki/docs/generalization.md",
+    "file:scripts/oot.py",
+    "file:scripts/oot_parallel.py"
+   ]
+  },
+  {
+   "order": 6,
+   "title": "Measured results and what they do not prove",
+   "description": "Read measured results and what they do not prove in the project wiki, then the code it names.",
+   "nodeIds": [
+    "document:wiki/docs/results.md",
+    "document:wiki/docs/generalization.md"
+   ]
+  }
+ ]
+}

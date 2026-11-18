@@ -6,18 +6,29 @@ repository root.
 
 ## What is trained on what
 
-Each reported model is fit on its own trace:
+Four experiment families, all on 5,000,000-request contiguous windows. A window is
+the unit of training and of scoring, so every number below is a distribution over
+windows, not one block read once.
 
-| Trace | Fit data | Tuned on it | Role |
+| Family | Train | Tune | Test |
 |---|---|---|---|
-| cluster45 | first 5M requests, 70% train block | yes, 15 Optuna trials | development |
-| cluster26 | first 5M requests, 70% train block | no study | development |
-| cluster10 | first 5M requests, 70% train block | 2-trial study | development |
-| cluster52 | first 5M requests, 70% train block | no, held out from tuning | scale and falsification |
+| Single block (`mrc train`) | first 5M requests, 70% train block | Optuna on the validation block | last 15% of the 5M |
+| Out-of-time (OOT) | up to 20 windows from the first 60% of the trace | Optuna, 8 to 34 trials | every window of the last 25% |
+| Leave-one-cluster-out (LOCO) | 12 windows of 5M from each of the other three traces | Optuna, 6 trials | every window of the held-out trace |
+| Retrain curve | prefix of the trace, `f = budget_rows / total_rows` | none (`--trials 0`) | every window of the last 25% |
 
-There is **no cross-cluster trained model** yet. Cluster52 is held out from tuning,
-but its model still learns from cluster52's own train block. "Held out" means the
-features, grid and hyperparameters were frozen before its labels were read.
+The split is `[0.60, 0.75]` in request-index space: train is the first 60%, validation
+the next 15%, test the last 25%. Blocks are contiguous, never shuffled.
+
+*Out-of-time* keeps the trace, the capacity grid and the feature distribution fixed and
+moves only the time. *Leave-one-cluster-out* moves the distribution and keeps the code.
+The two together separate temporal drift from workload transfer, which a single
+transfer number cannot do.
+
+Training volume was measured, not assumed: OOT models saw 83.5M (cluster10), 94.0M
+(cluster26), 100M (cluster45) and 120M (cluster52) training requests; every LOCO model
+saw 180M. So the LOCO models were trained on **more** data than the OOT models, which
+makes any LOCO loss attributable to distribution, not to starvation.
 
 ## What the four traces show
 
@@ -38,45 +49,103 @@ On cluster52 the pre-registered ordering and provisioning predictions held, but
 the predicted margin did not. Removing the timing features multiplies error by
 234x, so the covariates, not the marginal, carry the result.
 
-## What to test next, in order
+## Results of the three pre-registered tests
 
-### 1. Out-of-time within each cluster, primary
+The tests were pre-registered on this page in the order below. All three have now run
+on all four traces, and the numbers are recomputed from `artifacts/oot/`,
+`artifacts/loco/` and `artifacts/retrain/`; the per-window mean recomputed from the raw
+window files equals the reported mean exactly.
 
-Train on the first 60% of the week, validate on the next 15%, test on the last
-25%. Split by request index, never randomly. Fit one model on the train period,
-freeze it, then predict every test window and report the distribution of MAE.
+### 1. Out-of-time, per trace (primary)
 
-This is the strongest deployment claim. It keeps the distribution and the grid,
-and it isolates temporal drift.
+Fit on the first 60%, score every window of the last 25%. `n` is the number of scored
+windows. The ratio is the model's MAE divided by the Kaplan-Meier MAE on the same
+windows.
 
-### 2. Leave-one-cluster-out, secondary
+| Trace | n | MAE | median | KM MAE | ratio | MRE | KM MRE | windows won |
+|---|---|---|---|---|---|---|---|---|
+| cluster10 | 7 | 0.003637 | 0.003273 | 0.027656 | 0.132 | 0.61% | 4.03% | 7/7 |
+| cluster26 | 8 | 0.001518 | 0.001794 | 0.005109 | 0.297 | 0.38% | 1.09% | 8/8 |
+| cluster45 | 12 | 0.001313 | 0.000977 | 0.024877 | 0.053 | 0.21% | 4.07% | 12/12 |
+| cluster52 | 672 | 0.003834 | 0.003184 | 0.030559 | 0.125 | 0.70% | 4.72% | 672/672 |
 
-Hold out one cluster, train on the other three, run Optuna on the training
-clusters' validation periods, then test on the held-out cluster. Four folds.
+cluster52 is the only trace whose test block is a distribution rather than a handful of
+windows: 672 of 672 windows, 94 shards, no subsampling. Its block-bootstrap 95%
+interval on the mean MAE is **[0.003416, 0.004318]**, and its per-window IQR is
+[0.002122, 0.005872].
 
-This is the direct new-cluster test, but it confounds model transfer with
-distribution shift. The four traces span R p99 from about 8 to about 1M, so expect
-degradation. That degradation is the result.
+The model beats Kaplan-Meier on all 699 scored test windows across the four traces,
+with no exception.
 
-### 3. Minimal retraining curve, bridging
+### 2. Leave-one-cluster-out (secondary)
 
-Fit on 0.5M, 1M, 2M and 5M early requests of a held-out cluster, test on a later
-window, and plot MAE against the amount of local data. This answers how much data
-a new cluster needs before out-of-time evaluation works.
+| Held out | n | MAE | KM MAE | ratio | MRE | KM MRE | LOCO / OOT |
+|---|---|---|---|---|---|---|---|
+| cluster10 | 7 | 0.002756 | 0.160934 | 0.017 | 0.47% | 31.2% | **0.76x (better)** |
+| cluster26 | 8 | 0.006770 | 0.156697 | 0.043 | 3.78% | 139.8% | 4.46x |
+| cluster45 | 12 | 0.005445 | 0.097702 | 0.056 | 0.97% | 17.8% | 4.15x |
+| cluster52 | 667 | 0.016266 | 0.144415 | 0.113 | 3.24% | 24.7% | 4.24x |
 
-Do not tune on the test period or on the held-out cluster.
+Reading:
 
-## Why not train on three and test on the fourth as the only claim
+1. **The functional form transfers, the absolute level does not.** Every fold beats the
+   covariate-free floor by 9x to 60x, so nothing collapses on an unseen trace. Three of
+   four folds lose about 4x in absolute MAE, and the held-out cluster52 error is 1.63
+   percentage points of miss ratio. That is enough to mis-size a cache by a factor.
+2. **The loss is distributional.** LOCO models had 180M training requests against 83.5M
+   to 120M for the OOT models, so data volume cannot explain the gap.
+3. **cluster10 inverts, and the retrain curve explains why.** Its LOCO model
+   (0.002756) is better than its own-data model (0.003637). cluster10's own-data error
+   is still falling steeply at 60M rows (0.004259), so at 83M its binding constraint is
+   volume, and 180M requests of other traces is a better prior than its own small
+   sample. Two independent experiments, one mechanism.
+4. **cluster45 transfers without bias.** Its LOCO bias is -0.00056 against a MAE of
+   0.005445, so |bias|/MAE is 0.10: the level moved, the shape did not. Every other
+   fold has |bias|/MAE between 0.84 and 0.96.
+5. **Out of domain the error stops being a clean offset.** The worst grid point is 2.5
+   to 3.5 times the MAE in-domain but 9 to 10 times out of domain for cluster10 and
+   cluster26, so the in-domain residual is a level shift and the out-of-domain residual
+   is not.
 
-It answers a different question. A single transfer number mixes three effects:
+### 3. Retrain curve (bridging)
 
-1. the model's ability to use request features;
-2. the shift in reuse scale between clusters;
-3. the difference in capacity grids.
+Fixed hyper-parameters (`--trials 0`), only the data budget moves, same test windows at
+every budget.
 
-Out-of-time keeps 2 and 3 fixed. Leave-one-cluster-out changes all three. Run both:
-out-of-time for the deployment claim, leave-one-cluster-out for the transfer
-claim, and the retraining curve to connect them.
+| Trace | 5M requests | 25M | 60M | n |
+|---|---|---|---|---|
+| cluster10 | 0.017567 | 0.006046 | 0.004259 | 7 |
+| cluster26 | 0.003057 | 0.001861 | 0.001706 | 8 |
+| cluster45 | 0.001398 | 0.001313 | 0.001333 | 12 |
+
+cluster10 buys 4.1x from 12x more data and has not plateaued. cluster26 buys 1.8x and
+flattens. cluster45 is already saturated at 5M requests, and its three points sit
+inside its own per-window spread (0.0007 to 0.0035), so this curve says nothing about
+cluster45's data demand. That null is reported as a null.
+
+### The residual in domain is a level offset
+
+| Trace | MAE | bias | \|bias\|/MAE | mean worst point | worst / MAE |
+|---|---|---|---|---|---|
+| cluster10 | 0.003637 | -0.00336 | 0.93 | 0.0102 | 2.8x |
+| cluster26 | 0.001518 | -0.00134 | 0.88 | 0.0044 | 2.9x |
+| cluster45 | 0.001313 | -0.00098 | 0.74 | 0.0046 | 3.5x |
+| cluster52 | 0.003834 | -0.00373 | 0.97 | 0.0098 | 2.5x |
+
+The in-domain error is a near-constant under-prediction of the miss ratio, uniform
+across capacities, of 0.1 to 0.4 percentage points. That is the failure mode that
+under-provisions a cache, and it is the cheapest thing to fix: a per-trace scalar
+recalibration. It is a hypothesis, not a measured result; it has not been run.
+
+### What this proves and what it does not
+
+Proved: the model predicts the MRC on windows it never trained on, on every trace, and
+beats the covariate-free floor 100% of the time. The method transfers across workloads.
+
+Not proved: that one set of weights transfers at in-domain accuracy. A model trained on
+other traces is accurate to about 1% relative on a new trace, not 0.2%, so a new cluster
+needs local data before its curves are trusted. The retrain curve bounds that requirement
+for three traces at 25M to 60M requests.
 
 ## Pipeline in one screen
 
@@ -119,9 +188,14 @@ Enforced in code:
 6. cluster52 is refused by the tuning path;
 7. feature and truth caches validate against the label manifest.
 
-Not yet covered: a leave-one-cluster-out test, an out-of-time test, and an
-automated assertion that no future feature enters the matrix. The `single_row`
-baseline is an oracle by design and is excluded from headline tables.
+Now covered: the leave-one-cluster-out test and the out-of-time test, both on all four
+traces (see above). Still not covered: an automated assertion that no future feature
+enters the matrix.
+
+The `single_row` baseline takes `eval_rtilde` for the block it scores, and its own bin
+is the feature it reads, so it reconstructs the truth by construction. It is an oracle
+by design and is excluded from headline tables. Its MAE of 0.000000 in
+`artifacts/tables/cluster*_metrics.json` is that oracle, not a competitor.
 
 ## Handoff
 

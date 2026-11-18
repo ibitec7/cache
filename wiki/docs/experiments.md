@@ -53,9 +53,35 @@ trial, objective = validation MAPE at fixed trial count:
 | `lambda_l2` | $10^{-3}$ to $10$ | float, log |
 | `max_depth` | 3 to 12 | int |
 
-**Metrics.** MAPE over the capacity grid (primary), MaxErr, MAE, and $R^2$ on
-$m(C)$. Reported per cluster and aggregated by median, never by mean alone, since
-a few clusters with near-zero miss ratio dominate ratio errors.
+**Trial budget.** A study is only reported once it has run past trial 20. Measured:
+at 12 trials, three traces returned identical chosen parameters and a Spearman rank
+correlation of exactly 1.000 between their trial-value rankings, because seeded TPE
+spends its first 10 trials on random draws. That is capacity ordering, not a search.
+Continuing to 26 to 34 trials diverged per trace and improved every test MAE. A study
+that stops at 10 or 12 trials is random search wearing a sampler's name.
+
+**Windowed protocol.** The families on [Generalization](generalization.md) evaluate
+per 5,000,000-request contiguous window instead of per split block:
+
+1. fit once on a window budget from the train split, freeze the booster to
+   `booster.txt`, and only then open any test window;
+2. score each test window independently into one JSON file, so the run is resumable
+   and the fan-out is embarrassingly parallel;
+3. invalidate a window JSON whose mtime is older than `model.json`. After a refit the
+   old scores are stale, and silently reusing them reports one model's numbers under
+   another model's parameters. This happened once and produced three clusters whose
+   "re-tuned" results were identical to 16 digits;
+4. reduce the window files into a mean, a median, an IQR and a block-bootstrap
+   interval. The bootstrap resamples contiguous blocks, not single requests, because
+   requests inside a window are autocorrelated.
+
+**Metrics.** MAE over the capacity grid (primary), MAX, signed bias, MRE over points
+whose truth clears 0.01, and ABC. ABC integrates $|\hat m - m^\ast|$ in log capacity
+and divides by the log range, so it is an average displacement and does not grow with
+the number of capacities; two curves on different grids are therefore not comparable,
+which is why the grid is frozen. Reported per window, aggregated by median and mean
+with the window count beside them. A mean over 7 windows and a mean over 672 windows
+are not the same evidence, so `n` is never dropped from the table.
 
 ## Worked micro-example
 
@@ -82,6 +108,10 @@ prefix estimate $m(2)=0.750$, purely from window length.
 
 ## Where this lives in the code
 
-`src/mrc/splits.py` (time-ordered and leave-one-cluster-out splits),
-`src/mrc/train.py` (LightGBM fit, early stopping),
-`src/mrc/tuning/search.py` (Optuna study), `src/mrc/config.py` (frozen constants).
+`src/mrc/data/splits.py` (time-ordered and leave-one-cluster-out splits),
+`src/mrc/models/hazard.py` (risk set, hazard fit),
+`src/mrc/tuning/search.py` (Optuna study), `src/mrc/config.py` (frozen constants),
+`scripts/oot.py` (one window: prepare, fit, score, reduce),
+`scripts/oot_parallel.py` (`fit`, `score`, `reduce`, `window` sub-commands),
+`scripts/farm_oot.sh`, `scripts/farm_loco.sh`, `scripts/farm_retrain.sh` (the three
+orchestrators), `scripts/collect_results.py` (tables from artefacts).
