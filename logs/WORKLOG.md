@@ -1,3 +1,67 @@
+## 2026-11-18T16:22Z · perf/data · read path measured, HF datasets made reader-compatible
+
+Commit: this entry's commit.
+
+The parquet read path was measured on the two single-file clusters, because the
+handoff's 0.91 s per 5M window could not be reproduced on this box:
+
+| Store | Window | Read wall | `ParquetFile` opens | Key vocab |
+|---|---|---|---|---|
+| publish/cluster26 | 5M | 4.52 s (cold), 4.33 s (warm) | 7 | 394,747 |
+| publish/cluster45 | 5M | 4.15 s (cold), 4.11 s (warm) | 7 | 2,158,200 |
+
+Breakdown of the cluster45 window: `_key_codes` 4.09 s, every other column
+0.02 to 0.15 s, CSV `read_trace` 5.38 s over the same window with the same
+2,158,200 keys. So 95 % of the read is key string materialisation plus a fresh
+`dictionary_encode`, and the reader opens each covering part 7 times per window
+(one per `_rows` consumer plus the key pass). Candidate 1 and 5 of HANDOFF §3 are
+still unimplemented; candidate 2 is (row groups are selected, not scanned).
+
+A full window is not IO-bound. cluster45, 5M window, 8 threads, default 20M row
+budget: 223.4 s wall, 4.33 GB peak RSS, test gbdt MAE 0.00027 against KM 0.0200
+and hit-count 0.1097. The handoff's 117 s / 2.09 GB is a cluster52 number; a
+cluster45 window at the same protocol costs 1.9x and 2.1x the memory, so the
+128 GB instance plans 52 workers at 4.33 GB = 225 GB and would OOM. Budget the
+farm on the measured per-cluster RSS, not on a single cluster's window.
+
+A 1M window run end to end from a fresh `hf download` of cluster26 took 130.7 s
+and 3.95 GB, which confirms the remote runbook works: download, point `--store`
+at the directory, run `mrc train`.
+
+Data state changes, all verified by reading the hub back:
+
+| Dataset | Before | Now |
+|---|---|---|
+| `cache-trace-cluster26-parquet` | parquet only, no manifest | + `manifest.json`, `README.md` |
+| `cache-trace-cluster45-parquet` | parquet only, no manifest | + `manifest.json`, `README.md` |
+| `cache-trace-cluster10-parquet` | complete | unchanged |
+| `cache-trace-cluster52-parquet` | 48 shards, 46.9 GiB, no manifest | upload stalled mid-conversion, no manifest |
+
+`hf upload` reported a commit URL for the first attempt at both manifests and
+landed nothing ("No files have been modified since last commit" on the retry,
+while the hub tree stayed unchanged). The manifests went in through a git clone
+and push instead. Verify hub writes by listing the repo tree, never by the CLI's
+exit status.
+
+cluster52 on the hub is a partial upload of a directory that is still being
+written locally (81 shards, 81 GiB of about 107 GiB). 47 of its 48 uploaded
+shards are byte-identical to the current local shards, so the upload is resumable
+rather than corrupt, but no manifest may be built until the conversion exits.
+
+Code soft spots found while measuring, not yet fixed:
+
+1. Every worker of a sweep writes `artifacts/tables/<cluster>_metrics.json`,
+   `<cluster>.txt` and an MLflow run named after the cluster, so N windows of one
+   cluster cannot run concurrently: they clobber each other's artifacts. The
+   sweep driver must key outputs on the window, not the cluster.
+2. `prepare()` takes one label dict, and `block_masks` splits 70/15/15 inside it.
+   The OOT design in HANDOFF §4.1 needs 60/15/25 over the whole trace, which is
+   8.06B training requests for cluster52: it has to be assembled from windows,
+   and that aggregation path does not exist yet.
+3. `data/parquet/cluster45_parts` and `cluster26_parts` were built by hand;
+   `build_manifest.py` writes `rows_per_part` as the whole part count when a
+   cluster is a single file, which is wrong metadata (harmless to `Store`).
+
 ## 2026-11-18T09:50Z · perf · the fast window is 124 s and 3.24 GB, and DuckDB is the fast ingest
 
 Commit: this entry's commit.
