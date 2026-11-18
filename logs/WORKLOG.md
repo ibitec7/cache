@@ -24,6 +24,25 @@ cluster45 window at the same protocol costs 1.9x and 2.1x the memory, so the
 128 GB instance plans 52 workers at 4.33 GB = 225 GB and would OOM. Budget the
 farm on the measured per-cluster RSS, not on a single cluster's window.
 
+Stage breakdown of the same window at a 10M row budget, which is the sweep
+configuration (110.7 s total, test MAE 0.00026):
+
+| Stage | Seconds | Share |
+|---|---|---|
+| read from store | 4.47 | 4 % |
+| reuse-distance labels | 2.52 | 2 % |
+| features | 2.32 | 2 % |
+| prepare / grouped rows | 0.70 | 1 % |
+| LightGBM fit | 63.04 | 57 % |
+| `predict_mrc` on valid + test | 25.60 | 23 % |
+| hit-count baseline | 12.02 | 11 % |
+
+The read path is 4 % of a window and the label computation is 2 %. Optimising the
+reader first, as HANDOFF §3 orders, buys at most 4 %; the fit and the prediction
+pass are 80 %. If a sweep reorders work, it should cut the prediction pass (a
+sweep that scores per window does not need `predict_mrc` over every eligible
+request twice) before it touches parquet IO.
+
 A 1M window run end to end from a fresh `hf download` of cluster26 took 130.7 s
 and 3.95 GB, which confirms the remote runbook works: download, point `--store`
 at the directory, run `mrc train`.
