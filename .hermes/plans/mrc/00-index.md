@@ -272,3 +272,11 @@ Numeric acceptance thresholds live on the cards (`docs/CARDS.md`), not in prose:
 test block at most 0.02; `gbdt.mae` strictly below `km.mae` on at least 3 of 4 clusters;
 `gbdt.mae` below `hitcount.mae`; `max_abs` at most 0.10 wherever truth is at least 0.01;
 `|bias|` at most 0.01; reuse recompute bit-identical to `naive_reuse`.
+
+---
+
+## Additional plans (not phases of the original set)
+
+| Plan | Scope | Status |
+|---|---|---|
+| `09-technical-blog.md` | long-form public blog: 18 sections, 11 diagrams via `diagram-design`, 16 tables generated from `artifacts/`, three ground-truth corrections (no GOSS, classification not regression, one frozen fit) | drafted, awaiting the skin decision |
