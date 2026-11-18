@@ -25,6 +25,10 @@ N_CAPACITIES = 24
 
 SPLIT_TRAIN = 0.70              # contiguous request blocks
 SPLIT_VALID = 0.85              # valid [0.70, 0.85), test [0.85, 1.0)
+# Out-of-time split for the generalisation experiment: 60 % of the trace to fit,
+# 15 % to tune, 25 % held out. Time, not request count, is the thing that moves, so
+# the blocks are windows of the trace in order rather than slices of one array.
+SPLIT_OOT = (0.60, 0.75)
 
 MAX_GROUPED_ROWS = 60_000_000
 PER_STEP_MAX_REQUESTS = 200_000

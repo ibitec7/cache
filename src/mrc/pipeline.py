@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -30,7 +31,10 @@ from mrc.config import (
     PROCESSED,
     REPO,
     SEED,
+    SPLIT_TRAIN,
+    SPLIT_VALID,
 )
+from mrc.data.hist import DistanceHistogram
 from mrc.data.labels import build_labels, labels_from_trace, load_labels, save_labels
 from mrc.data.store import StoreShard
 from mrc.eval.metrics import curve_metrics
@@ -221,21 +225,34 @@ class Prepared:
     rows: dict | None = None
     n_fit_requests: int = 0
     meta: dict = field(default_factory=dict)
+    # Request-index interval the early-stopping set comes from. The legacy default
+    # stops on the last 15 % of the training block, which is what every committed
+    # artefact was fitted with; an out-of-time run sets this to the validation block
+    # so the stopping set is the period the design says is validation.
+    stop_split: tuple[float, float] = (0.85, 1.0)
 
 
 def prepare(cluster: str, labels: dict, X: np.ndarray, names: list[str],
             truth: tuple[np.ndarray, np.ndarray], nbins: int = N_BINS,
             row_budget: int = ROW_BUDGET, seed: int = SEED,
-            edges: np.ndarray | None = None) -> Prepared:
+            edges: np.ndarray | None = None,
+            split: tuple[float, float] | None = None,
+            stop_on_validation: bool = False) -> Prepared:
     """Build the bin grid, the split, and the training rows for one cluster.
 
     Pass `edges` when the labels are a subsample: the bin grid must come from the
     full trace, or the capacity grid and the model's identification limit disagree.
+
+    `split` is the (train_end, valid_end) fraction of the request index, and
+    `stop_on_validation` moves the early-stopping set onto the validation block.
+    Both default to the frozen behaviour, so every existing artefact reproduces.
     """
     edges = cluster_edges(labels, nbins) if edges is None else np.asarray(edges)
     caps, truth_curve = truth
     n = int(X.shape[0])
-    masks = block_masks(n)
+    split = (SPLIT_TRAIN, SPLIT_VALID) if split is None else (float(split[0]), float(split[1]))
+    masks = block_masks(n, split[0], split[1])
+    stop_split = split if stop_on_validation else (0.85, 1.0)
     tr, va, te = masks
     # Target: the BACKWARD reuse distance, which is what MRC(C) = P(R >= C) is a
     # survival function of. Every eligible request has it observed; the only
@@ -270,26 +287,163 @@ def prepare(cluster: str, labels: dict, X: np.ndarray, names: list[str],
         cluster=cluster, X=X, names=names, edges=edges, capacities=caps,
         truth=truth_curve, masks=masks, eligible=eligible, rtilde=rtilde,
         delta=delta, p_compulsory=p_comp, truth_blocks=truth_blocks,
-        rows=rows, n_fit_requests=int(idx.size),
+        rows=rows, n_fit_requests=int(idx.size), stop_split=stop_split,
         meta={"n_requests": n, "n_eligible": int(eligible.sum()),
               "grouped_rows": int(rows["n_rows"]), "row_budget": int(row_budget),
               "edges_last": int(edges[-1]), "b_M_minus_1": int(edges[-2]),
               "fit_requests": int(idx.size), "per_request_rows": per_request,
+              "split": list(split), "stop_split": list(stop_split),
               "target": "backward_reuse_distance"},
     )
 
 
+# ---------------------------------------------------------------- out of time
+
+WindowPart = tuple[str, dict, np.ndarray]
+
+
+@dataclass
+class WindowPrepared:
+    """Fit-ready reduction of many windows; no request-index split survives.
+
+    `Prepared` describes one contiguous array, so its masks index requests inside
+    that array. An out-of-time run has no such array: the train, validation and
+    test blocks are different windows, read and discarded one at a time. What
+    survives is the bin grid, the sampled fit rows, and one reduced curve and
+    compulsory fraction per block.
+
+    `n_fit_requests` counts pooled requests, so `stop_split` splits the pool: the
+    pool is a uniform sample of each train window in time order, which makes the
+    last 15 % a sample of the latest train windows rather than a random draw.
+    """
+
+    cluster: str
+    names: list[str]
+    edges: np.ndarray
+    capacities: np.ndarray
+    rows: dict
+    n_fit_requests: int
+    stop_split: tuple[float, float]
+    truth_blocks: dict[str, np.ndarray]
+    p_compulsory: dict[str, float]
+    histograms: dict[str, DistanceHistogram]
+    meta: dict = field(default_factory=dict)
+
+
+def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
+                    nbins: int = N_BINS, row_budget: int = ROW_BUDGET,
+                    seed: int = SEED, pool_factor: int = 6,
+                    n_train_windows: int | None = None) -> WindowPrepared:
+    """Fit-ready reduction of a time-ordered sequence of windows.
+
+    Each part is `(block, labels, X)` with `block` in train / valid / test, and the
+    caller streams it: peak memory is one window plus the pooled fit rows, never
+    the whole trace. Every quantity the fit and the report need from `R` is
+    accumulated into a histogram (see `mrc.data.hist`), so nothing is
+    approximated: the bin grid and the block curves are the ones the arrays give.
+
+    Two choices are deliberate. The bin grid comes from the TRAIN block alone,
+    because at deployment time the later periods do not exist yet. The fit rows
+    are a uniform sample of the train period, sized by `row_budget`, with a pool
+    `pool_factor` times larger so the final draw is uniform in requests rather
+    than in bins.
+    """
+    hists: dict[str, DistanceHistogram] = {}
+    counted: dict[str, list[int]] = {}
+    pool_x: list[np.ndarray] = []
+    pool_rt: list[np.ndarray] = []
+    pool_delta: list[np.ndarray] = []
+    per_window = max(1, (pool_factor * row_budget) // (nbins + 1))
+    if n_train_windows:
+        per_window = max(1, per_window // int(n_train_windows))
+
+    for i, (block, labels, X) in enumerate(parts):
+        r = np.asarray(labels["R"], dtype=np.int64)
+        eligible = np.asarray(labels["eligible"], dtype=bool)
+        hists.setdefault(block, DistanceHistogram()).add(r)
+        slot = counted.setdefault(block, [0, 0])
+        slot[0] += int(r.size)
+        slot[1] += int(eligible.sum())
+        if block != "train":
+            continue
+        idx = np.flatnonzero(eligible)
+        if idx.size > per_window:
+            pick = np.random.default_rng(seed + i).choice(idx, per_window, replace=False)
+            idx = np.sort(pick)
+        pool_x.append(np.asarray(X[idx], dtype=np.float32))
+        pool_rt.append(np.minimum(r[idx], CAP_QUANTILE))
+        pool_delta.append(r[idx] <= CAP_QUANTILE)
+
+    if "train" not in hists:
+        raise ValueError("no train window was supplied; the bin grid comes from the train period")
+
+    top = int(max(hists["train"].percentile(99.9), 3))
+    edges = bin_edges(top, nbins)
+    caps = capacity_grid_from_edges(edges, N_CAPACITIES)
+    truth_blocks = {block: h.mrc(caps) for block, h in hists.items()}
+    p_comp = {block: 1.0 - counted[block][1] / counted[block][0] for block in hists}
+
+    x_all = np.concatenate(pool_x) if pool_x else np.empty((0, len(names)), np.float32)
+    rt_all = np.concatenate(pool_rt) if pool_rt else np.empty(0, np.int64)
+    d_all = np.concatenate(pool_delta) if pool_delta else np.empty(0, bool)
+    del pool_x, pool_rt, pool_delta
+    rt_capped = np.minimum(rt_all, int(edges[-1]))
+    per_request = float(np.mean(assign_bins(rt_capped, edges) + 1)) if rt_capped.size else 0.0
+    max_requests = int(row_budget / max(per_request, 1.0))
+    if rt_capped.size > max_requests > 0:
+        pick = np.random.default_rng(seed).choice(rt_capped.size, max_requests, replace=False)
+        pick.sort()
+        x_all, rt_capped, d_all = x_all[pick], rt_capped[pick], d_all[pick]
+
+    rows = grouped_rows(x_all, rt_capped, d_all, edges, len(names))
+    return WindowPrepared(
+        cluster=cluster, names=list(names), edges=edges, capacities=caps,
+        rows=rows, n_fit_requests=int(rt_capped.size), stop_split=(0.85, 1.0),
+        truth_blocks=truth_blocks, p_compulsory=p_comp, histograms=hists,
+        meta={"n_requests": {b: counted[b][0] for b in counted},
+              "n_eligible": {b: counted[b][1] for b in counted},
+              "grouped_rows": int(rows["n_rows"]), "row_budget": int(row_budget),
+              "pool_requests": int(rt_all.size), "fit_requests": int(rt_capped.size),
+              "per_request_rows": per_request, "edges_last": int(edges[-1]),
+              "b_M_minus_1": int(edges[-2]), "edges_from": "train_period",
+              "stop_split": [0.85, 1.0], "target": "backward_reuse_distance"},
+    )
+
+
+def km_from_hist(hist: DistanceHistogram, edges: np.ndarray, caps: np.ndarray,
+                 p_compulsory: float) -> np.ndarray:
+    """Kaplan-Meier miss curve from a bin histogram, identical to `km_curve`.
+
+    `km_curve` bins the training block's distances, applies the same binning to the
+    capacity grid, and returns `p_comp + (1 - p_comp) * S[bin(C - 1)]`. The bin
+    counts are a property of the histogram, so the same curve is available after
+    the window has been discarded.
+    """
+    hist_counts = hist.bin_counts(edges).astype(np.float64)
+    nb = len(hist_counts)
+    at_risk = np.cumsum(hist_counts[::-1])[::-1]
+    h = np.where(at_risk > 0, hist_counts / np.maximum(at_risk, 1e-12), 0.0)
+    survival = np.cumprod(1.0 - np.clip(h, 0.0, 1.0))
+    bin_c = np.clip(assign_bins(np.asarray(caps, dtype=np.int64) - 1, edges), 0, nb - 1)
+    return p_compulsory + (1.0 - p_compulsory) * survival[bin_c]
+
+
 # ---------------------------------------------------------------- fitting
 
-def fit(prep: Prepared, params: dict | None = None, num_boost_round: int = 400,
-        early_stopping: int = 50) -> HazardModel:
-    """Fit one hazard model on the prepared rows, early-stopping on the last 15 %."""
+def fit(prep: Prepared | WindowPrepared, params: dict | None = None,
+        num_boost_round: int = 400, early_stopping: int = 50) -> HazardModel:
+    """Fit one hazard model on the prepared rows.
+
+    The early-stopping set comes from `prep.stop_split`: the last 15 % of the
+    training block by default, the validation block when the prepared object came
+    from an out-of-time split.
+    """
     if prep.rows is None:
         raise ValueError('prepared rows are missing; call prepare() first')
     model = HazardModel(params=dict(params or DEFAULT_PARAMS), nbins=len(prep.edges) - 1)
     model.fit_grouped(prep.rows, prep.edges, prep.names,
                       num_boost_round=num_boost_round, n_requests=prep.n_fit_requests,
-                      train=0.85, valid=1.0)
+                      train=prep.stop_split[0], valid=prep.stop_split[1])
     return model
 
 
@@ -377,8 +531,8 @@ def provisioning(caps, truth, pred, p_compulsory: float,
 
 def log_mlflow(cluster: str, params: dict, metrics: dict, artifacts: list[Path],
                 meta: dict, *, source: str, params_source: str,
-                timings: dict[str, float]) -> None:
-    """One MLflow run per cluster. Silent failure is not allowed: it raises."""
+                timings: dict[str, float], tag: str | None = None) -> None:
+    """One MLflow run per window (per cluster when the source is a whole trace). Raises on failure."""
     import mlflow
 
     from mrc.config import MLFLOW_URI
@@ -386,7 +540,7 @@ def log_mlflow(cluster: str, params: dict, metrics: dict, artifacts: list[Path],
     Path(MLFLOW_URI.replace("sqlite:///", "")).parent.mkdir(parents=True, exist_ok=True)
     mlflow.set_tracking_uri(MLFLOW_URI)
     mlflow.set_experiment("mrc")
-    with mlflow.start_run(run_name=cluster):
+    with mlflow.start_run(run_name=tag or cluster):
         mlflow.set_tags({"cluster": cluster, "params_source": params_source,
                          "git_sha": _git_sha()})
         mlflow.log_params({k: v for k, v in params.items() if k != "objective"})
@@ -488,14 +642,18 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
 
     start = time.perf_counter()
     TABLE_DIR.mkdir(parents=True, exist_ok=True)
-    out = TABLE_DIR / f"{cluster}_metrics.json"
+    # A windowed source needs its own artefact names: every worker of a sweep writes
+    # into the same directories, and keying on the cluster alone made concurrent
+    # windows of one cluster overwrite each other's metrics, curves and model.
+    tag = cluster if not isinstance(source, StoreShard) else f"{cluster}_w{source.start}_{source.rows}"
+    out = TABLE_DIR / f"{tag}_metrics.json"
     out.write_text(json.dumps(payload, indent=1) + "\n")
-    curve_path = TABLE_DIR / f"{cluster}_curves.npz"
+    curve_path = TABLE_DIR / f"{tag}_curves.npz"
     np.savez_compressed(curve_path, **curves)  # type: ignore[arg-type]
 
     model_dir = ARTIFACTS / "models"
     model_dir.mkdir(parents=True, exist_ok=True)
-    model_path = model_dir / f"{cluster}.txt"
+    model_path = model_dir / f"{tag}.txt"
     if model.booster is None:
         raise RuntimeError('fit produced no booster')
     model.booster.save_model(str(model_path))
@@ -513,5 +671,5 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
         log_mlflow(cluster, dict(params or DEFAULT_PARAMS), metrics, artifacts, prep.meta,
                     source=source_key(source),
                     params_source="tuned" if params is not None else "default",
-                    timings=timings)
+                    timings=timings, tag=tag)
     return payload

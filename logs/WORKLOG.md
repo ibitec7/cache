@@ -24,6 +24,52 @@ hf upload-large-folder ibitec/cache-trace-cluster52-parquet data/publish/cluster
   --type dataset --num-workers 8
 ```
 
+## 2026-11-18T17:05Z · feat · out-of-time split, exact histogram reduction, per-window artefacts
+
+Commit: this entry's commit.
+
+The OOT experiment in HANDOFF §4.1 could not run: `prepare()` takes one label
+dict and `block_masks` splits 70/15/15 inside it, so there was no way to fit on
+one period and score another, and 60/15/25 over cluster52's 13.4B requests is
+8.06B training requests, which no array holds.
+
+What was added, all with exact-first gates (`tests/test_oot.py`, 7 tests, all
+`np.array_equal`, tolerance 0.0):
+
+| Piece | Contract |
+|---|---|
+| `mrc.data.hist.DistanceHistogram` | integer histogram over `R`; `percentile(q)` equals `np.percentile` exactly (measured max abs diff 0.0 over 30 trials), `mrc(caps)` is bit-identical to `mrc_curve`, `bin_counts(edges)` is bit-identical to `bincount(assign_bins(...))` |
+| `pipeline.prepare_windows` | streams `(block, labels, X)` parts, pools a uniform sample of the train period, keeps one histogram per block; with an unbounded pool its rows are bit-identical to `grouped_rows` on the union |
+| `pipeline.km_from_hist` | Kaplan-Meier curve from the training block's histogram, bit-identical to `km_curve` |
+| `pipeline.Prepared.stop_split` | the early-stopping interval is now explicit; the legacy default `(0.85, 1.0)` keeps every committed artefact reproducible, `stop_on_validation` moves it onto the validation block |
+| `run_one` artefact tag | a windowed source writes `<cluster>_w<start>_<rows>_{metrics.json,curves.npz}` and its own model file, so concurrent windows of one cluster no longer overwrite each other |
+| `scripts/oot.py` | 60/15/25 window plan, fit on the pooled train period, score every valid and test window, report per-window MAE with a moving-block bootstrap CI |
+| `scripts/bench_fit.py` | `build` dumps one real window as a fixture (rows + eval + meta); `run` measures a named configuration on it and appends a JSON record |
+
+Design choices worth recording:
+
+1. The bin grid comes from the TRAIN period only, because at deployment time the
+   later periods do not exist. `prepare()` still derives it from the window it
+   is given; `prepare_windows` derives it from the train block.
+2. The test block is never read before the model is frozen: `oot.py` streams
+   train and validation into the fit pass and touches test only for scoring.
+3. The unit of replication is the window. The summary reports median, IQR and a
+   moving-block bootstrap CI over contiguous windows, because neighbouring
+   windows share keys and are not independent samples.
+4. Early stopping inside an OOT run uses the last 15 % of the pooled train
+   sample, which is the latest train windows, not a random draw.
+
+Smoke run on a synthetic 600k-request store with deliberate popularity drift
+(`/home/ibrahim/.hermes/cache/bench/motd/oot_mini.json`): 7 windows, 4 train, 1
+valid, 2 test, 2.0M grouped rows from 186k pooled requests, fit 206 s at 80
+rounds. Per-window test MAE 0.0154 and 0.0206 against KM 0.1013 and 0.1260, so
+the harness separates a good model from the baseline on a trace whose drift
+grows over time. The bootstrap CI is NaN there because two test windows is below
+the three the estimator needs, which is the intended guard.
+
+Not done yet: the sweep driver over windows and clusters, and the results of the
+three benchmark workers (CPU LightGBM configuration, CUDA build, predict path).
+
 ## 2026-11-18T16:22Z · perf/data · read path measured, HF datasets made reader-compatible
 
 Commit: this entry's commit.
