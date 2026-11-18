@@ -645,6 +645,8 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
     # A windowed source needs its own artefact names: every worker of a sweep writes
     # into the same directories, and keying on the cluster alone made concurrent
     # windows of one cluster overwrite each other's metrics, curves and model.
+    # `analysis._WINDOW_TAG` recognises this suffix and keeps windows out of the
+    # reported per-cluster tables.
     tag = cluster if not isinstance(source, StoreShard) else f"{cluster}_w{source.start}_{source.rows}"
     out = TABLE_DIR / f"{tag}_metrics.json"
     out.write_text(json.dumps(payload, indent=1) + "\n")

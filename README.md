@@ -87,6 +87,9 @@ sampling noise of the truth block (`scripts/noise_floor.py`, `report/tables/nois
 src/mrc/{data,models,eval,plots}   library
 tests/                             exact-first gates
 scripts/fetch_traces.sh            bounded, resumable acquisition
+scripts/sweep.py                   one process per store window, resumable
+scripts/oot.py                     60/15/25 out-of-time fit and per-window scoring
+scripts/bench_fit.py               fit/predict benchmark on one real window
 report/ slides/ wiki/ docs/        outputs
 data/ artifacts/                   gitignored payloads
 ```

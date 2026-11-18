@@ -140,7 +140,12 @@ Benchmark:
 3. Run one `mrc train --store ... --no-keep-cache` window and record wall and RSS.
 
 Known current numbers: parquet 0.91 s per 5M window, CSV 4.35 s; labels from both
-are bit-identical.
+are bit-identical. Measured again on 2026-11-18 and NOT reproduced on the two
+single-file clusters: 4.15 s for `data/publish/cluster45` and 4.52 s for
+`cluster26`, 95 % of it in `_key_codes`, and a window's read is 4 % of its 110 s
+total. Read the 16:22Z and 17:05Z worklog entries before spending a day here: the
+fit and the prediction pass are 80 %, so this phase buys less than it costs unless
+the sweep is IO-saturated across 50 workers.
 
 Candidate changes, in order:
 
@@ -176,8 +181,7 @@ cross-cluster confound.
 2. Use the first 60% of requests for training, the next 15% for validation, the
    last 25% for test. Split on request index, never randomly.
 3. Fit one model on a sample of the train period (20 to 30 windows of 5M requests
-   is enough to bound compute). Use the validation period for early stopping and
-   Optuna.
+   is enough to bound compute). Use the validation period for Optuna.
 4. Freeze the model and the capacity grid, then predict every test window.
 5. Report the distribution of per-window MAE, not one pooled number.
 
@@ -185,6 +189,18 @@ Why: this isolates temporal drift from distribution shift. It answers "will the
 model still work later in the week on the same cache?"
 
 Leakage rule: no test window may contribute rows, labels or grid edges to the fit.
+
+Implemented (2026-11-18): `scripts/oot.py` runs exactly steps 1 to 5 on a store,
+and `tests/test_oot.py` holds the exact-first gates for the reduction it uses
+(`prepare_windows`, `DistanceHistogram`, `km_from_hist`). Two places where the
+code is deliberately stricter than the text above:
+
+- Early stopping uses the last 15 % of the pooled train sample, not the
+  validation period, so the validation period is used only by Optuna and never by
+  the fit.
+- Each window is reduced to an integer histogram of `R` as it is read, so the bin
+  grid, the block curves and the KM baseline come from every request in the block
+  without ever holding the block.
 
 ### 4.2 Leave-one-cluster-out (LOCO): secondary
 

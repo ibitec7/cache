@@ -8,6 +8,7 @@ error, and it is the quantity the provisioning table reports.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,11 @@ import numpy as np
 from mrc.config import ARTIFACTS
 
 TABLE_DIR = ARTIFACTS / "tables"
+
+# Single-file runs report `cluster45`; a windowed run reports `cluster45_w0_5000000`.
+# The suffix is what tells them apart, so it is defined once, here, for the readers
+# that must not mix the two (`pipeline.run_one` builds it, this filters it out).
+_WINDOW_TAG = re.compile(r"_w\d+_\d+$")
 
 # Report column order. Traces are added to the tables as their artifacts appear, so
 # a new trace needs no edit in any script; this order only fixes the columns.
@@ -25,10 +31,13 @@ def reported_clusters(table_dir: Path = TABLE_DIR) -> tuple[str, ...]:
     """Clusters with a metrics artifact, in report order.
 
     `sample45` is excluded by the name filter: it is the small validation sample, not
-    a reported trace.
+    a reported trace. Window artefacts (`cluster45_w0_5000000_metrics.json`, written
+    by `mrc train --store` and `scripts/sweep.py`) are excluded for the same reason:
+    they are per-window runs of a trace, not the trace's reported row.
     """
     have = {p.name.removesuffix("_metrics.json")
             for p in table_dir.glob("cluster*_metrics.json")}
+    have = {name for name in have if not _WINDOW_TAG.search(name)}
     ordered = tuple(c for c in REPORT_ORDER if c in have)
     return ordered + tuple(sorted(have - set(ordered)))
 

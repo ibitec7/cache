@@ -137,6 +137,11 @@ class FitPredict(Protocol):
     same rows, the same target and the same parameters. `names` names the columns
     of `X` in order; the group list is deliberately not passed, so an
     implementation cannot change the feature axis it is handed.
+
+    Only defined for a single-window `Prepared`, whose requests are one contiguous
+    array. An out-of-time object (`pipeline.WindowPrepared`) has no request-index
+    split to replicate, so this protocol does not describe it: an ablation on an
+    OOT fit would silently apply 70/15/15 and report the wrong validation block.
     """
 
     def __call__(
