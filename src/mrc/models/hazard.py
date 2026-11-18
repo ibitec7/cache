@@ -175,16 +175,29 @@ class HazardModel:
         n, K = X.shape[0], len(steps)
         if self.booster is None:
             raise RuntimeError("predict_survival needs a fitted model")
-        step = np.asarray(steps, dtype=np.int64)
+        step = np.asarray(steps, dtype=np.float32)
+        d = X.shape[1]
         out = np.empty((n, K), dtype=np.float64)
         per = max(1, int(max_grid_rows) // max(K, 1))
         for start in range(0, n, per):
             block = X[start:start + per]
-            grid = np.column_stack([np.repeat(block, K, axis=0), np.tile(step, block.shape[0])])
-            pred = np.asarray(self.booster.predict(grid.astype(np.float32)), dtype=np.float64)
-            h = pred.reshape(-1, K)
-            out[start:start + block.shape[0]] = np.cumprod(
-                1.0 - np.clip(h, 1e-9, 1 - 1e-9), axis=1)
+            m = block.shape[0]
+            # One float32 allocation. `column_stack` of a float32 block and an int64
+            # step column promotes the whole block to float64 before the
+            # `.astype(float32)` copies it back, which is a 96 MB round trip per
+            # 2M-row chunk for values that were float32 to begin with. The widened
+            # float64 values are exact, so the float32 grid is the same bytes.
+            grid = np.empty((m * K, d + 1), dtype=np.float32)
+            grid[:, :d].reshape(m, K, d)[:] = block[:, None, :]
+            grid[:, d].reshape(m, K)[:] = step
+            h = np.asarray(self.booster.predict(grid), dtype=np.float64).reshape(m, K)
+            # In place: the clip, the complement and the prefix scan are each
+            # elementwise (or a running product along the axis), so writing into
+            # the same buffer gives the same values and drops three temporaries.
+            np.clip(h, 1e-9, 1 - 1e-9, out=h)
+            np.subtract(1.0, h, out=h)
+            np.cumprod(h, axis=1, out=h)
+            out[start:start + m] = h
         return out
 
     def predict_mrc(self, X, capacities, edges, p_compulsory=0.0):

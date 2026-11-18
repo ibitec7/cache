@@ -30,7 +30,6 @@ from mrc.data.store import StoreShard
 from mrc.eval.metrics import curve_metrics
 from mrc.features import build_features
 from mrc.gt.stackdist import capacity_grid_from_edges, mrc_from_labels
-from mrc.models.hazard import assign_bins
 from mrc.pipeline import DEFAULT_PARAMS, cluster_edges, prepare
 
 
@@ -101,8 +100,13 @@ def _fit(rows: dict, names: list[str], params: dict, rounds: int, threads: int,
     y = np.asarray(rows["y"], dtype=np.float32)
     w = np.asarray(rows["w"], dtype=np.float32)
     orig = rows["eligible_index"][rows["request_index"]]
-    tr = orig < int(n_requests * train)
-    va = (orig >= int(n_requests * train)) & (orig < int(n_requests * valid))
+    # The split must be taken over the requests the fixture actually holds. `meta`
+    # reports the window's request count, and when the row budget binds before the
+    # window ends the rows stop early, so a meta-sized split would put every row in
+    # train and leave the validation block empty (early stopping never fires).
+    n_present = int(rows["request_index"].max()) + 1
+    tr = orig < int(n_present * train)
+    va = (orig >= int(n_present * train)) & (orig < int(n_present * valid))
     dtrain = lgb.Dataset(X[tr], label=y[tr], weight=w[tr], feature_name=full)
     dvalid = lgb.Dataset(X[va], label=y[va], weight=w[va], reference=dtrain)
     del X, y, w
@@ -117,25 +121,14 @@ def _fit(rows: dict, names: list[str], params: dict, rounds: int, threads: int,
 
 def _predict(booster: lgb.Booster, X_eval: np.ndarray, caps: np.ndarray,
              edges: np.ndarray, p_comp: float, threads: int) -> tuple[np.ndarray, float]:
+    """Time the shipped prediction path, not a copy of it."""
+    from mrc.models.hazard import HazardModel
+
+    model = HazardModel(params={}, edges=np.asarray(edges), booster=booster)
     started = time.perf_counter()
-    limit = int(edges[-2])
-    if int(caps.max()) >= limit:
-        raise ValueError(f"capacity {int(caps.max())} at or above limit {limit}")
-    kmax = int(min(len(edges) - 2, assign_bins(np.array([int(caps.max())]), edges)[0])) + 1
-    steps = np.arange(kmax + 1)
-    X = np.asarray(X_eval, dtype=np.float32)
-    n, K = X.shape[0], steps.size
-    S = np.empty((n, K), dtype=np.float64)
-    per = max(1, 2_000_000 // K)
-    for start in range(0, n, per):
-        block = X[start:start + per]
-        grid = np.empty((block.shape[0] * K, X.shape[1] + 1), dtype=np.float32)
-        grid[:, :-1] = np.repeat(block, K, axis=0)
-        grid[:, -1] = np.tile(steps, block.shape[0])
-        h = np.asarray(booster.predict(grid, num_threads=threads)).reshape(-1, K)
-        S[start:start + block.shape[0]] = np.cumprod(1.0 - np.clip(h, 1e-9, 1 - 1e-9), axis=1)
-    bins_c = np.clip(assign_bins(np.asarray(caps, dtype=np.int64) - 1, edges), 0, kmax)
-    return p_comp + (1.0 - p_comp) * S[:, bins_c].mean(axis=0), time.perf_counter() - started
+    pred = model.predict_mrc(np.asarray(X_eval, dtype=np.float32), np.asarray(caps),
+                             np.asarray(edges), p_compulsory=p_comp)
+    return pred, time.perf_counter() - started
 
 
 def cmd_run(args: argparse.Namespace) -> None:

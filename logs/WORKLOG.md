@@ -1,3 +1,82 @@
+## 2026-11-19T01:20Z · perf · what the fit and the prediction pass actually cost
+
+Commit: this entry's commit. Box idle (load 0.4) for every number below; fixture
+`~/.hermes/cache/bench/fx45` (444,781 eval requests, 33 steps, 383 trees, 8.37M
+train rows / 1.63M valid).
+
+| Change | Result |
+|---|---|
+| `predict_survival`: one float32 grid allocation instead of `column_stack` of a float32 block with an int64 step column (which upcasts the block to float64 and copies it back), and clip / complement / prefix scan in place | curves **bit-identical** (`array_equal`, `mrc_max_abs_diff` 0.0), **24.99 -> 23.73 s, 1.045x** |
+| prediction threads 8 -> 4 -> 12 | 23.73 / 25.25 / 24.74 s: flat. Prediction is not thread-limited, so thread count only matters for the fit |
+| keeping fewer trees | 383 -> 23.73 s, MAE 2.6425e-4; 300 -> 22.18 s, 2.7907e-4; 200 -> 12.08 s, 3.4073e-4; 150 -> 7.87 s, 6.5124e-4 |
+
+Two conclusions, both negative and both worth having:
+
+1. Numpy housekeeping was never the bottleneck. Prediction is 444,781 x 33 =
+   14.7M grid rows through 383 trees, about 60 ms per tree; the three temporaries
+   cost 4.5 %.
+2. The only real lever on prediction is the number of trees, and it is linear with
+   a proportional accuracy cost. 200 trees halves prediction and adds 29 % to the
+   test MAE, so the rounds/accuracy trade belongs to the report, not to a silent
+   code change.
+
+Also fixed, both found by the benchmark workers:
+
+- `scripts/bench_fit.py` split on `meta["n_requests"]`, the window's request count,
+  while the fixture's rows only span the requests the row budget reached. With a
+  window-sized split every row lands in train and the validation block is empty, so
+  early stopping never fires. The split now uses the requests the fixture holds.
+- `scripts/bench_fit.py::_predict` was a line-for-line copy of the shipped predict
+  path, so timing it measured the copy. It now calls `HazardModel.predict_mrc`.
+
+Gates added: `tests/test_predict.py` keeps the pre-optimisation body as the
+reference and asserts the grid is the same bytes plus `array_equal` curves at three
+chunk sizes (`max_grid_rows` 8, 64, 2M) so the chunk boundary is exercised.
+
+### Fit and predict, 12 configurations on the same fixture
+
+One fit plus one prediction over the whole eval set, minimum of two reps per
+configuration, same 8.37M train rows / 1.63M valid rows / 444,781 eval requests.
+`total` is what one window costs end to end.
+
+| config | fit s | predict s | total s | trees | valid logloss | test MAE |
+|---|---|---|---|---|---|---|
+| ref lr .05 / 400 / leaves 63, t8 | 59.2 | 22.7 | 82.0 | 383 | 0.01858380 | 2.64248e-4 |
+| auto executor, t8 | 56.4 | 23.6 | 80.1 | 383 | 0.01858380 | 2.64248e-4 |
+| col-wise, t8 | 69.9 | 23.7 | 93.5 | 383 | 0.01858380 | 2.64248e-4 |
+| row-wise, t4 | 69.8 | 22.7 | 92.5 | 383 | 0.01858380 | 2.64248e-4 |
+| row-wise, t12 | 58.5 | 23.6 | 82.2 | 383 | 0.01858380 | 2.64248e-4 |
+| max_bin 63 | 52.7 | 21.1 | 73.8 | 382 | 0.02649911 | 2.77883e-4 |
+| leaves 31, lr .05 / 400 | 57.1 | 24.1 | 81.1 | 397 | 0.01886513 | 2.39508e-4 |
+| leaves 127, lr .05 / 400 | 43.5 | 13.2 | 56.8 | 230 | 0.01858929 | 3.01393e-4 |
+| lr .1 / 200, leaves 63 | 28.2 | 8.6 | 36.8 | 183 | 0.01859993 | 2.61008e-4 |
+| **lr .1 / 200, leaves 31** | **29.1** | **9.5** | **38.6** | 198 | 0.01891253 | **2.36595e-4** |
+| lr .1 / 400, leaves 31 | 45.4 | 15.3 | 60.6 | 314 | 0.01869071 | 2.57930e-4 |
+| lr .1 / 200, leaves 63, max_bin 127 | 28.7 | 8.7 | 37.4 | 188 | 0.02167857 | 2.77847e-4 |
+
+What this says:
+
+1. The executor axis is free: col-wise is 18 % slower, auto is within noise of
+   forced row-wise, and the metrics are identical to the last digit. Nothing to
+   win, nothing to lose.
+2. Threads: 4 is 24 % slower, 12 is no better than 8. Eight threads on this box.
+3. `max_bin` down is a pure loss (logloss 0.0265 and MAE +5 %).
+4. Shallow trees are the accuracy surprise: leaves 31 at lr .05 gives MAE
+   2.39508e-4 against 2.64248e-4 for leaves 63 at the same wall time.
+5. lr .1 / 200 rounds halves the cost and does not cost accuracy: 36.8 s against
+   82.0 s, MAE 1.2 % lower.
+6. Combined (lr .1, 200 rounds, leaves 31): 38.6 s against 82.0 s, 2.12x, MAE 10.5 %
+   lower. `best_iteration` is 198 of 200, so it is still improving at the cap, and
+   400 rounds makes it worse (MAE 2.57930e-4): the cap is close to optimal here.
+
+Caveat, and it matters: this is one fixture, one window of cluster45, one seed.
+The per-window MAE of a single frozen model in the synthetic smoke run ranged from
+0.0154 to 0.0206 across two test windows, so a 10 % MAE difference on one window is
+not yet evidence. The fit speed (2x, CPU-time as well as wall) is robust; the
+accuracy ranking needs the multi-window sweep on at least two traces before the
+defaults change. `DEFAULT_PARAMS` is therefore untouched: the candidate is measured
+and recorded, not shipped.
+
 ## 2026-11-18T16:35Z · data · cluster52 parquet build complete: 92 shards, 13,426,570,607 rows
 
 Commit: this entry's commit.
