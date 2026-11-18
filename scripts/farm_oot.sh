@@ -11,12 +11,15 @@ ROUNDS="${ROUNDS:-200}"
 MAXWIN="${MAXWIN:-20}"
 SCORERS="${SCORERS:-24}"
 
+# One sqlite file per cluster: three concurrent Optuna writers on the same file
+# fail on commit, which is how the first launch of this script died.
 echo "[$(date -u +%H:%M:%SZ)] phase 1: fits + studies, $CLUSTERS"
 pids=()
 for c in $CLUSTERS; do
   env -u PYTHONPATH uv run python scripts/oot_parallel.py fit --cluster "$c" \
     --store "$c:data/publish/$c" --max-windows "$MAXWIN" --rounds "$ROUNDS" \
     --trials "$TRIALS" --score-sample 200000 --row-budget 20000000 \
+    --study-storage "sqlite:///$HOME/cache/artifacts/study_$c.db" \
     --out "artifacts/oot/$c" > "logs/fit_$c.log" 2>&1 &
   pids+=($!)
 done
