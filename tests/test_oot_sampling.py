@@ -148,6 +148,33 @@ def test_windows_objective_runs_and_keeps_exact_truth() -> None:
     assert attrs["n_requests_scored"] == [2_000, 2_000]
 
 
+def test_booster_roundtrip_is_bit_identical(tmp_path) -> None:
+    """The parallel driver ships a booster file, not a live model: reloading must not move a number."""
+    import lightgbm as lgb
+
+    from mrc.models.hazard import HazardModel
+    from mrc.pipeline import fit, prepare_windows
+
+    rng = np.random.default_rng(11)
+    names = ["f0", "f1"]
+    prep = prepare_windows("toy", iter(_toy_parts(rng, names, 4_000)), names, nbins=8,
+                           row_budget=60_000, n_train_windows=2)
+    model = fit(prep, {"objective": "binary", "num_leaves": 7, "verbose": -1,
+                       "seed": 3, "deterministic": True, "num_threads": 2},
+                num_boost_round=25)
+    path = tmp_path / "b.txt"
+    assert model.booster is not None
+    model.booster.save_model(str(path))
+    reloaded = HazardModel(params=model.params, nbins=model.nbins,
+                           booster=lgb.Booster(model_file=str(path)),
+                           edges=model.edges, feature_names=model.feature_names)
+    x = np.asarray(prep.rows["X"])[:500]
+    caps = np.asarray(prep.capacities)
+    a = model.predict_mrc_rows(x, caps, prep.edges, p_compulsory=0.2)
+    b = reloaded.predict_mrc_rows(x, caps, prep.edges, p_compulsory=0.2)
+    assert np.array_equal(a, b)
+
+
 def test_given_edges_are_used_verbatim() -> None:
     """A screening run can pin the full pass's grid instead of re-deriving a coarser one."""
     from mrc.pipeline import prepare_windows

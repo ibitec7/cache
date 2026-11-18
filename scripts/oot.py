@@ -127,6 +127,93 @@ def summarise(records: list[dict], block: str) -> dict:
     }
 
 
+def score_window(model, prep, train_km: np.ndarray, store: str | Path,
+                 block: str, start: int, stop: int, score_sample: int) -> dict:
+    """One non-train window: exact truth, sampled prediction, both baselines.
+
+    The same function serves the sequential run and the parallel fan-out, so a
+    worker cannot drift from the single-process arithmetic.
+    """
+    t0 = time.perf_counter()
+    labels, x, _ = load_window(store, start, stop)
+    r = np.asarray(labels["R"], dtype=np.int64)
+    eligible = np.asarray(labels["eligible"], dtype=bool)
+    # Both sides stay honest under sampling: `p_comp` and the truth curve come
+    # from the whole window, only the predicted curve is averaged over a sample.
+    p_comp = 1.0 - float(eligible.mean())
+    truth = mrc_curve(r, prep.capacities)
+    idx = np.flatnonzero(eligible)
+    if score_sample and idx.size > score_sample:
+        pick = np.random.default_rng(SEED + int(start) % 1_000_003).choice(
+            idx, score_sample, replace=False)
+        idx = np.sort(pick)
+    pred_rows = model.predict_mrc_rows(x[idx], prep.capacities, prep.edges,
+                                       p_compulsory=p_comp)
+    metrics: dict[str, object] = dict(curve_metrics(pred_rows.mean(axis=0), truth,
+                                                    prep.capacities))
+    if idx.size < int(eligible.sum()):
+        metrics["mae_ci95_block_bootstrap"] = list(curve_metrics_ci(
+            pred_rows, truth, prep.capacities, seed=SEED))
+        metrics["n_scored"] = int(idx.size)
+        metrics["n_eligible"] = int(eligible.sum())
+    return {
+        "block": block, "start": int(start), "stop": int(stop),
+        "requests": int(r.size), "p_compulsory": p_comp,
+        "gbdt": metrics,
+        "km": curve_metrics(train_km, truth, prep.capacities),
+        "seconds": round(time.perf_counter() - t0, 1),
+        "bins_used": int(assign_bins(np.asarray(prep.capacities) - 1, prep.edges).max()),
+    }
+
+
+def fit_from_windows(store: str | Path, cluster: str, windows: list[tuple[str, int, int]],
+                     params: dict, *, row_budget: int, rounds: int, trials: int,
+                     score_sample: int, study_storage: str | None,
+                     edges: np.ndarray | None):
+    """Fit one model on the train block, optionally tuning on the validation block.
+
+    The test block is deliberately absent: nothing about it may reach the fit or
+    the early-stopping set, so it is only read after the model is frozen.
+    """
+    plan = [w for w in windows if w[0] in ("train", "valid")]
+    train_plan = [w for w in plan if w[0] == "train"]
+    if not train_plan:
+        raise SystemExit("no training window in the plan; shorten --window or check --split")
+    # The feature names come from the first window, so it is read once and then
+    # replayed through the generator instead of being read twice.
+    head_block, head_start, head_stop = train_plan[0]
+    head_labels, head_x, names = load_window(store, head_start, head_stop)
+    print(f"  train window [{head_start:,}, {head_stop:,}) (features known)", flush=True)
+
+    def fit_parts():
+        yield head_block, head_labels, head_x
+        for block, start, stop in plan[1:]:
+            labels, x, _ = load_window(store, start, stop)
+            print(f"  {block} window [{start:,}, {stop:,})", flush=True)
+            yield block, labels, x
+
+    prep = prepare_windows(cluster, fit_parts(), names, nbins=N_BINS,
+                           row_budget=row_budget, n_train_windows=len(train_plan),
+                           keep_scored="valid" if trials else None,
+                           scored_per_window=score_sample or 200_000,
+                           edges=edges)
+    print(f"fit rows {prep.rows['n_rows']:,} from {prep.n_fit_requests:,} pooled requests, "
+          f"edges top {int(prep.edges[-1]):,}, {len(prep.scored)} scored valid windows")
+
+    if trials:
+        study = run_windows_study(prep, trials, cluster=cluster, num_boost_round=rounds,
+                                  score_sample=score_sample, storage=study_storage)
+        params.update(study.best_params)
+        print(f"study mrc-oot-{cluster}: {len(study.trials)} trials, "
+              f"best valid mae {study.best_value:.6f}, params "
+              f"{json.dumps(study.best_params, sort_keys=True)}", flush=True)
+
+    model = fit(prep, params, num_boost_round=rounds)
+    train_km = km_from_hist(prep.histograms["train"], prep.edges, prep.capacities,
+                            prep.p_compulsory["train"])
+    return model, prep, train_km, params
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -172,95 +259,28 @@ def main() -> None:
     print(f"{len(windows)} windows over {store.n_rows:,} requests, {n_train} for training, "
           f"stride {args.window_stride}, score sample {args.score_sample or 'all'}")
 
-    names: list[str] = []
-    plan = [w for w in windows if w[0] in ("train", "valid")]
-    train_plan = [w for w in plan if w[0] == "train"]
-    if not train_plan:
-        raise SystemExit("no training window in the plan; shorten --window or check --split")
-    # The feature names come from the first window, so it is read once and then
-    # replayed through the generator instead of being read twice.
-    head_block, head_start, head_stop = train_plan[0]
-    head_labels, head_x, names = load_window(args.store, head_start, head_stop)
-    print(f"  train window [{head_start:,}, {head_stop:,}) (features known)", flush=True)
-
-    def fit_parts():
-        """Train windows (pooled into the fit rows) and validation windows (curve only).
-
-        The test block is deliberately absent: nothing about it may reach the fit or
-        the early-stopping set, so it is only read after the model is frozen.
-        """
-        yield head_block, head_labels, head_x
-        for block, start, stop in plan[1:]:
-            labels, x, _ = load_window(args.store, start, stop)
-            print(f"  {block} window [{start:,}, {stop:,})", flush=True)
-            yield block, labels, x
-
     grid = None
     if args.edges_from:
         src = json.loads(Path(args.edges_from).read_text())
         grid = np.asarray(src["edges"] if "edges" in src else src["meta"]["edges"],
                           dtype=np.int64)
-    prep = prepare_windows(args.cluster, fit_parts(), names, nbins=N_BINS,
-                           row_budget=args.row_budget, n_train_windows=len(train_plan),
-                           keep_scored="valid" if args.trials else None,
-                           scored_per_window=args.score_sample or 200_000,
-                           edges=grid)
-    print(f"fit rows {prep.rows['n_rows']:,} from {prep.n_fit_requests:,} pooled requests, "
-          f"edges top {int(prep.edges[-1]):,}, {len(prep.scored)} scored valid windows")
-
-    if args.trials:
-        study = run_windows_study(prep, args.trials, cluster=args.cluster,
-                                  num_boost_round=args.rounds,
-                                  score_sample=args.score_sample,
-                                  storage=args.study_storage)
-        params.update(study.best_params)
-        print(f"study mrc-oot-{args.cluster}: {len(study.trials)} trials, "
-              f"best valid mae {study.best_value:.6f}, params "
-              f"{json.dumps(study.best_params, sort_keys=True)}", flush=True)
-
-    model = fit(prep, params, num_boost_round=args.rounds)
+    model, prep, train_km, params = fit_from_windows(
+        args.store, args.cluster, windows, params, row_budget=args.row_budget,
+        rounds=args.rounds, trials=args.trials, score_sample=args.score_sample,
+        study_storage=args.study_storage, edges=grid)
     if args.save_booster and model.booster is not None:
         model.booster.save_model(args.save_booster)
     fit_seconds = time.perf_counter() - started
-    train_km = km_from_hist(prep.histograms["train"], prep.edges, prep.capacities,
-                            prep.p_compulsory["train"])
 
     per_window: list[dict] = []
     for block, start, stop in windows:
         if block == "train":
             continue
-        t0 = time.perf_counter()
-        labels, x, _ = load_window(args.store, start, stop)
-        r = np.asarray(labels["R"], dtype=np.int64)
-        eligible = np.asarray(labels["eligible"], dtype=bool)
-        # Both sides stay honest under sampling: `p_comp` and the truth curve come
-        # from the whole window, only the predicted curve is averaged over a sample.
-        p_comp = 1.0 - float(eligible.mean())
-        truth = mrc_curve(r, prep.capacities)
-        idx = np.flatnonzero(eligible)
-        if args.score_sample and idx.size > args.score_sample:
-            pick = np.random.default_rng(SEED + int(start) % 1_000_003).choice(
-                idx, args.score_sample, replace=False)
-            idx = np.sort(pick)
-        pred_rows = model.predict_mrc_rows(x[idx], prep.capacities, prep.edges,
-                                           p_compulsory=p_comp)
-        metrics: dict[str, object] = dict(curve_metrics(pred_rows.mean(axis=0), truth,
-                                                        prep.capacities))
-        if idx.size < int(eligible.sum()):
-            metrics["mae_ci95_block_bootstrap"] = list(curve_metrics_ci(
-                pred_rows, truth, prep.capacities, seed=SEED))
-            metrics["n_scored"] = int(idx.size)
-            metrics["n_eligible"] = int(eligible.sum())
-        per_window.append({
-            "block": block, "start": int(start), "stop": int(stop),
-            "requests": int(r.size), "p_compulsory": p_comp,
-            "gbdt": metrics,
-            "km": curve_metrics(train_km, truth, prep.capacities),
-            "seconds": round(time.perf_counter() - t0, 1),
-            "bins_used": int(assign_bins(np.asarray(prep.capacities) - 1, prep.edges).max()),
-        })
-        print(f"  {block} window [{start:,}, {stop:,}) mae {per_window[-1]['gbdt']['mae']:.6f} "
-              f"km {per_window[-1]['km']['mae']:.6f}", flush=True)
+        rec = score_window(model, prep, train_km, args.store, block, start, stop,
+                           args.score_sample)
+        per_window.append(rec)
+        print(f"  {block} window [{start:,}, {stop:,}) mae {rec['gbdt']['mae']:.6f} "
+              f"km {rec['km']['mae']:.6f}", flush=True)
 
     summary = {block: summarise([w for w in per_window if w["block"] == block], block)
                for block in ("valid", "test")}
