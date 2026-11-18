@@ -25,7 +25,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from mrc.config import NUM_THREADS, REPO
+from mrc.config import REPO
 from mrc.data.store import Store
 
 
