@@ -100,7 +100,7 @@ on 52 workers.
 The source data ships as CSV.zst. PyArrow streams it and stops at the 5M prefix
 (4.35 s per window). For the full 13.4B-request shard, `mrc.data.store` converts
 the trace to zstd parquet shards and reads a window by row group (0.91 s per 5M
-window). The full shard is about 107 GB in 1 GB shards.
+window). The full shard is 92 shards, 98.3 GB, 13,426,570,607 rows.
 
 Labels and features stay npz. They are dense numeric arrays of 98 MB and 67 MB at
 5M rows and load in under a second. Parquet would add row-group overhead with no

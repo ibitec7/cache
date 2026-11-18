@@ -250,6 +250,7 @@ sequence of independent 5M-request runs with flat memory.
 | Window run, 20M-row budget | 204.2 s, 5.65 GB peak, 4 threads |
 | Window run, 10M-row budget | 123.8 s, 3.24 GB peak, test MAE 0.00020 |
 | Projected full shard | 112 GB on disk, 2,685 windows, about 3.8 h to write |
+| Built cluster52 shard (DuckDB) | 92 parts, 98.3 GB, 13,426,570,607 rows, 5,001,000-row groups |
 
 The table above describes a store written by `write_store`, which chooses the part
 and row-group sizes. The published single-file clusters and the DuckDB-converted

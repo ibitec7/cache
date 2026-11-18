@@ -1,3 +1,29 @@
+## 2026-11-18T16:35Z · data · cluster52 parquet build complete: 92 shards, 13,426,570,607 rows
+
+Commit: this entry's commit.
+
+The single-thread DuckDB build finished in 2 h 02 min. It wrote 92 zstd parquet
+shards under `data/parquet/cluster52` at 1 GB target, 98,338,458,065 bytes total.
+`PER_THREAD_OUTPUT` with one thread preserves request order; with two threads the
+shards interleave, which is why the build stayed single-threaded.
+
+Verified:
+
+- 92 parts, 13,426,570,607 rows, matching the published count;
+- first and last timestamps monotone across parts, last timestamp 554,161 s;
+- the first 5M rows read through `Store` are bit-identical to the CSV on
+  timestamps, decoded keys, sizes, client, op and TTL;
+- `manifest.json` rebuilt with exact per-part row-group sizes, because DuckDB
+  groups are 5,001,xxx rows and the last group of a part is short.
+
+The Hugging Face repo `ibitec/cache-trace-cluster52-parquet` holds 48 of the 92
+parts and no manifest. Resuming the upload adds the rest:
+
+```bash
+hf upload-large-folder ibitec/cache-trace-cluster52-parquet data/publish/cluster52 \
+  --type dataset --num-workers 8
+```
+
 ## 2026-11-18T16:22Z · perf/data · read path measured, HF datasets made reader-compatible
 
 Commit: this entry's commit.

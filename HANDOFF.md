@@ -33,9 +33,9 @@ add.
 | `ibitec/cache-trace-cluster10-parquet` | uploaded, 139,150,615 rows, 959 MB, with `manifest.json` |
 | `ibitec/cache-trace-cluster26-parquet` | uploaded, 156,594,627 rows, 1.27 GB, with `manifest.json` |
 | `ibitec/cache-trace-cluster45-parquet` | uploaded, 227,773,739 rows, 1.75 GB, with `manifest.json` |
-| `data/parquet/cluster52/` | converting: 89 shards, 89 GiB at 2026-11-18T16:30Z, target about 107 GB |
-| `ibitec/cache-trace-cluster52-parquet` | partial and stalled at 48 shards, 46.9 GiB, no `manifest.json`; do not read from it |
-| `data/publish/cluster52/` | does not exist yet; the manifest is built after the conversion exits |
+| `data/parquet/cluster52/` | built: 92 shards, 98.3 GB, 13,426,570,607 rows |
+| `ibitec/cache-trace-cluster52-parquet` | partial: 48 shards uploaded, no `manifest.json`; resume the upload |
+| `data/publish/cluster52/` | built: `manifest.json` with exact row-group offsets, `README.md`, hard links |
 
 `mrc train --store` needs `manifest.json` beside the parts. The three
 single-file clusters now carry one; before 2026-11-18T16:10Z only cluster10 did,
@@ -43,16 +43,10 @@ so a fresh `hf download` of cluster26 or cluster45 could not be read. The
 manifest records exact per-part row-group sizes, because the converted parts do
 not all have 5M-row groups (cluster26 has one of 1,458 rows).
 
-At the time of writing the cluster52 conversion is still running:
-
-```bash
-du -sh data/parquet/cluster52
-ls data/parquet/cluster52 | wc -l
-pgrep -af convert_shards
-```
-
-Do not upload a partial directory. Wait for the process to exit, then build the
-manifest:
+The cluster52 build is complete and verified: 92 parts, 13,426,570,607 rows,
+monotone timestamps, and the first 5M rows are bit-identical to the CSV on every
+column. The last timestamp is 554,161 s. The manifest was rebuilt after the build
+with exact per-part row-group sizes:
 
 ```bash
 cd /home/ibrahim/uni/cache
@@ -82,12 +76,9 @@ print("parts", len(files), "rows", rows)
 PY
 ```
 
-If `data_0.parquet` has no footer, regenerate the first shard with DuckDB and the
-same `FILE_SIZE_BYTES`, or rerun the conversion. The manifest builder fails loudly
-if a part is unreadable.
-
-Upload with 8 workers. Measured throughput is about 18 MB/s, so 107 GB is about
-1.7 hours.
+Upload with 8 workers. Measured throughput is about 18 MB/s, so 98 GB is about
+1.5 hours. The Hub repo already holds the first 48 parts; rerunning the upload adds
+the remaining parts and the manifest. The first 48 are final and need no rewrite.
 
 ```bash
 hf repos create ibitec/cache-trace-cluster52-parquet --type dataset --public
@@ -276,4 +267,3 @@ request's own distance and is an oracle, not a model.
 - No trained-on-3-tested-on-1 result exists yet.
 - The full cluster52 sweep is within-trace robustness, not cross-cluster.
 - Optuna studies exist only for cluster45 and cluster10.
-- The first cluster52 shard needs a footer check before upload.
