@@ -247,13 +247,15 @@ sequence of independent 5M-request runs with flat memory.
 | Size | 42.0 MB per 5M-request part, 8.4 bytes per request |
 | Write | 6.1 s for 5M requests; 20.1 s for 20M requests, 4.1 GiB peak RSS |
 | Read | 0.91 s for a 5M-request window; 0.14 s for 1M requests |
+| Window run, 20M-row budget | 204.2 s, 5.65 GB peak, 4 threads |
+| Window run, 10M-row budget | 123.8 s, 3.24 GB peak, test MAE 0.00020 |
 | Projected full shard | 112 GB on disk, 2,685 windows, about 3.8 h to write |
 
 The store is additive to the frozen npz schema in section 5: labels, features and
 truth stay npz, and only the raw trace gains a second reader. `mrc store F --out D`
 writes a store; `mrc train NAME --store D --start N --window M` runs one window
-from it, and `--no-keep-cache` drops that window's label, feature and truth arrays
-after the metrics are written.
+from it, and `--no-keep-cache` computes the label, feature and truth arrays in
+memory and writes none of them.
 
 A window has its own key vocabulary, so key codes are block-local. Every quantity
 the pipeline consumes is a function of key equality inside the window, so the

@@ -99,7 +99,7 @@ def source_key(source: Source) -> str:
 
 
 def ensure_labels(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
-                  cap: int = CAP_QUANTILE) -> dict:
+                  cap: int = CAP_QUANTILE, save: bool = True) -> dict:
     """Load the label cache, or build and save it. Returns the label dict.
 
     A `StoreShard` is read as a request window and labelled on its own, so the
@@ -112,11 +112,13 @@ def ensure_labels(cluster: str, source: Source, limit: int | None = LABEL_REQUES
         return load_labels(out)
     labels = (labels_from_trace(source.read(), cap=cap) if isinstance(source, StoreShard)
               else build_labels(source, limit=limit, cap=cap))
-    save_labels(out, labels, source=key, limit=limit, cap=cap)
+    if save:
+        save_labels(out, labels, source=key, limit=limit, cap=cap)
     return labels
 
 
-def ensure_features(cluster: str, labels: dict) -> tuple[np.ndarray, list[str], list[int]]:
+def ensure_features(cluster: str, labels: dict,
+                    save: bool = True) -> tuple[np.ndarray, list[str], list[int]]:
     """Load the design matrix cache, or build it. The labels are the input contract."""
     out = features_path(cluster)
     man = out.with_name(out.stem + ".manifest.json")
@@ -124,17 +126,19 @@ def ensure_features(cluster: str, labels: dict) -> tuple[np.ndarray, list[str], 
         with np.load(out, allow_pickle=False) as z:
             return z["X"], list(z["names"]), z["cat_idx"].tolist()
     X, names, cat_idx = build_features(labels)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out, X=X, names=np.array(names), cat_idx=np.array(cat_idx))
-    man.write_text(json.dumps({
-        "n_rows": int(X.shape[0]), "n_cols": int(X.shape[1]),
-        "feature_version": FEATURE_VERSION, "names": names,
-        "source": str(labels_path(cluster)),
-    }, indent=2) + "\n")
+    if save:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(out, X=X, names=np.array(names), cat_idx=np.array(cat_idx))
+        man.write_text(json.dumps({
+            "n_rows": int(X.shape[0]), "n_cols": int(X.shape[1]),
+            "feature_version": FEATURE_VERSION, "names": names,
+            "source": str(labels_path(cluster)),
+        }, indent=2) + "\n")
     return X, names, cat_idx
 
 
-def ensure_truth(cluster: str, labels: dict, edges: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def ensure_truth(cluster: str, labels: dict, edges: np.ndarray,
+                 save: bool = True) -> tuple[np.ndarray, np.ndarray]:
     """Ground-truth curve and its capacity grid, cached under artifacts/truth."""
     out = truth_path(cluster)
     man = out.with_name(out.stem + ".manifest.json")
@@ -142,9 +146,10 @@ def ensure_truth(cluster: str, labels: dict, edges: np.ndarray) -> tuple[np.ndar
         with np.load(out, allow_pickle=False) as z:
             return z["capacities"], z["mrc"]
     caps = capacity_grid_from_edges(edges, N_CAPACITIES)
-    written_truth(out, labels, n_keys=int(labels["n_keys"][0]),
-                  overflow_edge=int(edges[-2]), edges=edges, points=N_CAPACITIES,
-                  source_labels=labels_path(cluster))
+    if save:
+        written_truth(out, labels, n_keys=int(labels["n_keys"][0]),
+                      overflow_edge=int(edges[-2]), edges=edges, points=N_CAPACITIES,
+                      source_labels=labels_path(cluster))
     return caps, mrc_from_labels(labels, caps)
 
 
@@ -367,10 +372,10 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
             nbins: int = N_BINS, row_budget: int = ROW_BUDGET,
             with_mlflow: bool = True, keep_cache: bool = True) -> dict:
     """Run every stage for one cluster and write the metrics artefact."""
-    labels = ensure_labels(cluster, source, limit=limit)
-    X, names, cat_idx = ensure_features(cluster, labels)
+    labels = ensure_labels(cluster, source, limit=limit, save=keep_cache)
+    X, names, cat_idx = ensure_features(cluster, labels, save=keep_cache)
     edges = cluster_edges(labels, nbins)
-    truth = ensure_truth(cluster, labels, edges)
+    truth = ensure_truth(cluster, labels, edges, save=keep_cache)
     caps, _truth_curve = truth
     # Labels carry the request columns and the censoring intermediates as well as the four
     # arrays the fit reads. Dropping the rest before the risk set is built frees about
@@ -446,10 +451,4 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
 
     if with_mlflow:
         _log_mlflow(cluster, dict(params or DEFAULT_PARAMS), metrics, [out, curve_path], prep)
-    if not keep_cache:
-        # A window sweep keeps the metrics and drops the per-window arrays: labels and
-        # features are 165 MB per 5M-request window, which is 443 GB over the full shard.
-        for path in (labels_path(cluster), features_path(cluster), truth_path(cluster)):
-            path.unlink(missing_ok=True)
-            path.with_name(path.stem + ".manifest.json").unlink(missing_ok=True)
     return payload

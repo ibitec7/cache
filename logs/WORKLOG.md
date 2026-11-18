@@ -1,3 +1,32 @@
+## 2026-11-18T09:50Z · perf · the fast window is 124 s and 3.24 GB, and DuckDB is the fast ingest
+
+Commit: this entry's commit.
+
+Two changes make a sweep cheap. `--no-keep-cache` now computes the label, feature
+and truth arrays in memory and writes nothing, instead of writing npz and deleting
+it. The grouped-row budget drops from 20M to 10M for a sweep. Measured on the same
+cluster52 5M window, 4 threads:
+
+| Configuration | Wall | Peak RSS | Test MAE |
+|---|---|---|---|
+| 20M rows, cache written | 204.2 s | 5.65 GB | 0.00027 |
+| 10M rows, cache written | 120.8 s | 2.70 GB | 0.00020 |
+| 10M rows, no cache written | 123.8 s | 3.24 GB | 0.00020 |
+
+The 10M budget was checked on cluster52 only; the reported four-trace numbers stay
+on 20M. At 124 s per window, the 2,685 windows are 92.5 core-hours, 1.54 h at 60
+concurrent 4-thread workers.
+
+Ingest: DuckDB converts 2 GiB of `cluster52.sort.zst` to zstd parquet in 7.7 s at
+8 threads, 280 MB/s against 46 MB/s for `write_store` (pyarrow). Its row order is
+preserved and the output is readable by `mrc.data.store` unchanged: the first 5M
+rows match the CSV on every column after key decoding. At 64 threads the full
+608 GiB is decompression-bound at about 700 MB/s, 15 to 25 min, against 3.8 h.
+
+CUDA still helps only the fit (2.19x). On a 240-vCPU node the sweep is CPU-bound:
+60 concurrent 4-thread fits finish in 1.5 h, while eight A100s can only run about
+eight fits at once, which is slower in aggregate.
+
 ## 2026-11-18T09:36Z · perf · cluster52 becomes 2,685 parquet windows
 
 Commit: this entry's commit.

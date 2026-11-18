@@ -144,7 +144,7 @@ def truth(cluster: str, bins: int) -> None:
 @click.option("--tuned/--no-tuned", default=False, help="use the best Optuna trial")
 @click.option("--mlflow/--no-mlflow", default=True)
 @click.option("--keep-cache/--no-keep-cache", default=True,
-              help="keep the per-window label, feature and truth arrays")
+              help="write the per-window label, feature and truth arrays")
 def train(cluster: str, source: str | None, store: str | None, start: int,
           window: int | None, limit: int, rounds: int, bins: int,
           rows: int, tuned: bool, mlflow: bool, keep_cache: bool) -> None:
