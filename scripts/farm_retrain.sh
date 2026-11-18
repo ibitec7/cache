@@ -14,6 +14,11 @@ CLUSTERS="${CLUSTERS:-cluster10 cluster26 cluster45 cluster52}"
 BUDGETS="${BUDGETS:-1 5 12}"     # windows of 5M requests: 5M, 25M, 60M
 WINDOW="${WINDOW:-5000000}"
 SCORERS="${SCORERS:-20}"
+# One test window per budget: the point of the curve is the data budget, and a
+# fixed first test window keeps every point on the same rows. Scoring all 672
+# cluster52 windows at three budgets would cost 40 minutes of I/O for a mean
+# whose CI over one row would be reported anyway.
+LIMIT="${LIMIT:-1}"
 
 for n in $BUDGETS; do
   pids=()
@@ -29,7 +34,7 @@ for n in $BUDGETS; do
         --row-budget 20000000 --study-storage "sqlite:///$HOME/cache/artifacts/study_retrain.db" \
         --out "$out" > "logs/retrain_fit_$c-$n.log" 2>&1 \
       && env -u PYTHONPATH uv run python scripts/oot_parallel.py score \
-        --model "$out/model.json" --store "data/publish/$c" --block test --workers "$SCORERS" --force \
+        --model "$out/model.json" --store "data/publish/$c" --block test --workers "$SCORERS" --limit "$LIMIT" --force \
         > "logs/retrain_score_$c-$n.log" 2>&1 \
       && env -u PYTHONPATH uv run python scripts/oot_parallel.py reduce \
         --model "$out/model.json" > "logs/retrain_reduce_$c-$n.log" 2>&1
