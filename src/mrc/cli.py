@@ -171,7 +171,8 @@ def train(cluster: str, source: str | None, store: str | None, start: int,
             click.echo(f"{block:5s} {name:5s} mae={metrics['mae']:.5f} "
                        f"max={metrics['max_abs']:.5f} bias={metrics['bias']:+.5f} "
                        f"mre={metrics['mre']:.4f}")
-    click.echo(f"wrote artifacts/tables/{cluster}_metrics.json")
+    tag = (f"{cluster}_w{start}_{window}" if store else cluster)
+    click.echo(f"wrote artifacts/tables/{tag}_metrics.json")
 
 
 def best_params(cluster: str) -> dict:
