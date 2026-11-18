@@ -773,3 +773,101 @@ logged `prepare rows=4537515` at 3.1 s and then sat in `fit` for **942.1 s** bef
 killed it. The same fit under `MRC_THREADS=4` inside the real pipeline takes 54 s end
 to end. Two independent instruments, same conclusion: the barrier, not the data, was
 the cost. The probe is scratch, not an artifact.
+
+## 2026-11-18T22:36Z - full experiment batch on bxint4 (n2d-highcpu-128)
+
+Instance bxint4 (`n2d-highcpu-128`, 128 vCPU / 125 GB / 125 GB, ~USD 3.16/h) carried
+every reported number in this entry. Code reached it as a git bundle, data as parallel
+`curl -C -` from `ibitec/*-parquet`, results came back as one tarball. Nothing here is
+transcribed from a terminal: each row was recomputed from `artifacts/*/*/result.json`
+and its `per-window` JSONs at 22:35Z on the box, after the last refit.
+
+### Out of time (OOT): train on cluster c, test on its own final 25% block
+
+Fit window budget 20 x 5M rows, 200 rounds, Optuna TPE (12 trials for the first
+pass, extended to 34/28/29 for c10/c26/c45 when the first pass turned out to be
+startup-limited). MAE is the mean per-window absolute error of the predicted MCR
+curve; KM is the same curve built from training-set hazard only.
+
+| cluster | test windows | GBDT MAE | median | KM MAE | ratio | windows GBDT beats KM |
+|---|---|---|---|---|---|---|
+| cluster10 | 7 | 0.003637 | 0.003273 | 0.027656 | 0.132 | 7/7 |
+| cluster26 | 8 | 0.001518 | 0.001794 | 0.005109 | 0.297 | 8/8 |
+| cluster45 | 12 | 0.001313 | 0.000977 | 0.024877 | 0.053 | 12/12 |
+| cluster52 | 672 | 0.003834 | 0.003184 | 0.030559 | 0.125 | 672/672 |
+
+cluster52 is the only cluster whose test block is a distribution rather than a handful
+of windows: 672 of 672 windows, all 94 shards, no subsampling.
+
+### Leave-one-cluster-out (LOCO): 4 folds, none of the held-out cluster in training
+
+| held out | test windows | GBDT MAE | KM MAE |
+|---|---|---|---|
+| cluster10 | 7 | 0.002756 | 0.160934 |
+| cluster26 | 8 | 0.006770 | 0.156696 |
+| cluster45 | 12 | 0.005445 | 0.097702 |
+| cluster52 | 667 | 0.016266 | 0.144410 |
+
+LOCO on cluster52 costs 4.3x the within-cluster error (0.016266 vs 0.003834) and the
+other three folds 1.0x to 4.5x, so the model transfers across clusters but the
+transfer is not free. cluster52 reports 667 windows because three partial windows at
+the store boundary were merged.
+
+### Retrain curve: fixed hyper-parameters, only the data budget moves
+
+Budgets 1/5/12 windows x 5M rows = 5M/25M/60M training rows, `--trials 0` so the
+search cannot confound the data axis. All test windows of the small clusters, same
+windows at every budget.
+
+| cluster | 5M rows | 25M rows | 60M rows |
+|---|---|---|---|
+| cluster10 | 0.017567 | 0.006046 | 0.004259 |
+| cluster26 | 0.003057 | 0.001861 | 0.001706 |
+| cluster45 | 0.001398 | 0.001313 | 0.001333 |
+
+cluster10 still gains 4.1x from 5M to 60M rows and is still falling; cluster26 gains
+1.8x and flattens; cluster45 is flat inside its own per-window spread (0.0007 to
+0.0035), so this curve says nothing about cluster45 demand.
+
+### Optuna: the first 12 trials were startup-phase, not a search
+
+At 12 trials all three small clusters returned the *same* six hyper-parameters and a
+Spearman correlation of exactly 1.000 between the trial-value rankings of every pair
+of clusters. The sampler is seeded and TPE spends its first 10 trials on random draws,
+so the ranking was dominated by capacity, not by the trace. Continuing the same
+studies past trial 20 diverged per cluster (num_leaves 24/20/25, learning rate
+0.110/0.104/0.103) and every test MAE improved: 0.003704 to 0.003637, 0.001762 to
+0.001518, 0.001517 to 0.001313. Report the extended numbers; the 12-trial numbers are
+a startup artifact and are retracted.
+
+### Telemetry
+
+Fit time is fit-only, median 56 s per cluster on pooled windows (c10 49.4, c26 53.6,
+c45 59.0, c52 97.2). Streaming a 5M-row window is 12 s single-threaded. Scoring a
+cluster52 window costs 66 s at the median (85 s mean, 158 s max) and the cost is
+I/O-latency bound, not CPU bound: 12 workers gave 0.06 windows/s with load average 17
+on 128 cores, 28 workers gave 0.40 windows/s. 672 windows is 28 minutes at 28 workers
+and would have been 3 hours at 12. The box was idle for most of the first pass because
+of this, not because of the data.
+
+### Bugs found and fixed while running
+
+1. `score` reused a per-window JSON from a *previous* model after a refit, so the
+   reduced mean described one model while `meta.params` described another. Now a
+   window JSON older than `model.json` is rescored, and the three orchestrators pass
+   `--force`. This is why the first re-tuned OOT numbers looked identical to the
+   12-trial ones to 16 digits: they were stale files, not identical models.
+2. `( cmd & )` detaches the child, so `wait` returns immediately and `reduce` reads
+   the previous run's window files. Sequential rescoring now backgrounds plainly.
+3. Three Optuna writers on one sqlite file fail on commit; one database per cluster.
+   And a resumed study reports the *call's* `--trials`, not the study's trial count,
+   so `meta.trials` reads 8 for a 34-trial study. Cosmetic, unfixed, noted here.
+4. Attempting 40 trials for three clusters while 96 scoring workers were live drove
+   the box into OOM (python killed at 2.2 GB RSS). Scoring fan-out and fitting must
+   not overlap at that concurrency.
+
+### What is not done
+
+`data/` (96 GB) stayed on the box; it is reproducible from `ibitec/*-parquet` and
+`data/publish/` is gitignored by rule. The retrain curve has no cluster52 point and
+the LOCO folds use 6-trial studies, both because cluster52 scoring is the I/O ceiling.

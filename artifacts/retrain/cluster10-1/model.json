@@ -1,0 +1,122 @@
+{
+ "cluster": "retrain-cluster10-1",
+ "stores": [
+  {
+   "name": "cluster10",
+   "path": "data/publish/cluster10"
+  }
+ ],
+ "window": 5000000,
+ "split": [
+  0.03593228819003064,
+  0.75
+ ],
+ "row_budget": 20000000,
+ "rounds": 200,
+ "trials": 0,
+ "score_sample": 200000,
+ "window_stride": 1,
+ "max_windows": 1,
+ "params": {
+  "objective": "binary",
+  "metric": "binary_logloss",
+  "verbosity": -1,
+  "num_leaves": 63,
+  "learning_rate": 0.05,
+  "min_data_in_leaf": 100,
+  "feature_fraction": 0.9,
+  "bagging_fraction": 0.8,
+  "bagging_freq": 1,
+  "lambda_l2": 1.0,
+  "num_threads": 8,
+  "seed": 7,
+  "deterministic": true,
+  "force_row_wise": true
+ },
+ "prep": {
+  "n_requests": {
+   "train": 5000000,
+   "valid": 5000000
+  },
+  "n_eligible": {
+   "train": 2499949,
+   "valid": 2499872
+  },
+  "grouped_rows": 7129151,
+  "row_budget": 20000000,
+  "pool_requests": 2499949,
+  "fit_requests": 2499949,
+  "per_request_rows": 2.851718575058931,
+  "edges_last": 14,
+  "b_M_minus_1": 13,
+  "edges_from": "train_period",
+  "stop_split": [
+   0.85,
+   1.0
+  ],
+  "target": "backward_reuse_distance",
+  "seconds": 27.8
+ },
+ "nbins": 14,
+ "edges": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14
+ ],
+ "capacities": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12
+ ],
+ "train_km": [
+  0.8772671999999999,
+  0.7425923999999999,
+  0.6421026,
+  0.578328,
+  0.5413492,
+  0.52125,
+  0.5107543999999999,
+  0.5054634,
+  0.5028684,
+  0.5016311999999999,
+  0.5010258,
+  0.5007431999999999
+ ],
+ "feature_names": [
+  "log_obj_size",
+  "log_key_size",
+  "log_val_size",
+  "ns_code",
+  "op",
+  "is_write",
+  "log_ttl",
+  "has_ttl",
+  "client_bucket",
+  "log_gap",
+  "log_freq",
+  "log_age"
+ ],
+ "booster": "booster.txt",
+ "fit_seconds": 27.8
+}

@@ -1,0 +1,137 @@
+{
+ "cluster": "retrain-cluster10-5",
+ "stores": [
+  {
+   "name": "cluster10",
+   "path": "data/publish/cluster10"
+  }
+ ],
+ "window": 5000000,
+ "split": [
+  0.17966144095015318,
+  0.75
+ ],
+ "row_budget": 20000000,
+ "rounds": 200,
+ "trials": 0,
+ "score_sample": 200000,
+ "window_stride": 1,
+ "max_windows": 5,
+ "params": {
+  "objective": "binary",
+  "metric": "binary_logloss",
+  "verbosity": -1,
+  "num_leaves": 63,
+  "learning_rate": 0.05,
+  "min_data_in_leaf": 100,
+  "feature_fraction": 0.9,
+  "bagging_fraction": 0.8,
+  "bagging_freq": 1,
+  "lambda_l2": 1.0,
+  "num_threads": 8,
+  "seed": 7,
+  "deterministic": true,
+  "force_row_wise": true
+ },
+ "prep": {
+  "n_requests": {
+   "train": 25000000,
+   "valid": 25000000
+  },
+  "n_eligible": {
+   "train": 12499528,
+   "valid": 12499298
+  },
+  "grouped_rows": 14011721,
+  "row_budget": 20000000,
+  "pool_requests": 3636360,
+  "fit_requests": 3636360,
+  "per_request_rows": 3.8532271282271284,
+  "edges_last": 20,
+  "b_M_minus_1": 19,
+  "edges_from": "train_period",
+  "stop_split": [
+   0.85,
+   1.0
+  ],
+  "target": "backward_reuse_distance",
+  "seconds": 51.5
+ },
+ "nbins": 19,
+ "edges": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  19,
+  20
+ ],
+ "capacities": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17
+ ],
+ "train_km": [
+  0.92764224,
+  0.8284554,
+  0.7355142,
+  0.6604902800000001,
+  0.6049724400000001,
+  0.56636496,
+  0.5409076,
+  0.5246928000000001,
+  0.51473188,
+  0.5087756000000001,
+  0.5052683600000001,
+  0.5032428400000001,
+  0.5020777200000001,
+  0.5014264,
+  0.5010458400000001,
+  0.5008258000000001,
+  0.5006919200000001
+ ],
+ "feature_names": [
+  "log_obj_size",
+  "log_key_size",
+  "log_val_size",
+  "ns_code",
+  "op",
+  "is_write",
+  "log_ttl",
+  "has_ttl",
+  "client_bucket",
+  "log_gap",
+  "log_freq",
+  "log_age"
+ ],
+ "booster": "booster.txt",
+ "fit_seconds": 51.5
+}
