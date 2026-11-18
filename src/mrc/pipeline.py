@@ -303,6 +303,24 @@ WindowPart = tuple[str, dict, np.ndarray]
 
 
 @dataclass
+class ScoredWindow:
+    """One non-train window kept so a study can score it without re-reading it.
+
+    `histogram` holds the full window's distances, so `mrc(capacities)` is the exact
+    truth curve; `x` is a uniform sample of the eligible design rows and only ever
+    feeds the *prediction* side, which makes a sampled score an unbiased estimate of
+    the full-window score rather than a different quantity.
+    """
+
+    block: str
+    p_comp: float
+    histogram: DistanceHistogram
+    x: np.ndarray
+    n_requests: int
+    n_eligible: int
+
+
+@dataclass
 class WindowPrepared:
     """Fit-ready reduction of many windows; no request-index split survives.
 
@@ -328,12 +346,15 @@ class WindowPrepared:
     p_compulsory: dict[str, float]
     histograms: dict[str, DistanceHistogram]
     meta: dict = field(default_factory=dict)
+    scored: list[ScoredWindow] = field(default_factory=list)
 
 
 def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
                     nbins: int = N_BINS, row_budget: int = ROW_BUDGET,
                     seed: int = SEED, pool_factor: int = 6,
-                    n_train_windows: int | None = None) -> WindowPrepared:
+                    n_train_windows: int | None = None,
+                    keep_scored: str | None = None,
+                    scored_per_window: int = 200_000) -> WindowPrepared:
     """Fit-ready reduction of a time-ordered sequence of windows.
 
     Each part is `(block, labels, X)` with `block` in train / valid / test, and the
@@ -347,9 +368,18 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
     are a uniform sample of the train period, sized by `row_budget`, with a pool
     `pool_factor` times larger so the final draw is uniform in requests rather
     than in bins.
+
+    `keep_scored` names a block (in practice `valid`) whose windows are retained as
+    `ScoredWindow`s: a per-window histogram plus a uniform sample of up to
+    `scored_per_window` eligible rows. A hyper-parameter study needs to score the
+    validation windows repeatedly, and re-reading them per trial would cost more
+    than every fit in the study. `scored_per_window` is a real floor on precision,
+    not a free knob: on cluster10, scoring 50,000 of 2.5M eligible requests moved a
+    window's MAE by 8 %, 200,000 moved it by 0.4 %.
     """
     hists: dict[str, DistanceHistogram] = {}
     counted: dict[str, list[int]] = {}
+    scored: list[ScoredWindow] = []
     pool_x: list[np.ndarray] = []
     pool_rt: list[np.ndarray] = []
     pool_delta: list[np.ndarray] = []
@@ -364,6 +394,17 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
         slot = counted.setdefault(block, [0, 0])
         slot[0] += int(r.size)
         slot[1] += int(eligible.sum())
+        if keep_scored is not None and block == keep_scored:
+            idx = np.flatnonzero(eligible)
+            if scored_per_window and idx.size > scored_per_window:
+                pick = np.random.default_rng(seed + 7919 * i).choice(
+                    idx, scored_per_window, replace=False)
+                idx = np.sort(pick)
+            scored.append(ScoredWindow(
+                block=block, p_comp=1.0 - float(eligible.mean()),
+                histogram=DistanceHistogram().add(r),
+                x=np.asarray(X[idx], dtype=np.float32),
+                n_requests=int(r.size), n_eligible=int(eligible.sum())))
         if block != "train":
             continue
         idx = np.flatnonzero(eligible)
@@ -400,6 +441,7 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
         cluster=cluster, names=list(names), edges=edges, capacities=caps,
         rows=rows, n_fit_requests=int(rt_capped.size), stop_split=(0.85, 1.0),
         truth_blocks=truth_blocks, p_compulsory=p_comp, histograms=hists,
+        scored=scored,
         meta={"n_requests": {b: counted[b][0] for b in counted},
               "n_eligible": {b: counted[b][1] for b in counted},
               "grouped_rows": int(rows["n_rows"]), "row_budget": int(row_budget),

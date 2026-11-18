@@ -47,6 +47,40 @@ def abc(pred: ArrayLike, truth: ArrayLike, capacities: ArrayLike) -> float:
     return _trapezoid(np.abs(p - t), lg) / float(lg[-1] - lg[0])
 
 
+def curve_metrics_ci(pred: ArrayLike, truth: ArrayLike, capacities: ArrayLike,
+                     *, blocks: int = 64, reps: int = 200,
+                     seed: int = 0) -> tuple[float, float]:
+    """Percentile CI for the MAE of a curve estimated on a *sample* of requests.
+
+    `curve_metrics(pred, truth, ...)` averages the sampled requests into one curve,
+    so the number moves with which requests were sampled. Requests inside a window
+    are autocorrelated, so resampling single rows would report a CI that is too
+    narrow; this resamples contiguous blocks of the sampled rows instead.
+
+    Returns `(lo, hi)` for the 95 % percentile interval, or `(nan, nan)` below two
+    blocks.
+    """
+    p = np.asarray(pred, dtype=np.float64)
+    if p.ndim == 1:
+        p = p[None, :]
+    t = np.asarray(truth, dtype=np.float64).reshape(-1)
+    n = int(p.shape[0])
+    length = max(1, n // max(1, blocks))
+    nb = n // length
+    if nb < 2:
+        return (float("nan"), float("nan"))
+    block_sums = p[:nb * length].reshape(nb, length, p.shape[1]).sum(axis=1)
+    rng = np.random.default_rng(seed)
+    need = int(np.ceil(n / length))
+    out = np.empty(reps, dtype=np.float64)
+    for r in range(reps):
+        pick = rng.integers(0, nb, size=need)
+        curve = block_sums[pick].sum(axis=0) / (need * length)
+        out[r] = float(np.mean(np.abs(curve - t)))
+    lo, hi = np.percentile(out, [2.5, 97.5])
+    return float(lo), float(hi)
+
+
 def curve_metrics(
     pred: ArrayLike, truth: ArrayLike, capacities: ArrayLike, mre_floor: float = 0.01
 ) -> dict[str, float | int]:

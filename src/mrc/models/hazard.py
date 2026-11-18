@@ -209,6 +209,23 @@ class HazardModel:
         turn into hits; the model is fitted only on requests that have a previous
         access, so that mass has to be added back explicitly.
         """
+        steps, bins_c = self._steps_and_bins(capacities, edges)
+        S = self.predict_survival(X, steps)
+        return p_compulsory + (1.0 - p_compulsory) * S[:, bins_c].mean(axis=0)
+
+    def predict_mrc_rows(self, X, capacities, edges, p_compulsory=0.0):
+        """The same curve per request, shape `(n, len(capacities))`.
+
+        `predict_mrc` averages these values first and that order is kept: averaging
+        then scaling is not the same floating-point sequence as scaling then
+        averaging, and the committed curves are the averaged ones.
+        """
+        steps, bins_c = self._steps_and_bins(capacities, edges)
+        S = self.predict_survival(X, steps)
+        return p_compulsory + (1.0 - p_compulsory) * S[:, bins_c]
+
+    def _steps_and_bins(self, capacities, edges) -> tuple[np.ndarray, np.ndarray]:
+        """Hazard steps to predict and the step each capacity reads, with the checks."""
         caps = np.asarray(capacities, dtype=np.int64)
         limit = int(edges[-2])
         if caps.size and int(caps.max()) >= limit:
@@ -219,10 +236,8 @@ class HazardModel:
             )
         kmax = int(min(len(edges) - 2, assign_bins(np.array([int(caps.max())]), edges)[0])) + 1
         steps = np.arange(kmax + 1)
-        S = self.predict_survival(X, steps)
-        bins_c = assign_bins(np.asarray(capacities, dtype=np.int64) - 1, edges)
-        bins_c = np.clip(bins_c, 0, kmax)
-        return p_compulsory + (1.0 - p_compulsory) * S[:, bins_c].mean(axis=0)
+        bins_c = np.clip(assign_bins(caps - 1, edges), 0, kmax)
+        return steps, bins_c
 
 
 def km_hazard(distance: np.ndarray, nbins: int = 32):

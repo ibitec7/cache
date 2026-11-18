@@ -1,3 +1,50 @@
+## 2026-11-19T03:10Z · feat · OOT study, window stride, and a measured sampling floor
+
+Commit: this entry's commit.
+
+`scripts/oot.py` now takes `--trials` (Optuna on the validation windows),
+`--window-stride`, `--max-windows`, `--score-sample` and `--save-booster`, and
+records all of them in its meta. The pieces:
+
+- `pipeline.ScoredWindow` and `prepare_windows(keep_scored=...)` keep each
+  validation window's whole distance histogram plus a uniform sample of its
+  eligible design rows, so a study scores exact truth against a sampled prediction
+  without re-reading the store.
+- `tuning.make_windows_objective` / `run_windows_study` optimise mean validation
+  MAE over those windows; every trial records its per-window MAEs, so one window
+  dominating the objective is visible instead of hidden in a mean.
+- `metrics.curve_metrics_ci` is a moving-block bootstrap over the sampled rows, so
+  an interval on a sampled MAE accounts for within-window autocorrelation.
+- `hazard.predict_mrc_rows` exposes the per-request curve; `predict_mrc` keeps its
+  original averaging order, so every committed curve is bit-identical.
+- `oot.thin_windows` strides inside each block, never across a boundary.
+
+Gates in `tests/test_oot_sampling.py`: `DistanceHistogram.mrc` is byte-equal to
+`mrc_curve` on raw distances (20 random traces); stride 1 with no cap is the
+identity and any stride is a subsequence of its own block; a 10 % request sample
+lands inside the block-bootstrap interval in at least 95 of 100 draws with a real
+model error; the objective runs and reports two per-window scores.
+
+Smoke on real data (`cluster10`, 2 windows per block, 1 trial, 60 rounds,
+50,000-request sample): **89 s end to end**, study persisted, 2% of each window's
+eligible requests scored.
+
+The sampling floor, measured on one cluster10 window against its full population
+(2,499,735 eligible requests, full-population MAE 0.011222):
+
+| requests scored | MAE | shift vs full | block-bootstrap CI |
+|---|---|---|---|
+| 50,000 | 0.012126 | +8.05 % | 0.00887 to 0.01587 |
+| 200,000 | 0.011172 | -0.45 % | 0.00808 to 0.01450 |
+| 500,000 | 0.011288 | +0.59 % | 0.00823 to 0.01482 |
+| 1,000,000 | 0.011302 | +0.71 % | 0.00817 to 0.01457 |
+
+The point estimate converges by 200,000; the interval does not narrow, because
+predicted curves are strongly autocorrelated inside a window, so a window holds
+far fewer independent observations than it holds requests. `--score-sample 200000`
+is the default recommendation; below it the per-window number moves by more than
+the differences a study is trying to resolve.
+
 ## 2026-11-19T01:20Z · perf · what the fit and the prediction pass actually cost
 
 Commit: this entry's commit. Box idle (load 0.4) for every number below; fixture

@@ -39,11 +39,12 @@ import numpy as np
 from mrc.config import CAP_QUANTILE, N_BINS, SEED, SPLIT_OOT
 from mrc.data.labels import labels_from_trace
 from mrc.data.store import Store, StoreShard
-from mrc.eval.metrics import curve_metrics
+from mrc.eval.metrics import curve_metrics, curve_metrics_ci
 from mrc.eval.mrc import mrc_curve
 from mrc.features import build_features
 from mrc.models.hazard import assign_bins
 from mrc.pipeline import DEFAULT_PARAMS, ROW_BUDGET, fit, km_from_hist, prepare_windows
+from mrc.tuning.search import run_windows_study
 
 
 def windows_for(n_rows: int, window: int, split: tuple[float, float]) -> list[tuple[str, int, int]]:
@@ -66,6 +67,24 @@ def load_window(root: str | Path, start: int, stop: int) -> tuple[dict, np.ndarr
     labels = labels_from_trace(StoreShard(root, start, stop - start).read(), cap=CAP_QUANTILE)
     x, names, _cat = build_features(labels)
     return labels, x, names
+
+
+def thin_windows(windows: list[tuple[str, int, int]], stride: int = 1,
+                 max_windows: int = 0) -> list[tuple[str, int, int]]:
+    """Keep every `stride`-th window of each block, never crossing a block boundary.
+
+    Striding is computed inside each block, so no selection ever draws from a later
+    period: the train / valid / test split stays exactly the split `windows_for`
+    produced. Windows stay in time order within a block, which the fit relies on
+    (the last 15 % of the pool is the latest train windows).
+    """
+    out: list[tuple[str, int, int]] = []
+    for block in ("train", "valid", "test"):
+        sel = [w for w in windows if w[0] == block][::max(1, stride)]
+        if max_windows:
+            sel = sel[:max_windows]
+        out.extend(sel)
+    return out
 
 
 def block_bootstrap(values: np.ndarray, length: int, reps: int = 2000,
@@ -120,6 +139,18 @@ def main() -> None:
     ap.add_argument("--params", help="JSON file with LightGBM params")
     ap.add_argument("--limit-windows", type=int, default=0,
                     help="use at most N windows per block (smoke test)")
+    ap.add_argument("--window-stride", type=int, default=1,
+                    help="keep every K-th window of each block; the split never moves")
+    ap.add_argument("--max-windows", type=int, default=0,
+                    help="keep at most N windows per block after striding")
+    ap.add_argument("--score-sample", type=int, default=0,
+                    help="score at most N eligible requests per window (0 = all)")
+    ap.add_argument("--trials", type=int, default=0,
+                    help="run an Optuna study on the validation windows before fitting")
+    ap.add_argument("--study-storage", default=None,
+                    help="Optuna storage URL; default is the configured sqlite file")
+    ap.add_argument("--save-booster", default=None,
+                    help="write the fitted booster here (probes and reuse)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -130,13 +161,13 @@ def main() -> None:
     store = Store(args.store)
     started = time.perf_counter()
     windows = windows_for(store.n_rows, args.window, tuple(args.split))
-    if args.limit_windows:
-        keep: list[tuple[str, int, int]] = []
-        for block in ("train", "valid", "test"):
-            keep.extend([w for w in windows if w[0] == block][:args.limit_windows])
-        windows = keep
+    windows = thin_windows(windows, args.window_stride,
+                           args.max_windows or args.limit_windows)
+    if not windows:
+        raise SystemExit("no window left after striding")
     n_train = sum(1 for w in windows if w[0] == "train")
-    print(f"{len(windows)} windows over {store.n_rows:,} requests, {n_train} for training")
+    print(f"{len(windows)} windows over {store.n_rows:,} requests, {n_train} for training, "
+          f"stride {args.window_stride}, score sample {args.score_sample or 'all'}")
 
     names: list[str] = []
     plan = [w for w in windows if w[0] in ("train", "valid")]
@@ -162,11 +193,25 @@ def main() -> None:
             yield block, labels, x
 
     prep = prepare_windows(args.cluster, fit_parts(), names, nbins=N_BINS,
-                           row_budget=args.row_budget, n_train_windows=len(train_plan))
+                           row_budget=args.row_budget, n_train_windows=len(train_plan),
+                           keep_scored="valid" if args.trials else None,
+                           scored_per_window=args.score_sample or 200_000)
     print(f"fit rows {prep.rows['n_rows']:,} from {prep.n_fit_requests:,} pooled requests, "
-          f"edges top {int(prep.edges[-1]):,}")
+          f"edges top {int(prep.edges[-1]):,}, {len(prep.scored)} scored valid windows")
+
+    if args.trials:
+        study = run_windows_study(prep, args.trials, cluster=args.cluster,
+                                  num_boost_round=args.rounds,
+                                  score_sample=args.score_sample,
+                                  storage=args.study_storage)
+        params.update(study.best_params)
+        print(f"study mrc-oot-{args.cluster}: {len(study.trials)} trials, "
+              f"best valid mae {study.best_value:.6f}, params "
+              f"{json.dumps(study.best_params, sort_keys=True)}", flush=True)
 
     model = fit(prep, params, num_boost_round=args.rounds)
+    if args.save_booster and model.booster is not None:
+        model.booster.save_model(args.save_booster)
     fit_seconds = time.perf_counter() - started
     train_km = km_from_hist(prep.histograms["train"], prep.edges, prep.capacities,
                             prep.p_compulsory["train"])
@@ -179,16 +224,29 @@ def main() -> None:
         labels, x, _ = load_window(args.store, start, stop)
         r = np.asarray(labels["R"], dtype=np.int64)
         eligible = np.asarray(labels["eligible"], dtype=bool)
+        # Both sides stay honest under sampling: `p_comp` and the truth curve come
+        # from the whole window, only the predicted curve is averaged over a sample.
         p_comp = 1.0 - float(eligible.mean())
         truth = mrc_curve(r, prep.capacities)
-        pred = model.predict_mrc(x[eligible], prep.capacities, prep.edges,
-                                 p_compulsory=p_comp)
-        km = train_km
+        idx = np.flatnonzero(eligible)
+        if args.score_sample and idx.size > args.score_sample:
+            pick = np.random.default_rng(SEED + int(start) % 1_000_003).choice(
+                idx, args.score_sample, replace=False)
+            idx = np.sort(pick)
+        pred_rows = model.predict_mrc_rows(x[idx], prep.capacities, prep.edges,
+                                           p_compulsory=p_comp)
+        metrics: dict[str, object] = dict(curve_metrics(pred_rows.mean(axis=0), truth,
+                                                        prep.capacities))
+        if idx.size < int(eligible.sum()):
+            metrics["mae_ci95_block_bootstrap"] = list(curve_metrics_ci(
+                pred_rows, truth, prep.capacities, seed=SEED))
+            metrics["n_scored"] = int(idx.size)
+            metrics["n_eligible"] = int(eligible.sum())
         per_window.append({
             "block": block, "start": int(start), "stop": int(stop),
             "requests": int(r.size), "p_compulsory": p_comp,
-            "gbdt": curve_metrics(pred, truth, prep.capacities),
-            "km": curve_metrics(km, truth, prep.capacities),
+            "gbdt": metrics,
+            "km": curve_metrics(train_km, truth, prep.capacities),
             "seconds": round(time.perf_counter() - t0, 1),
             "bins_used": int(assign_bins(np.asarray(prep.capacities) - 1, prep.edges).max()),
         })
@@ -201,6 +259,10 @@ def main() -> None:
         "meta": {"cluster": args.cluster, "store": str(args.store),
                  "window": args.window, "split": list(args.split),
                  "row_budget": args.row_budget, "rounds": args.rounds,
+                 "window_stride": args.window_stride,
+                 "max_windows_per_block": args.max_windows or args.limit_windows,
+                 "score_sample": args.score_sample,
+                 "trials": args.trials,
                  "params": params, "prep": prep.meta,
                  "train_windows": n_train,
                  "train_km": train_km.tolist(),
