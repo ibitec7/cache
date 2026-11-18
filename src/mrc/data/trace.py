@@ -66,7 +66,8 @@ class Trace:
         return len(self.key_vocab)
 
 
-def _open(path: str | Path) -> pa.NativeFile:
+def open_stream(path: str | Path) -> pa.NativeFile:
+    """Open a plain or zstd-compressed CSV as a pyarrow input stream."""
     p = Path(path)
     raw = pa.OSFile(str(p), "rb")
     if p.suffix == ".zst":
@@ -74,26 +75,8 @@ def _open(path: str | Path) -> pa.NativeFile:
     return raw
 
 
-def read_trace(path: str | Path, limit: int | None = None, block_size: int = 1 << 26) -> Trace:
-    """Read a trace shard (plain CSV or .zst) into a `Trace`.
-
-    With `limit`, parsing stops as soon as that many rows are read, so a 93 GB shard
-    costs a prefix instead of its whole decompressed size.
-    """
-    read_opts = pacsv.ReadOptions(column_names=COLUMNS, block_size=block_size)
-    parse_opts = pacsv.ParseOptions(delimiter=",")
-    batches: list[pa.RecordBatch] = []
-    rows = 0
-    with pacsv.open_csv(_open(path), read_options=read_opts, convert_options=_CONVERT,
-                        parse_options=parse_opts) as reader:
-        for batch in reader:
-            if limit is not None and rows + batch.num_rows >= limit:
-                batches.append(batch.slice(0, limit - rows))
-                break
-            batches.append(batch)
-            rows += batch.num_rows
-    tbl = pa.Table.from_batches(batches)
-
+def trace_from_table(tbl: pa.Table) -> Trace:
+    """Convert a table with the fixed trace columns into a `Trace`."""
     keys = tbl.column("key").combine_chunks()
     if not pa.types.is_string(keys.type):
         keys = keys.cast(pa.string())
@@ -117,6 +100,28 @@ def read_trace(path: str | Path, limit: int | None = None, block_size: int = 1 <
         ttl=tbl.column("ttl").to_numpy(zero_copy_only=False).astype(np.int64, copy=False),
         key_vocab=key_vocab,
     )
+
+
+def read_trace(path: str | Path, limit: int | None = None, block_size: int = 1 << 26) -> Trace:
+    """Read a trace shard (plain CSV or .zst) into a `Trace`.
+
+    With `limit`, parsing stops as soon as that many rows are read, so a 93 GB shard
+    costs a prefix instead of its whole decompressed size.
+    """
+    read_opts = pacsv.ReadOptions(column_names=COLUMNS, block_size=block_size)
+    parse_opts = pacsv.ParseOptions(delimiter=",")
+    batches: list[pa.RecordBatch] = []
+    rows = 0
+    with pacsv.open_csv(open_stream(path), read_options=read_opts, convert_options=_CONVERT,
+                        parse_options=parse_opts) as reader:
+        for batch in reader:
+            if limit is not None and rows + batch.num_rows >= limit:
+                batches.append(batch.slice(0, limit - rows))
+                break
+            batches.append(batch)
+            rows += batch.num_rows
+    tbl = pa.Table.from_batches(batches)
+    return trace_from_table(tbl)
 
 
 def summary(t: Trace) -> dict:

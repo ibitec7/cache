@@ -144,10 +144,14 @@ class HazardModel:
         self.split_n = n_req
         tr, va, _te = _split_rows(rows, n_req, train, valid)
 
-        X = np.column_stack([rows["X"], rows["bin"]]).astype(np.float32)
+        names = self.feature_names + ["hazard_step"]
+        # One allocation for the design matrix. `column_stack` followed by
+        # `.astype(float32)` made two copies of a 20M x 13 block, about 2 GB.
+        X = np.empty((rows["X"].shape[0], len(names)), dtype=np.float32)
+        X[:, :-1] = rows["X"]
+        X[:, -1] = rows["bin"]
         y = np.asarray(rows["y"], dtype=np.float32)
         w = np.asarray(rows["w"], dtype=np.float32)
-        names = self.feature_names + ["hazard_step"]
 
         dtrain = lgb.Dataset(X[tr], label=y[tr], weight=w[tr], feature_name=names)
         dvalid = lgb.Dataset(X[va], label=y[va], weight=w[va], reference=dtrain)

@@ -229,7 +229,44 @@ with FetcherSession(impersonate="chrome") as s:
 rows = page.css("table.results tr")
 ```
 
-## 9. Known blocker: libcachesim 0.3.5 pybind layer
+## 9. Sharded parquet store
+
+The 93 GB shard is one zstd CSV. It expands to 608 GiB and holds 13,426,570,607
+requests over 554,161 s, 24,229 requests per second (the row count and the published
+stat table agree, see the 2026-11-10T19:25Z worklog entry). It cannot be labelled in
+one process: the current Fenwick pass allocates about 50 bytes per request.
+
+`mrc.data.store` cuts the shard into fixed zstd parquet parts and reads a request
+window by row group. The window is the unit of work, so the whole shard becomes a
+sequence of independent 5M-request runs with flat memory.
+
+| Property | Measured |
+|---|---|
+| Part | 5,000,000 requests, 5 row groups of 1,000,000 |
+| Encoding | zstd level 3; `key` and `operation` dictionary encoded |
+| Size | 42.0 MB per 5M-request part, 8.4 bytes per request |
+| Write | 6.1 s for 5M requests; 20.1 s for 20M requests, 4.1 GiB peak RSS |
+| Read | 0.91 s for a 5M-request window; 0.14 s for 1M requests |
+| Projected full shard | 112 GB on disk, 2,685 windows, about 3.8 h to write |
+
+The store is additive to the frozen npz schema in section 5: labels, features and
+truth stay npz, and only the raw trace gains a second reader. `mrc store F --out D`
+writes a store; `mrc train NAME --store D --start N --window M` runs one window
+from it, and `--no-keep-cache` drops that window's label, feature and truth arrays
+after the metrics are written.
+
+A window has its own key vocabulary, so key codes are block-local. Every quantity
+the pipeline consumes is a function of key equality inside the window, so the
+labels do not change. Gate: the 5M labels built from the store are bit-identical to
+the labels built from the CSV prefix, and their npz sha256 both equal
+`eb09679ff3b19d24aa3b7e22ca6aa2d95433607c25436691cce0ff1a34e46d8d`.
+
+What the store does not do: it does not make one exact pass over all 13.4 billion
+requests possible. Exact reuse distance needs a key table for the whole window, and
+a window larger than memory still fails. Cross-shard reuse is therefore outside the
+window by construction, exactly like the 5M prefix protocol.
+
+## 10. Known blocker: libcachesim 0.3.5 pybind layer
 
 Observed 2026-11-10, python 3.13, `libcachesim==0.3.5` wheel (manylinux):
 
@@ -273,7 +310,7 @@ numba LRU replay, cross-checked against the naive `OrderedDict` reference. The
 bug is fixed; `make test` must be extended with a version check before it is trusted
 again.
 
-## 10. Sources
+## 11. Sources
 
 - Dataset repository and format: <https://github.com/twitter/cache-trace> (fetched 2026-11-10).
 - Mirror index and file sizes: <https://ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/open_source/> (fetched 2026-11-10).

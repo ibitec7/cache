@@ -40,6 +40,24 @@ def inspect(path: str, limit: int | None) -> None:
 
 @main.command()
 @click.argument("path", type=click.Path(exists=True))
+@click.option("--out", type=click.Path(), required=True)
+@click.option("--limit", type=int, default=None)
+@click.option("--rows-per-part", type=int, default=5_000_000)
+@click.option("--row-group", type=int, default=1_000_000)
+def store(path: str, out: str, limit: int | None, rows_per_part: int,
+          row_group: int) -> None:
+    """Convert a CSV shard into zstd parquet parts and a manifest."""
+    from mrc.data.store import write_store
+
+    meta = write_store(path, out, limit=limit, rows_per_part=rows_per_part,
+                       row_group_rows=row_group)
+    mb = sum(p["bytes"] for p in meta["parts"]) / 1e6
+    click.echo(f"wrote {out}: {meta['rows']} requests in {len(meta['parts'])} parts, "
+               f"{mb:.1f} MB")
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True))
 @click.option("--limit", type=int, default=None)
 @click.option("--out", type=click.Path(), required=True)
 def reuse(path: str, limit: int | None, out: str) -> None:
@@ -114,23 +132,40 @@ def truth(cluster: str, bins: int) -> None:
 @main.command()
 @click.argument("cluster")
 @click.option("--source", type=str, default=None)
+@click.option("--store", type=click.Path(exists=True, file_okay=False), default=None,
+              help="parquet store root; run one request window from it")
+@click.option("--start", type=int, default=0, help="first request index in the store")
+@click.option("--window", type=int, default=5_000_000,
+              help="requests in the window (default: 5M, clipped to the store)")
 @click.option("--limit", type=int, default=LABEL_REQUESTS)
 @click.option("--rounds", type=int, default=400)
 @click.option("--bins", type=int, default=N_BINS)
 @click.option("--rows", type=int, default=20_000_000)
 @click.option("--tuned/--no-tuned", default=False, help="use the best Optuna trial")
 @click.option("--mlflow/--no-mlflow", default=True)
-def train(cluster: str, source: str | None, limit: int, rounds: int, bins: int,
-          rows: int, tuned: bool, mlflow: bool) -> None:
-    """Run labels, truth, features, fit and metrics for one cluster."""
+@click.option("--keep-cache/--no-keep-cache", default=True,
+              help="keep the per-window label, feature and truth arrays")
+def train(cluster: str, source: str | None, store: str | None, start: int,
+          window: int | None, limit: int, rounds: int, bins: int,
+          rows: int, tuned: bool, mlflow: bool, keep_cache: bool) -> None:
+    """Run labels, truth, features, fit and metrics for one cluster or store window."""
+    from mrc.data.store import StoreShard
     from mrc.pipeline import run_one
 
+    if store and source:
+        raise click.UsageError("pass either --source or --store, not both")
+    run_limit: int | None = limit
+    if store:
+        source_obj: str | StoreShard = StoreShard(store, start, window)
+        run_limit = None
+    else:
+        source_obj = source or default_source(cluster)
     params = None
     if tuned:
         params = best_params(cluster)
-    payload = run_one(cluster, source or default_source(cluster), limit=limit,
+    payload = run_one(cluster, source_obj, limit=run_limit,
                       params=params, num_boost_round=rounds, nbins=bins,
-                      row_budget=rows, with_mlflow=mlflow)
+                      row_budget=rows, with_mlflow=mlflow, keep_cache=keep_cache)
     for block in ("valid", "test"):
         for name, metrics in payload["metrics"][block].items():
             click.echo(f"{block:5s} {name:5s} mae={metrics['mae']:.5f} "

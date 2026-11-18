@@ -5,7 +5,7 @@ numeric or boolean, so `np.load(..., allow_pickle=False)` always works. Array eq
 reproducibility invariant; file bytes are not, because `np.savez_compressed` stamps zip entries with
 the wall clock.
 
-Input contract: a trace shard readable by `mrc.data.trace.read_trace` (plain CSV or `.zst`).
+Input contract: a trace shard readable by `mrc.data.trace.read_trace` (plain CSV or `.zst`), or an in-memory `Trace` from a parquet store window (`mrc.data.store`).
 Output contract: `LABEL_KEYS` plus `REQUEST_KEYS` plus `n_keys`, and a `<stem>.manifest.json` beside
 the npz carrying sha256, row and key counts, the cache key, the event counts, the git sha and the
 creation time.
@@ -23,7 +23,7 @@ import numpy as np
 
 from mrc.config import CAP_QUANTILE, REPO
 from mrc.data.reuse import compute_reuse
-from mrc.data.trace import read_trace
+from mrc.data.trace import Trace, read_trace
 
 LABEL_KEYS: tuple[str, ...] = (
     "R", "B", "gap", "freq", "gamma", "rtilde", "eligible", "delta", "compulsory",
@@ -56,13 +56,8 @@ def _key_codes(vocab: np.ndarray, keys: np.ndarray) -> tuple[np.ndarray, np.ndar
     return ns_table[idx], len_table[idx]
 
 
-def build_labels(
-    path: str | Path,
-    limit: int | None = None,
-    cap: int = CAP_QUANTILE,
-) -> dict[str, np.ndarray]:
-    """Read a shard prefix and return label columns plus the request columns they join to."""
-    trace = read_trace(path, limit=limit)
+def labels_from_trace(trace: Trace, cap: int = CAP_QUANTILE) -> dict[str, np.ndarray]:
+    """Return label columns plus the request columns they join to, from an in-memory trace."""
     derived = compute_reuse(trace.key, trace.obj_size, trace.n_keys, cap=cap)
     key_ns, key_len = _key_codes(trace.key_vocab, trace.key)
     geometry = {"key_ns": key_ns, "key_len": key_len}
@@ -73,6 +68,15 @@ def build_labels(
     labels.update({name: getattr(trace, name) for name in REQUEST_KEYS})
     labels["n_keys"] = np.array([trace.n_keys], dtype=np.int64)
     return labels
+
+
+def build_labels(
+    path: str | Path,
+    limit: int | None = None,
+    cap: int = CAP_QUANTILE,
+) -> dict[str, np.ndarray]:
+    """Read a shard prefix and return label columns plus the request columns they join to."""
+    return labels_from_trace(read_trace(path, limit=limit), cap=cap)
 
 
 def _sha256(path: Path) -> str:

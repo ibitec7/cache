@@ -30,7 +30,8 @@ from mrc.config import (
     REPO,
     SEED,
 )
-from mrc.data.labels import build_labels, load_labels, save_labels
+from mrc.data.labels import build_labels, labels_from_trace, load_labels, save_labels
+from mrc.data.store import StoreShard
 from mrc.eval.metrics import curve_metrics
 from mrc.eval.mrc import mrc_curve
 from mrc.features import FEATURE_VERSION, build_features
@@ -89,14 +90,29 @@ def labels_are_cached(path: Path, source: str, limit: int | None, cap: int) -> b
             and meta.get("cap") == cap)
 
 
-def ensure_labels(cluster: str, source: str | Path, limit: int | None = LABEL_REQUESTS,
+Source = str | Path | StoreShard
+
+
+def source_key(source: Source) -> str:
+    """Stable cache key for a CSV path or a store shard."""
+    return source.key() if isinstance(source, StoreShard) else str(source)
+
+
+def ensure_labels(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
                   cap: int = CAP_QUANTILE) -> dict:
-    """Load the label cache, or build and save it. Returns the label dict."""
+    """Load the label cache, or build and save it. Returns the label dict.
+
+    A `StoreShard` is read as a request window and labelled on its own, so the
+    window is the unit of work: peak memory is set by the window, not by the shard
+    the window came from.
+    """
     out = labels_path(cluster)
-    if labels_are_cached(out, str(source), limit, cap):
+    key = source_key(source)
+    if labels_are_cached(out, key, limit, cap):
         return load_labels(out)
-    labels = build_labels(source, limit=limit, cap=cap)
-    save_labels(out, labels, source=source, limit=limit, cap=cap)
+    labels = (labels_from_trace(source.read(), cap=cap) if isinstance(source, StoreShard)
+              else build_labels(source, limit=limit, cap=cap))
+    save_labels(out, labels, source=key, limit=limit, cap=cap)
     return labels
 
 
@@ -346,16 +362,20 @@ def _log_mlflow(cluster: str, params: dict, metrics: dict, artifacts: list[Path]
                 mlflow.log_artifact(str(path))
 
 
-def run_one(cluster: str, source: str | Path, limit: int | None = LABEL_REQUESTS,
+def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
             params: dict | None = None, num_boost_round: int = 400,
             nbins: int = N_BINS, row_budget: int = ROW_BUDGET,
-            with_mlflow: bool = True) -> dict:
+            with_mlflow: bool = True, keep_cache: bool = True) -> dict:
     """Run every stage for one cluster and write the metrics artefact."""
     labels = ensure_labels(cluster, source, limit=limit)
     X, names, cat_idx = ensure_features(cluster, labels)
     edges = cluster_edges(labels, nbins)
     truth = ensure_truth(cluster, labels, edges)
     caps, _truth_curve = truth
+    # Labels carry the request columns and the censoring intermediates as well as the four
+    # arrays the fit reads. Dropping the rest before the risk set is built frees about
+    # 375 MB at 5M requests (R, eligible, freq and n_keys are 85 MB of a 460 MB dict).
+    labels = {name: labels[name] for name in ("R", "eligible", "freq", "n_keys")}
     prep = prepare(cluster, labels, X, names, truth, nbins=nbins, row_budget=row_budget)
     model = fit(prep, params, num_boost_round=num_boost_round)
 
@@ -403,7 +423,7 @@ def run_one(cluster: str, source: str | Path, limit: int | None = LABEL_REQUESTS
         "km": provisioning(caps, curves["truth_test"], curves["km_test"],
                            prep.p_compulsory["test"]),
     }
-    meta = {"cluster": cluster, "source": str(source), "limit": limit,
+    meta = {"cluster": cluster, "source": source_key(source), "limit": limit,
             "params": dict(params or DEFAULT_PARAMS), "num_boost_round": num_boost_round,
             "features": names, "cat_idx": cat_idx, **prep.meta}
     payload = {"meta": meta, "capacities": caps.tolist(), "metrics": metrics,
@@ -426,4 +446,10 @@ def run_one(cluster: str, source: str | Path, limit: int | None = LABEL_REQUESTS
 
     if with_mlflow:
         _log_mlflow(cluster, dict(params or DEFAULT_PARAMS), metrics, [out, curve_path], prep)
+    if not keep_cache:
+        # A window sweep keeps the metrics and drops the per-window arrays: labels and
+        # features are 165 MB per 5M-request window, which is 443 GB over the full shard.
+        for path in (labels_path(cluster), features_path(cluster), truth_path(cluster)):
+            path.unlink(missing_ok=True)
+            path.with_name(path.stem + ".manifest.json").unlink(missing_ok=True)
     return payload

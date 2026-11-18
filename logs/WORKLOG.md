@@ -1,3 +1,41 @@
+## 2026-11-18T09:36Z · perf · cluster52 becomes 2,685 parquet windows
+
+Commit: this entry's commit.
+
+The shard holds 13,426,570,607 requests (2026-11-10T19:25Z entry) and expands to
+608 GiB. It cannot be labelled in one process. `mrc.data.store` cuts the zstd CSV
+into 5M-request zstd parquet parts and reads a window by row group, so the 5M
+protocol is the unit of work for the whole shard.
+
+| Property | Measured |
+|---|---|
+| Conversion | 20M requests in 20.1 s, 4.1 GiB peak, 8.4 bytes per request |
+| Part | 5M requests, 5 row groups of 1M, 42.0 MB |
+| Read | 5M window 0.91 s; 1M 0.14 s |
+| Full shard | 112 GB, 2,685 windows, 3.8 h projected conversion |
+| Window run | 204.2 s, 5.65 GB peak, 4 threads |
+
+Exactness: labels from the store are bit-identical to the CSV prefix labels and
+carry the same npz sha256 (`eb0967...`). A window crossing a part boundary matches
+the CSV on every column once keys are decoded. Key codes are block-local and only
+equality matters downstream.
+
+Memory: the peak is data preparation, not the fit. The reader fills preallocated
+arrays per row group instead of a materialised table; the grouped design matrix is
+one allocation; the fit drops the label columns it no longer reads (375 MB at 5M).
+Measured peak 5.65 GB against 5.77 GB for the first store run; the useful property
+is that it does not grow with the shard.
+
+CUDA: LightGBM 4.7.0 built with CUDA 12.4 in 135 s (gcc-13, NCCL from pip); recipe
+in `docs/LIGHTGBM_CUDA.md`. Real 20M x 13 fit: CPU 99.0 s / 219 rounds, CUDA 45.3 s
+/ 206 rounds, 2.19x, peak VRAM 2.19 GiB against a 407 MiB desktop baseline. Two CUDA
+repeats agree to 4.5e-08, not bitwise; CPU against CUDA predictions differ by up to
+0.032. Exact-first gates stay on the CPU wheel.
+
+Not done: one exact pass over all 13.4 billion requests. Cross-window reuse is
+outside the window by construction. Keeping every window's labels and features
+would take 443 GB, so a sweep passes `--no-keep-cache`.
+
 ## 2026-11-10T19:25:41Z · data · cluster52 span, op mix and TTL semantics resolved
 
 **Tasked:** resolve whether the kqps figure and the row count agree, and pin the TTL

@@ -19,11 +19,12 @@ it is a distribution rather than a point estimate.
 | Layer | Implementation | Contract |
 |---|---|---|
 | Trace ingest | pyarrow CSV/zstd reader | `timestamp,key,key_size,value_size,client,op,ttl` |
+| Trace store | zstd parquet shards, 5M requests per part, 8.4 bytes per request | request window by row group, manifest with part ranges |
 | Reuse distance | Fenwick tree over last-occurrence positions, numba kernel, `O(n log n)` | distinct-key distance `R`, distinct-byte distance `B` |
 | Ground truth | exact LRU replay plus naive reference for tests | `MRC(C) = P(R >= C)` unit sizes, `P(B + s >= C)` bytes |
 | Model | LightGBM discrete-time hazard over the risk set | `S_R(k|x) = prod (1 - h_b(x))`, `MRC(C) = p_comp + (1-p_comp) S(bin(C-1))` |
 | Tuning | Optuna (TPE), one SQLite study | objective: MRC error against ground truth |
-| Telemetry | MLflow (params, metrics, figures), Optuna dashboard, DuckDB over parquet | all local, no cloud |
+| Telemetry | MLflow (params, metrics, figures), Optuna dashboard | all local, no cloud |
 | Output | matplotlib with a frozen style, LaTeX report, Beamer deck, mkdocs wiki | see `AGENTS.md` |
 
 ## Quickstart
@@ -37,6 +38,13 @@ make reuse F=data/raw/cache-trace/samples/2020Mar/cluster045 OUT=data/interim/c4
 make mrc R=data/interim/c45.npz
 make fit R=data/interim/c45.npz
 make test
+```
+
+A full shard is processed as fixed request windows, each with the same memory ceiling:
+
+```bash
+make store F=data/raw/traces/cluster52.sort.zst D=data/processed/store52
+make shard C=s52_00000 S=data/processed/store52 I=0 N=5000000
 ```
 
 Telemetry: `make ui` starts MLflow on :5000 and the Optuna dashboard on :8080.
@@ -66,6 +74,7 @@ sampling noise of the truth block (`scripts/noise_floor.py`, `report/tables/nois
 | `docs/PROJECT_PLAN.md` | problem, architecture, parallel build strategy |
 | `docs/STATISTICAL_SKELETON.md` | full statistical specification, every symbol defined |
 | `docs/DATA.md` | acquisition, parsing, sampling, scraping, known blockers |
+| `docs/LIGHTGBM_CUDA.md` | CUDA build recipe, GPU measurements, reproducibility limits |
 | `docs/MILESTONES.md` | M0 to M4 with verifiable exit gates |
 | `docs/RISKS.md` | risk register |
 | `docs/LITERATURE.md` | verified sources with method of verification |
@@ -77,7 +86,6 @@ sampling noise of the truth block (`scripts/noise_floor.py`, `report/tables/nois
 ```
 src/mrc/{data,models,eval,plots}   library
 tests/                             exact-first gates
-configs/                           data, model, search configs
 scripts/fetch_traces.sh            bounded, resumable acquisition
 report/ slides/ wiki/ docs/        outputs
 data/ artifacts/                   gitignored payloads

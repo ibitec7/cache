@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PY := env -u PYTHONPATH uv run
 export MLFLOW_TRACKING_URI := sqlite:///$(CURDIR)/artifacts/mlflow/mlflow.db
 
-.PHONY: help sync data-samples data-t1 data-t2 inspect reuse mrc fit labels features truth train tune interpret analysis plots report slides wiki ui smoke test lint check
+.PHONY: help sync data-samples data-t1 data-t2 inspect store shard reuse mrc fit labels features truth train tune interpret analysis plots report slides wiki ui smoke test lint check
 
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/'
@@ -22,10 +22,16 @@ data-t2:  ## T2: cluster52 full shard (93.09 GB, resumable, 8 parallel ranges)
 inspect:  ## summarise a trace file: make inspect F=data/raw/cache-trace/samples/2020Mar/cluster045
 	$(PY) python -m mrc.cli inspect "$(F)"
 
-reuse:  ## compute reuse distance for a trace: make reuse F=... OUT=data/interim/x.parquet
+store:  ## convert a shard to zstd parquet: make store F=... D=data/processed/store52
+	$(PY) python -m mrc.cli store "$(F)" --out "$(D)"
+
+shard:  ## run one store window: make shard C=s52_0 S=data/processed/store52 I=0 N=5000000
+	$(PY) python -m mrc.cli train "$(C)" --store "$(S)" --start "$(I)" --window "$(N)" --no-keep-cache
+
+reuse:  ## compute reuse distance for a trace: make reuse F=... OUT=data/interim/x.npz
 	$(PY) python -m mrc.cli reuse "$(F)" --out "$(OUT)"
 
-mrc:  ## empirical MRC curve: make mrc R=data/interim/x.parquet
+mrc:  ## empirical MRC curve: make mrc R=data/interim/x.npz
 	$(PY) python -m mrc.cli mrc "$(R)"
 
 fit:  ## fit the hazard model under MLflow: make fit R=data/interim/x.parquet
