@@ -691,6 +691,7 @@ def run_one(cluster: str, source: Source, limit: int | None = LABEL_REQUESTS,
             "params": dict(params or DEFAULT_PARAMS), "num_boost_round": num_boost_round,
             "features": names, "cat_idx": cat_idx, **prep.meta}
     payload = {"meta": meta, "capacities": caps.tolist(), "metrics": metrics,
+               "edges": [int(e) for e in edges],
                "curves": {k: v.tolist() for k, v in curves.items()}}
 
     start = time.perf_counter()

@@ -197,7 +197,8 @@ def main() -> None:
 
     grid = None
     if args.edges_from:
-        grid = np.asarray(json.loads(Path(args.edges_from).read_text())["meta"]["edges"],
+        src = json.loads(Path(args.edges_from).read_text())
+        grid = np.asarray(src["edges"] if "edges" in src else src["meta"]["edges"],
                           dtype=np.int64)
     prep = prepare_windows(args.cluster, fit_parts(), names, nbins=N_BINS,
                            row_budget=args.row_budget, n_train_windows=len(train_plan),
