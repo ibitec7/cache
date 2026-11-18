@@ -90,7 +90,7 @@ CONFIGS: dict[str, dict] = {
 
 
 def _fit(rows: dict, names: list[str], params: dict, rounds: int, threads: int,
-         train: float, valid: float, n_requests: int) -> tuple[lgb.Booster, float, float]:
+         train: float, valid: float) -> tuple[lgb.Booster, float, float]:
     """Same construction as `HazardModel.fit_grouped`, timed end to end."""
     started = time.perf_counter()
     full = names + ["hazard_step"]
@@ -100,13 +100,14 @@ def _fit(rows: dict, names: list[str], params: dict, rounds: int, threads: int,
     y = np.asarray(rows["y"], dtype=np.float32)
     w = np.asarray(rows["w"], dtype=np.float32)
     orig = rows["eligible_index"][rows["request_index"]]
-    # The split must be taken over the requests the fixture actually holds. `meta`
-    # reports the window's request count, and when the row budget binds before the
-    # window ends the rows stop early, so a meta-sized split would put every row in
-    # train and leave the validation block empty (early stopping never fires).
-    n_present = int(rows["request_index"].max()) + 1
-    tr = orig < int(n_present * train)
-    va = (orig >= int(n_present * train)) & (orig < int(n_present * valid))
+    # The split is over the original request index of the requests these rows
+    # actually hold, which is the rule `fit_grouped` uses when it is not given
+    # `n_requests` (max original index + 1). Splitting on the window's request
+    # count instead puts every row in train whenever the row budget stopped the
+    # rows early, and an empty validation block silently disables early stopping.
+    n_req = int(orig.max()) + 1
+    tr = orig < int(n_req * train)
+    va = (orig >= int(n_req * train)) & (orig < int(n_req * valid))
     dtrain = lgb.Dataset(X[tr], label=y[tr], weight=w[tr], feature_name=full)
     dvalid = lgb.Dataset(X[va], label=y[va], weight=w[va], reference=dtrain)
     del X, y, w
@@ -146,7 +147,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         params.update(CONFIGS[name])
         params.pop("objective", None)
         booster, fit_s, logloss = _fit(rows, meta["features"], params, args.rounds,
-                                       args.threads, 0.85, 1.0, meta["n_requests"])
+                                       args.threads, 0.85, 1.0)
         pred, pred_s = _predict(booster, ev["X_eval"], ev["capacities"], ev["edges"],
                                meta["p_compulsory_test"], args.threads)
         mae = curve_metrics(pred, ev["truth_test"], ev["capacities"])["mae"]

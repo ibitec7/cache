@@ -25,7 +25,9 @@ Also fixed, both found by the benchmark workers:
 - `scripts/bench_fit.py` split on `meta["n_requests"]`, the window's request count,
   while the fixture's rows only span the requests the row budget reached. With a
   window-sized split every row lands in train and the validation block is empty, so
-  early stopping never fires. The split now uses the requests the fixture holds.
+  early stopping never fires. It now uses `max(orig) + 1`, the same rule
+  `fit_grouped` applies when `n_requests` is not given, so the fixture and the
+  shipped path cannot disagree about where the split falls.
 - `scripts/bench_fit.py::_predict` was a line-for-line copy of the shipped predict
   path, so timing it measured the copy. It now calls `HazardModel.predict_mrc`.
 
