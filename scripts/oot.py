@@ -149,6 +149,9 @@ def main() -> None:
                     help="run an Optuna study on the validation windows before fitting")
     ap.add_argument("--study-storage", default=None,
                     help="Optuna storage URL; default is the configured sqlite file")
+    ap.add_argument("--edges-from", default=None,
+                    help="reuse the bin grid recorded in this run's json instead of "
+                         "deriving it from the strided train period")
     ap.add_argument("--save-booster", default=None,
                     help="write the fitted booster here (probes and reuse)")
     ap.add_argument("--out", required=True)
@@ -192,10 +195,15 @@ def main() -> None:
             print(f"  {block} window [{start:,}, {stop:,})", flush=True)
             yield block, labels, x
 
+    grid = None
+    if args.edges_from:
+        grid = np.asarray(json.loads(Path(args.edges_from).read_text())["meta"]["edges"],
+                          dtype=np.int64)
     prep = prepare_windows(args.cluster, fit_parts(), names, nbins=N_BINS,
                            row_budget=args.row_budget, n_train_windows=len(train_plan),
                            keep_scored="valid" if args.trials else None,
-                           scored_per_window=args.score_sample or 200_000)
+                           scored_per_window=args.score_sample or 200_000,
+                           edges=grid)
     print(f"fit rows {prep.rows['n_rows']:,} from {prep.n_fit_requests:,} pooled requests, "
           f"edges top {int(prep.edges[-1]):,}, {len(prep.scored)} scored valid windows")
 

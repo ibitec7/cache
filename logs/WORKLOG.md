@@ -1,3 +1,43 @@
+## 2026-11-19T04:40Z · measure · what a window stride costs, and it is not the fit
+
+Three runs on cluster10 (5M-request windows, 200 rounds, 200k scoring sample), all
+recorded in `~/.hermes/cache/scratch/stride{1,4,4_pinned}.json`:
+
+| run | windows train/valid/test | grid top | fit rows | fit | total | test MAE |
+|---|---|---|---|---|---|---|
+| stride 1 | 17/5/7 | 52 | 15,313,652 | 194.7 s | 324.9 s | 0.008546, 0.000964 (`104M`, `124M`) |
+| stride 4 | 5/2/2 | 20 | 13,527,856 | 94.7 s | 133.1 s | 0.016248, 0.003119 |
+| stride 4, grid pinned | 5/2/2 | 52 | 13,539,098 | 92.7 s | 133.1 s | 0.011128, 0.002144 |
+
+Matched on the two test windows present in every arm, relative to stride 1: stride 4
+is **2.04x** worse, and **1.40x** worse once the bin grid is held at the full pass's
+52 bins. So of the accuracy lost, roughly half is real (fewer windows, same request
+count) and half was the grid coarsening because the train period shrank. The valid
+block behaves the same way, 2.42x then 1.67x.
+
+That confound is a defect in the screening design, not just in the experiment: a
+strided run derives its grid from a shrunk train period, so it tunes hyper-parameters
+against a coarser hazard discretisation than the model it is choosing them for.
+`prepare_windows(edges=...)` now takes the grid explicitly, `edges_from` records
+`"given"`, and `scripts/oot.py --edges-from <run.json>` reuses another run's grid.
+
+What stride does **not** buy: the study. `prepare_windows` streams once and
+`row_budget` caps the fit, so a 12-trial study at stride 1 is 2h18m of which the
+streaming is 6 minutes. Stride 4 cuts that study to 1h00m by making each fit cheaper
+(13.5M rows against 15.3M) and by removing windows from the pooled draw, not by
+removing streaming. The real levers on study cost are `--rounds` and `--row-budget`.
+
+Plan cost from these units (`~/.hermes/cache/scratch/cost_plan.py`), OOT + 12-trial
+study + LOOC over the three training clusters plus the held-out trace scored once:
+
+| | local (12 cores) | 128 vCPU, /16 | 128 vCPU, realistic /8 |
+|---|---|---|---|
+| stride 1 | 5h24m | 20m19s | 40m37s |
+| stride 4 | 3h43m | 13m59s | 27m57s |
+
+The held-out trace is 1h56m of the stride-1 total and does not stride: 673 windows
+scored once for the report.
+
 ### Consistency follow-up on the same commit
 
 Two studies per cluster now exist (`mrc-<cluster>` on one contiguous array,

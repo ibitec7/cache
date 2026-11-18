@@ -354,7 +354,8 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
                     seed: int = SEED, pool_factor: int = 6,
                     n_train_windows: int | None = None,
                     keep_scored: str | None = None,
-                    scored_per_window: int = 200_000) -> WindowPrepared:
+                    scored_per_window: int = 200_000,
+                    edges: np.ndarray | None = None) -> WindowPrepared:
     """Fit-ready reduction of a time-ordered sequence of windows.
 
     Each part is `(block, labels, X)` with `block` in train / valid / test, and the
@@ -368,6 +369,11 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
     are a uniform sample of the train period, sized by `row_budget`, with a pool
     `pool_factor` times larger so the final draw is uniform in requests rather
     than in bins.
+
+    `edges` overrides that grid. Pass the grid of the full pass when screening with
+    a window stride: striding shrinks the train period, which shrinks the p99.9
+    distance, which coarsens the grid, so a strided run otherwise tunes against a
+    different hazard discretisation than the model it is choosing parameters for.
 
     `keep_scored` names a block (in practice `valid`) whose windows are retained as
     `ScoredWindow`s: a per-window histogram plus a uniform sample of up to
@@ -418,8 +424,13 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
     if "train" not in hists:
         raise ValueError("no train window was supplied; the bin grid comes from the train period")
 
-    top = int(max(hists["train"].percentile(99.9), 3))
-    edges = bin_edges(top, nbins)
+    if edges is None:
+        top = int(max(hists["train"].percentile(99.9), 3))
+        edges = bin_edges(top, nbins)
+        edges_from = "train_period"
+    else:
+        edges = np.asarray(edges, dtype=np.int64)
+        edges_from = "given"
     caps = capacity_grid_from_edges(edges, N_CAPACITIES)
     truth_blocks = {block: h.mrc(caps) for block, h in hists.items()}
     p_comp = {block: 1.0 - counted[block][1] / counted[block][0] for block in hists}
@@ -447,7 +458,7 @@ def prepare_windows(cluster: str, parts: Iterable[WindowPart], names: list[str],
               "grouped_rows": int(rows["n_rows"]), "row_budget": int(row_budget),
               "pool_requests": int(rt_all.size), "fit_requests": int(rt_capped.size),
               "per_request_rows": per_request, "edges_last": int(edges[-1]),
-              "b_M_minus_1": int(edges[-2]), "edges_from": "train_period",
+              "b_M_minus_1": int(edges[-2]), "edges_from": edges_from,
               "stop_split": [0.85, 1.0], "target": "backward_reuse_distance"},
     )
 

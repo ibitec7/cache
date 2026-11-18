@@ -148,6 +148,24 @@ def test_windows_objective_runs_and_keeps_exact_truth() -> None:
     assert attrs["n_requests_scored"] == [2_000, 2_000]
 
 
+def test_given_edges_are_used_verbatim() -> None:
+    """A screening run can pin the full pass's grid instead of re-deriving a coarser one."""
+    from mrc.pipeline import prepare_windows
+
+    rng = np.random.default_rng(7)
+    names = ["f0", "f1"]
+    grid = np.array([0, 1, 2, 4, 8, 16, 32, 64], dtype=np.int64)
+    prep = prepare_windows("toy", iter(_toy_parts(rng, names, 2_000)), names, nbins=8,
+                           row_budget=5_000, n_train_windows=2, edges=grid)
+    assert np.array_equal(prep.edges, grid)
+    assert prep.meta["edges_from"] == "given"
+    assert prep.meta["edges_last"] == 64
+    derived = prepare_windows("toy", iter(_toy_parts(rng, names, 2_000)), names, nbins=8,
+                              row_budget=5_000, n_train_windows=2)
+    assert derived.meta["edges_from"] == "train_period"
+    assert not np.array_equal(derived.edges, grid)
+
+
 def test_objective_without_scored_windows_refuses() -> None:
     from mrc.pipeline import prepare_windows
     from mrc.tuning.search import make_windows_objective
