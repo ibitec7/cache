@@ -208,7 +208,12 @@ def fit_from_windows(store: str | Path, cluster: str, windows: list[tuple[str, i
               f"best valid mae {study.best_value:.6f}, params "
               f"{json.dumps(study.best_params, sort_keys=True)}", flush=True)
 
+    t_fit = time.perf_counter()
     model = fit(prep, params, num_boost_round=rounds)
+    # Fit-only seconds, the same quantity `fit_pooled` records: the cumulative
+    # wall time in `oot.py`'s meta includes streaming and the study, so a table
+    # that shows both families must not read that one as "fit".
+    prep.meta["seconds"] = round(time.perf_counter() - t_fit, 1)
     train_km = km_from_hist(prep.histograms["train"], prep.edges, prep.capacities,
                             prep.p_compulsory["train"])
     return model, prep, train_km, params

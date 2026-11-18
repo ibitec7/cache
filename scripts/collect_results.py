@@ -38,7 +38,9 @@ def load(root: Path) -> list[dict]:
                 "beats_km": s["gbdt_beats_km_windows"],
                 "train_windows": meta.get("prep", {}).get("pool_requests"),
                 "edges_top": meta.get("prep", {}).get("edges_last"),
-                "fit_s": meta.get("fit_seconds"),
+                "fit_s": (meta.get("prep", {}).get("seconds")
+                          if meta.get("prep", {}).get("seconds") is not None
+                          else meta.get("fit_seconds")),
                 "trials": meta.get("trials"),
                 "stores": [s2["name"] for s2 in meta.get("stores", [])],
             })
