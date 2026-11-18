@@ -66,6 +66,7 @@ nav:
   - Ground truth MRC: ground-truth.md
   - Experiments: experiments.md
   - Results: results.md
+  - Generalization and handoff: generalization.md
   - Notation: notation.md
   - Papers:
       - papers/index.md

@@ -74,6 +74,7 @@ sampling noise of the truth block (`scripts/noise_floor.py`, `report/tables/nois
 | `docs/STATISTICAL_SKELETON.md` | full statistical specification, every symbol defined |
 | `docs/DATA.md` | acquisition, parsing, sampling, scraping, known blockers |
 | `docs/LIGHTGBM_CUDA.md` | CUDA build recipe, GPU measurements, reproducibility limits |
+| `HANDOFF.md` | data repos, CPU-farm commands, parquet optimization, generalization plan |
 | `docs/MILESTONES.md` | M0 to M4 with verifiable exit gates |
 | `docs/RISKS.md` | risk register |
 | `docs/LITERATURE.md` | verified sources with method of verification |
