@@ -1,9 +1,9 @@
-"""Build the technical blog: Mermaid charts, tables, and the assembled post.
+"""Build the technical blog: generated tables, placed figures, and the assembled post.
 
-Nothing in the post is typed by hand. Every table and every chart is generated here from
-`artifacts/`, so a number that moves in an artifact moves in the post, and a number that no
-artifact supports cannot appear at all. Structural diagrams live in `blog/src/post.md` as
-Mermaid source; only the data charts are generated.
+Nothing in the post is typed by hand. Every table is generated here from `artifacts/`, so a
+number that moves in an artifact moves in the post, and a number that no artifact supports
+cannot appear at all. Figures are rendered assets placed by name: `scripts/blog_diagrams.py`
+writes them and their manifest, and the prose refers to them as `{{FIG:name}}`.
 
 Input contract
 --------------
@@ -15,7 +15,8 @@ Reads:
     artifacts/loco/<cluster>/result.json         leave-one-cluster-out summary
     artifacts/retrain/<cluster>-<n>/result.json  retrain curve points
     data/processed/<cluster>/labels.npz          trace distribution statistics
-    blog/src/post.md                             prose with {{MER:x}} / {{TBL:x}} slots
+    blog/src/post.md                             prose with {{FIG:x}} / {{TBL:x}} slots
+    blog/diagrams/manifest.json                  rendered figures and their sizes
 
 Writes:
     blog/tables/<id>.md                          one markdown table per id
@@ -29,6 +30,7 @@ import glob
 import json
 import math
 import pathlib
+import re
 import statistics
 
 import numpy as np
@@ -98,118 +100,23 @@ def retrain_points(cluster: str) -> list[tuple[int, float, int]]:
     return sorted(pts, key=lambda t: t[2])
 
 
-# ---------------------------------------------------------------- mermaid charts
+# ---------------------------------------------------------------- figures
 #
-# Three data charts only. Everything structural is Mermaid source in the post itself,
-# because a hand-placed schematic drifts from the argument the moment the argument moves.
+# Figures are rendered assets, not inline Mermaid: the structural schematics come from
+# `pretty-mermaid` and the data charts from matplotlib, both via `scripts/blog_diagrams.py`,
+# which writes `blog/diagrams/manifest.json`. This module only places them, so a figure and the
+# table beside it cannot disagree about a number: both read the same artifacts.
 
-MERM_CONFIG = """---
-config:
-  theme: neutral
-  themeVariables:
-    fontFamily: Inter, system-ui, sans-serif
-    fontSize: 14px
-    primaryColor: '#ffffff'
-    primaryBorderColor: '#2d3142'
-    primaryTextColor: '#2d3142'
-    lineColor: '#8a91a0'
-    tertiaryColor: '#f7f7f5'
-    xyChart:
-      plotColorPalette: '#bf4520, #2d3142, #1f6f5c, #7a4b8f'
-  xyChart:
-    width: 760
-    height: 360
----"""
+MANIFEST = BLOG / "diagrams" / "manifest.json"
 
 
-def block(title: str, desc: str, body: str, kind: str) -> str:
-    """A fenced Mermaid block with front-matter theming and accessibility metadata."""
-    return ("```mermaid\n" + MERM_CONFIG + "\n" + body.strip() + "\n```")
-
-
-def chart_curves() -> str:
-    """Miss-ratio curves sampled at shared capacities.
-
-    Two of the four traces have a 24-point grid and one has a 12-point grid, so a single
-    chart needs a shared x. Each series is read at the nearest capacity its own grid
-    contains (a lookup, not an interpolation); beyond a trace's largest capacity the curve
-    is flat, so its last value is carried forward and the caption says so.
-    """
-    targets = (1, 2, 5, 10, 100, 1000, 10_000, 100_000, 1_000_000)
-    lines = []
-    for cluster in CLUSTERS:
-        d = curves(cluster)
-        caps = np.asarray(d["capacities"], dtype=float)
-        miss = np.asarray(d["truth_test"], dtype=float)
-        vals = []
-        for t in targets:
-            idx = int(np.argmin(np.abs(caps - t))) if caps.size else 0
-            vals.append(float(miss[idx]))
-        lines.append(f'    line "{cluster}" [' + ", ".join(f"{v:.3f}" for v in vals) + "]")
-    axis = ", ".join("1M" if t >= 1_000_000 else "100k" if t >= 100_000 else "10k" if t >= 10_000
-                     else "1k" if t >= 1000 else str(t) for t in targets)
-    body = (
-        "xychart-beta\n"
-        f'    accTitle: Measured miss-ratio curves\n'
-        f'    accDescr: Miss ratio against capacity for four production traces, sampled at shared '
-        f'capacities on a log-spaced axis.\n'
-        f'    title "Miss ratio against capacity"\n'
-        f"    x-axis [{axis}]\n"
-        '    y-axis "miss ratio" 0 --> 1.0\n'
-        + "\n".join(lines)
-    )
-    return block("Measured miss-ratio curves", "Miss ratio per capacity for four traces", body, "xy")
-
-
-def chart_ratio() -> str:
-    """Model error as a fraction of the Kaplan-Meier error, the readable form of Table 8/9."""
-    rows, labels = [], []
-    for cluster in CLUSTERS:
-        oot = load_json(ART / "oot" / cluster / "result.json")["summary"]["test"]
-        loco = load_json(ART / "loco" / cluster / "result.json")["summary"]["test"]
-        for name, s in (("OOT", oot), ("LOCO", loco)):
-            rows.append(round(float(s["mae_mean"]) / float(s["km_mae_mean"]), 3))
-            labels.append(f"{SHORT[cluster]}-{name}")
-    body = (
-        "xychart-beta\n"
-        f'    accTitle: Model error relative to the floor\n'
-        f'    accDescr: Mean absolute error of the model divided by the Kaplan-Meier error, '
-        f'per trace and protocol.\n'
-        f'    title "Model error as a fraction of Kaplan-Meier error (lower is better)"\n'
-        f"    x-axis [{', '.join(labels)}]\n"
-        "    y-axis \"model / Kaplan-Meier\" 0 --> 0.35\n"
-        f'    bar "model / KM" [{", ".join(f"{v:.3f}" for v in rows)}]\n'
-    )
-    return block("Model error relative to the floor", "Eight ratios", body, "bar")
-
-
-def chart_retrain() -> str:
-    """Mean test error against the number of pooled training windows, per trace."""
-    series = {}
-    for cluster in CLUSTERS[:3]:
-        pts = {}
-        for requests, mae, windows in retrain_points(cluster):
-            pts[windows] = mae * 1000.0
-        series[cluster] = pts
-    wins = sorted({w for v in series.values() for w in v})
-    lines = []
-    for cluster, pts in series.items():
-        vals = ", ".join(f"{pts[w]:.2f}" if w in pts else "0" for w in wins)
-        lines.append(f'    line "{SHORT[cluster]}" [{vals}]')
-    body = (
-        "xychart-beta\n"
-        f'    accTitle: Error against pooled history\n'
-        f'    accDescr: Mean test error in thousandths of miss ratio against the number of '
-        f'5M-request training windows pooled, with the fit row count held fixed.\n'
-        f'    title "Mean test error against pooled training windows"\n'
-        f"    x-axis [{', '.join(str(w) for w in wins)}]\n"
-        "    y-axis \"MAE x 1000\" 0 --> 20\n"
-        + "\n".join(lines)
-    )
-    return block("Error against pooled history", "Three traces", body, "xy")
-
-
-CHARTS = {"curves": chart_curves, "ratio": chart_ratio, "retrain": chart_retrain}
+def figure(name: str) -> str:
+    """Markdown image for one rendered figure, with its alt text name and pixel size."""
+    figures = load_json(MANIFEST)
+    if name not in figures:
+        raise SystemExit(f"figure {name!r} is not in the manifest; run scripts/blog_diagrams.py")
+    rec = figures[name]
+    return f"![{name} diagram]({rec['file']})"
 
 
 # ---------------------------------------------------------------- tables
@@ -438,18 +345,15 @@ def main() -> int:
         tables[name] = body
         print(f"table  blog/tables/{name}.md  {body.count(chr(10)) + 1} lines")
 
-    charts = {}
-    for name, builder in CHARTS.items():
-        charts[name] = builder()
-        fence = charts[name].count("```")
-        assert fence == 2, f"chart {name} has {fence} fences, expected 2"
-        print(f"chart  {{MER:{name}}}  {len(charts[name].splitlines())} lines")
-
     post = SRC.read_text()
-    for name, text in charts.items():
-        post = post.replace(f"{{{{MER:{name}}}}}", text)
     for name, body in tables.items():
         post = post.replace(f"{{{{TBL:{name}}}}}", body)
+
+    placed = set()
+    for name in sorted(set(re.findall(r"\{\{FIG:([a-z0-9_]+)\}\}", post))):
+        post = post.replace(f"{{{{FIG:{name}}}}}", figure(name))
+        placed.add(name)
+    print(f"figures placed  {', '.join(sorted(placed))}")
 
     leftover = [ln.strip() for ln in post.splitlines()
                 if ln.strip().startswith("{{") and ln.strip().endswith("}}")]
@@ -457,17 +361,11 @@ def main() -> int:
         print("UNRESOLVED SLOTS:", leftover)
         return 1
 
-    blocks = post.count("```mermaid")
-    fences = post.count("```")
-    if fences != blocks * 2:
-        print(f"FENCE MISMATCH: {blocks} mermaid blocks, {fences} fences")
-        return 1
-
     out = BLOG / "post.md"
     out.write_text(post)
     dashes = post.count("\u2014")
     print(f"\nwrote {out.relative_to(ROOT)}: {len(post.split())} words, "
-          f"{blocks} mermaid diagrams, {dashes} em-dashes")
+          f"{len(placed)} figures, {len(tables)} tables, {dashes} em-dashes")
     return 0 if dashes == 0 else 1
 
 

@@ -1,0 +1,7 @@
+flowchart LR
+    subgraph oot["out of time"]
+        o1["train<br/>first 60%"] --> o2["validate<br/>next 15%"] --> o3["test<br/>last 25%"]
+    end
+    subgraph loco["leave one cluster out"]
+        l1["train<br/>three traces"] --> l2["test<br/>the held-out one"]
+    end

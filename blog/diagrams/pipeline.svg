@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 943.2629999999999 84.45" width="943.2629999999999" height="84.45" style="--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+  @media (prefers-color-scheme: dark) {
+    svg {
+      --bg: #0d1117 !important;
+      --fg: #e6edf3 !important;
+      --line: #3d444d !important;
+      --accent: #4493f8 !important;
+      --muted: #9198a1 !important;
+    }
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<polyline class="edge" data-from="w1" data-to="w2" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="157.762,36.45 203.762,36.45" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="w2" data-to="w3" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="372.423,36.45 418.423,36.45" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="w3" data-to="w4" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="501.128,36.45 547.1279999999999,36.45" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="w4" data-to="w5" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="695.7819999999999,36.45 741.7819999999999,36.45" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="node" data-id="w1" data-label="read one window" data-shape="rectangle">
+  <rect x="18" y="18" width="139.762" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="87.881" y="36.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">read one window</text>
+</g>
+<g class="node" data-id="w2" data-label="pool the training block" data-shape="rectangle">
+  <rect x="203.762" y="18" width="168.661" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="288.0925" y="36.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">pool the training block</text>
+</g>
+<g class="node" data-id="w3" data-label="fit once" data-shape="rectangle">
+  <rect x="418.423" y="18" width="82.705" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="459.7755" y="36.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">fit once</text>
+</g>
+<g class="node" data-id="w4" data-label="freeze the booster" data-shape="rectangle">
+  <rect x="547.1279999999999" y="18" width="148.654" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="621.4549999999999" y="36.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">freeze the booster</text>
+</g>
+<g class="node" data-id="w5" data-label="score every test window" data-shape="rectangle">
+  <rect x="741.7819999999999" y="18" width="183.481" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="833.5224999999999" y="36.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">score every test window</text>
+</g>
+</svg>

@@ -22,7 +22,14 @@ mrc = "mrc.cli:main"
 
 [dependency-groups]
 viz = ["mkdocs-material>=9.5", "pymdown-extensions>=10.11"]
-dev = ["pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8", "mypy>=1.13", "pre-commit>=4.0"]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pre-commit>=4.0",
+    "cairosvg>=2.9.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]

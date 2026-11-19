@@ -937,3 +937,34 @@ OOT and LOCO summaries, per-window bias, retrain points, trace distributions fro
 caches, and Optuna trial counts and best values from the study sqlite files (the `meta.trials`
 field is stale, the db is not). Figures are the three data charts only; the six structural
 diagrams are source.
+
+## 2026-11-19T01:19Z - blog figures rebuilt as rendered assets, cache hierarchy added
+
+The inline Mermaid pass did not look good enough to ship, and the post opened the sizing argument
+without ever explaining the hierarchy it sits in. Both fixed.
+
+Figures are now rendered assets. `scripts/blog_diagrams.py` renders the five schematics with
+`pretty-mermaid` twice (github-light, github-dark) and folds the two into one SVG by appending a
+`@media (prefers-color-scheme: dark)` block that overrides the renderer's own custom properties
+with `!important`. One file per figure, correct on a white page and a dark one, no `<picture>`
+wrapper in the Markdown. `scripts/blog_figures.py` draws the three data figures with matplotlib
+on a real log capacity axis, transparent, mid-tone palette, series labelled at the line ends.
+
+Four things this pass had to discover by rendering, not by reading docs:
+
+1. `pretty-mermaid` accepts `xychart-beta` but draws an empty plot: axes, title and grid appear
+   and no series. The data charts therefore cannot use it, which is why they are matplotlib.
+2. It rejects `quadrantChart` outright ("Invalid mermaid header"). The cost/fidelity quadrant is
+   now a 3x3 markdown table, which is truer anyway: those positions are qualitative.
+3. It renders `accTitle` / `accDescr` as literal nodes, so accessibility lines have to be stripped
+   from the `.mmd` before rendering and carried by the image alt text instead.
+4. `cairosvg` rasterises these SVGs with every fill black, because the renderer puts its palette
+   in `var(--x)` custom properties and cairosvg does not resolve them. Visual QA has to go through
+   a real browser; a cairosvg preview is not evidence.
+
+Content: new Section 2, "The hierarchy you are shopping in", with the ladder table (registers to
+object store, capacity, latency, unit, who sets the size), the three things that differ down it,
+and an explicit list of what the estimator does not model. The one-tier request path moved there
+as Figure 1. Section 17 gained a ranked "what we would do next". The retrain row-count correction
+is now also recorded in the retractions table, and the results section says why MAE and not a
+relative error. Post is 8,591 words, 8 figures, 16 tables.

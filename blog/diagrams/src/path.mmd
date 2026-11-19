@@ -1,0 +1,5 @@
+flowchart LR
+    req["request for key k"] --> q{"resident?"}
+    q -->|hit| hit["return the object<br/>microseconds"]
+    q -->|miss| miss["read the next tier<br/>milliseconds"]
+    miss --> ins["insert it, evict one victim<br/>then return"]

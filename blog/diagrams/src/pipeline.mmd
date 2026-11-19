@@ -1,0 +1,5 @@
+flowchart LR
+    w1["read one window"] --> w2["pool the training block"]
+    w2 --> w3["fit once"]
+    w3 --> w4["freeze the booster"]
+    w4 --> w5["score every test window"]

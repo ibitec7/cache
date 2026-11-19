@@ -1,0 +1,50 @@
+{
+  "curves": {
+    "bytes": 55072,
+    "file": "diagrams/curves.svg",
+    "h": 225,
+    "w": 620
+  },
+  "episode": {
+    "bytes": 5867,
+    "file": "diagrams/episode.svg",
+    "h": 204,
+    "w": 575
+  },
+  "layers": {
+    "bytes": 5069,
+    "file": "diagrams/layers.svg",
+    "h": 93,
+    "w": 823
+  },
+  "path": {
+    "bytes": 6606,
+    "file": "diagrams/path.svg",
+    "h": 204,
+    "w": 830
+  },
+  "pipeline": {
+    "bytes": 5025,
+    "file": "diagrams/pipeline.svg",
+    "h": 84,
+    "w": 943
+  },
+  "ratio": {
+    "bytes": 43862,
+    "file": "diagrams/ratio.svg",
+    "h": 225,
+    "w": 618
+  },
+  "retrain": {
+    "bytes": 36980,
+    "file": "diagrams/retrain.svg",
+    "h": 225,
+    "w": 620
+  },
+  "validate": {
+    "bytes": 6223,
+    "file": "diagrams/validate.svg",
+    "h": 310,
+    "w": 427
+  }
+}

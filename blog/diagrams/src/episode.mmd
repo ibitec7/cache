@@ -1,0 +1,4 @@
+flowchart LR
+    s(["key accessed"]) --> b["at risk<br/>bucket b"]
+    b -->|reused here| e["event<br/>d = b"]
+    b -->|trace ends| c["censored<br/>d is a lower bound"]
