@@ -117,9 +117,11 @@ Continuing the same studies past trial 20 diverged per trace (num_leaves 24, 20 
 learning rate 0.110, 0.104, 0.103) and improved every test MAE: cluster10 0.003704 to
 0.003637, cluster26 0.001762 to 0.001518, cluster45 0.001517 to 0.001313.
 
-**Retracted**: the 12-trial numbers. **Reported**: the extended studies (34, 28 and 29
-trials for cluster10, cluster26 and cluster45; 10 for cluster52). A study that is
-reported must have run past trial 20, or it is random search wearing a sampler's name.
+**Retracted**: the 12-trial numbers. **Reported**: the extended studies, which hold 35, 29,
+30 and 20 complete trials for cluster10, cluster26, cluster45 and cluster52 (counted from
+`artifacts/study_<cluster>.db`, `trials` joined on `trial_values` where `state = COMPLETE`).
+A study that is reported must have run past trial 20, or it is random search wearing a
+sampler's name. cluster52 is the shortest at 20 because its windows are the expensive ones.
 
 ## Baselines: what each one establishes
 

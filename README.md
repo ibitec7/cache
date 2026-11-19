@@ -90,7 +90,11 @@ scripts/fetch_traces.sh            bounded, resumable acquisition
 scripts/sweep.py                   one process per store window, resumable
 scripts/oot.py                     60/15/25 out-of-time fit and per-window scoring
 scripts/bench_fit.py               fit/predict benchmark on one real window
-report/ slides/ wiki/ docs/        outputs
+scripts/blog_diagrams.py           render the post's figures (Mermaid + matplotlib)
+scripts/blog_build.py              assemble blog/post.md from artifacts
+scripts/blog_results.py            generate RESULTS.md from artifacts
+RESULTS.md                         headline results, generated, shareable
+report/ slides/ wiki/ blog/ docs/  outputs
 data/ artifacts/                   gitignored payloads
 ```
 

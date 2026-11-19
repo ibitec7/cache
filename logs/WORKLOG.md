@@ -993,3 +993,27 @@ and cluster45 (verified by joining `trial_params` for the best trial with number
 hit-count regression loses to the floor on all four traces, and `|bias|/MAE` computed per window
 (0.79 to 0.94) and as mean-bias over mean-MAE (0.74 to 0.97) agree in order of magnitude, so the
 level-offset reading is not an artefact of the averaging.
+
+## 2026-11-19T01:28Z - consistency pass over the numbers I published this turn
+
+Three copies of the same claim had drifted from the artifacts, all found by grepping for the
+strings rather than by re-reading my own writing.
+
+1. `wiki/docs/results.md` reported the extended studies as "34, 28 and 29 trials for cluster10,
+   cluster26 and cluster45; 10 for cluster52". The study databases hold 35, 29, 30 and 20 COMPLETE
+   trials. Corrected, with the query that verifies it written into the sentence.
+2. `wiki/site/` is untracked build output and carried the old sentence; rebuilt with `make wiki`.
+3. The reproduction table in the post listed every step up to `blog_build.py` and stopped, so a
+   reader following it would never produce RESULTS.md. Row added, which also rebuilds the post
+   (8,769 words).
+
+Also added to `README.md`: the three blog scripts and `RESULTS.md` in the repository map, since the
+results file is now the shareable surface.
+
+**Open discrepancy, not edited.** `report/sections/appendix.tex` says Optuna ran 15 trials on a
+four-million-row subsample and reports best validation MAE 0.00036 against 0.00042 for the shipped
+model. That matches `artifacts/optuna/study.db` (study `mrc-cluster45`, 15 trials, best 0.000364),
+which is the older subsample pilot, not the shipped per-trace studies (35/29/30/20 trials, cluster45
+best 0.001490 on the full validation block). Both statements can be true of different studies, but
+the appendix calls it "the shipped model" while citing the pilot. `report/` belongs to the mrc-write
+profile, so this is recorded here for the report owner rather than edited in place.

@@ -8,3 +8,4 @@
 | leave one out | `bash scripts/farm_loco.sh` | `artifacts/loco/cluster45/` |
 | render the figures | `env -u PYTHONPATH uv run python scripts/blog_diagrams.py` | `blog/diagrams/*.svg` |
 | rebuild this post | `env -u PYTHONPATH uv run python scripts/blog_build.py` | `blog/post.md` |
+| regenerate the results summary | `env -u PYTHONPATH uv run python scripts/blog_results.py` | `RESULTS.md` |
