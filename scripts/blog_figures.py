@@ -48,6 +48,7 @@ def setup() -> None:
         "figure.dpi": 200,
         "savefig.transparent": True,
         "svg.fonttype": "path",
+        "svg.hashsalt": "mrc-blog",  # deterministic ids, so a rebuild does not churn the repo
         "font.family": "sans-serif",
         "font.sans-serif": ["DejaVu Sans"],
         "font.size": 10,
@@ -71,7 +72,8 @@ def setup() -> None:
 def save(fig, name: str) -> pathlib.Path:
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / f"{name}.svg"
-    fig.savefig(path, format="svg", bbox_inches="tight", pad_inches=0.06, transparent=True)
+    fig.savefig(path, format="svg", bbox_inches="tight", pad_inches=0.06, transparent=True,
+                metadata={"Date": None})
     plt.close(fig)
     return path
 

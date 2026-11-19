@@ -1,6 +1,6 @@
 {
   "curves": {
-    "bytes": 55072,
+    "bytes": 55022,
     "file": "diagrams/curves.svg",
     "h": 225,
     "w": 620
@@ -30,13 +30,13 @@
     "w": 943
   },
   "ratio": {
-    "bytes": 43862,
+    "bytes": 43812,
     "file": "diagrams/ratio.svg",
     "h": 225,
     "w": 618
   },
   "retrain": {
-    "bytes": 36980,
+    "bytes": 36930,
     "file": "diagrams/retrain.svg",
     "h": 225,
     "w": 620
