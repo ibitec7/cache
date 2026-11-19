@@ -116,6 +116,10 @@ def figure(name: str) -> str:
     if name not in figures:
         raise SystemExit(f"figure {name!r} is not in the manifest; run scripts/blog_diagrams.py")
     rec = figures[name]
+    asset = BLOG / rec["file"]
+    if not asset.exists():
+        raise SystemExit(f"figure {name!r} is in the manifest but {asset} is missing; "
+                         "run scripts/blog_diagrams.py")
     return f"![{name} diagram]({rec['file']})"
 
 
@@ -323,7 +327,7 @@ def t_retract() -> str:
 
 
 def t_repro() -> str:
-    return "| step | command | produces |\n|---|---|---|\n| fetch a trace | `bash scripts/fetch_traces.sh cluster45` | `data/raw/traces/` |\n| build the shard | `env -u PYTHONPATH uv run python -m mrc.cli build cluster45` | `data/publish/cluster45/` |\n| fit and score one window | `env -u PYTHONPATH uv run python -m mrc.cli train cluster45` | `artifacts/tables/cluster45_metrics.json` |\n| tune | `env -u PYTHONPATH uv run python -m mrc.cli tune cluster45 --trials 30` | `artifacts/study_cluster45.db` |\n| out of time, all windows | `bash scripts/farm_oot.sh` | `artifacts/oot/cluster45/` |\n| leave one out | `bash scripts/farm_loco.sh` | `artifacts/loco/cluster45/` |\n| rebuild this post | `env -u PYTHONPATH uv run python scripts/blog_build.py` | `blog/post.md` |"
+    return "| step | command | produces |\n|---|---|---|\n| fetch a trace | `bash scripts/fetch_traces.sh cluster45` | `data/raw/traces/` |\n| build the shard | `env -u PYTHONPATH uv run python -m mrc.cli build cluster45` | `data/publish/cluster45/` |\n| fit and score one window | `env -u PYTHONPATH uv run python -m mrc.cli train cluster45` | `artifacts/tables/cluster45_metrics.json` |\n| tune | `env -u PYTHONPATH uv run python -m mrc.cli tune cluster45 --trials 30` | `artifacts/study_cluster45.db` |\n| out of time, all windows | `bash scripts/farm_oot.sh` | `artifacts/oot/cluster45/` |\n| leave one out | `bash scripts/farm_loco.sh` | `artifacts/loco/cluster45/` |\n| render the figures | `env -u PYTHONPATH uv run python scripts/blog_diagrams.py` | `blog/diagrams/*.svg` |\n| rebuild this post | `env -u PYTHONPATH uv run python scripts/blog_build.py` | `blog/post.md` |"
 
 
 TABLES = {

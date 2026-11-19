@@ -802,6 +802,7 @@ reporting rather than a fact about Optuna.
 | tune | `env -u PYTHONPATH uv run python -m mrc.cli tune cluster45 --trials 30` | `artifacts/study_cluster45.db` |
 | out of time, all windows | `bash scripts/farm_oot.sh` | `artifacts/oot/cluster45/` |
 | leave one out | `bash scripts/farm_loco.sh` | `artifacts/loco/cluster45/` |
+| render the figures | `env -u PYTHONPATH uv run python scripts/blog_diagrams.py` | `blog/diagrams/*.svg` |
 | rebuild this post | `env -u PYTHONPATH uv run python scripts/blog_build.py` | `blog/post.md` |
 
 *Table 16. Reproduction, in order. Every number in this post comes out of the artifacts these
