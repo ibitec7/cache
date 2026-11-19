@@ -907,3 +907,33 @@ cluster10 at 1M requests, setup 1.2 s, hit-count regression 0.6 s, `single_row` 
 window, so a four-trace run costs about one streaming pass. `single_row` returns MAE
 0.000000 because it reads `eval_rtilde` for the block it scores: an oracle, marked
 `oracle$^\dagger$` in the ablation table and excluded from headline tables.
+
+## 2026-11-19T00:17Z - technical blog built from artifacts, diagrams in Mermaid
+
+`blog/post.md` is the deliverable: 7,700 words, 17 sections, 9 Mermaid diagrams, 13 generated
+tables. One plain markdown file, no build step for a reader.
+
+What changed after the first attempt, which used hand-placed inline SVG: the diagrams did not
+look good, so they are Mermaid source now. That also fixed the honesty problem the SVG approach
+carried, because Mermaid source is diffable text a reader can edit.
+
+Four things the build had to correct mid-flight, all caught by rendering rather than review:
+
+1. `plotColorPalette` is not honoured under `config.xyChart`; it only works under
+   `themeVariables.xyChart`. With the wrong key the first series rendered near-white and the
+   focal trace was invisible.
+2. A YAML front matter with escaped quotes (`fontFamily: \"Inter\"`) does not parse, and a
+   front matter that does not parse is silently ignored, so theme and palette never applied.
+   Plain scalars and single-quoted hex values work.
+3. `xychart` has no log axis, so the curve chart is sampled at nine shared capacities, each read
+   from that trace's own grid (a lookup, not an interpolation). Caption says so.
+4. The retrain "budget" is not training rows. `prepare_windows` divides a fixed row budget across
+   the pooled windows, so 1, 5 and 12 windows all fit about 3.6M rows. The curve measures
+   coverage, not volume, and the earlier 5M/25M/60M row labels were wrong. Fixed in the post and
+   in the table.
+
+Tables come from `scripts/blog_build.py`, which reads every value out of `artifacts/`:
+OOT and LOCO summaries, per-window bias, retrain points, trace distributions from the label
+caches, and Optuna trial counts and best values from the study sqlite files (the `meta.trials`
+field is stale, the db is not). Figures are the three data charts only; the six structural
+diagrams are source.
