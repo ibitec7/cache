@@ -968,3 +968,28 @@ and an explicit list of what the estimator does not model. The one-tier request 
 as Figure 1. Section 17 gained a ranked "what we would do next". The retrain row-count correction
 is now also recorded in the retractions table, and the results section says why MAE and not a
 relative error. Post is 8,591 words, 8 figures, 16 tables.
+
+## 2026-11-19T01:26Z - RESULTS.md, and two caption corrections the numbers forced
+
+`scripts/blog_results.py` writes `RESULTS.md` from the artifacts: headline, out-of-time table
+with block-bootstrap intervals, leave-one-cluster-out table, the four-way baseline comparison,
+the provisioning decision, the Optuna studies with the trial-11 finding computed from the study
+databases, and the limits. Every number is read at generation time; nothing is typed.
+
+Two errors in the post were found while writing it, both from reading the numbers rather than
+trusting the prose:
+
+1. The cost-table caption said a decision made on the Kaplan-Meier curve "buys about twice the
+   memory". The ratio column is below 1 on every trace, so Kaplan-Meier asks for LESS capacity and
+   under-provisions. The post said the opposite of its own table.
+2. The baselines table was captioned as headers on the same windows as the out-of-time results.
+   It is not: `*_metrics.json` is a 5,000,000-request pilot block (meta.n_requests confirms),
+   scored 60/15/25 within that pilot, which is why its gbdt error is 0.00027 for cluster52 against
+   0.0038 over 672 windows. The caption now says pilot block, says why the factors differ, and the
+   results file repeats the warning.
+
+Three checks worth keeping: the trial-11 configuration is byte-identical on cluster10, cluster26
+and cluster45 (verified by joining `trial_params` for the best trial with number < 12), the
+hit-count regression loses to the floor on all four traces, and `|bias|/MAE` computed per window
+(0.79 to 0.94) and as mean-bias over mean-MAE (0.74 to 0.97) agree in order of magnitude, so the
+level-offset reading is not an artefact of the averaging.
